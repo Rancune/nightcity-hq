@@ -1,3 +1,17 @@
+### DÉCLENCHER LE CRON DE PURGE MANUELLEMENT (SUR LE SERVEUR LIVE)
+
+# Remplace "nightcity-hq-XXXX.vercel.app" par l'URL réelle de ton application
+GET https://https://nightcity-hq.vercel.app/api/crons/purge-contracts
+Authorization: Bearer 9lxWDWu34vmuKEtrJkupSiKXjjH88x6rToYbTRSW
+
+
+
+
+/*
+### PURGER LES CONTRATS EXPIRÉS
+GET http://localhost:2077/api/crons/purge-contracts
+
+
 ### CRÉER UN NOUVEAU CONTRAT
 # @name createContract
 POST http://localhost:2077/api/contrats
@@ -16,3 +30,5 @@ Content-Type: application/json
 ### LIRE TOUS LES CONTRATS
 # @name getAllContracts
 GET http://localhost:2077/api/contrats
+
+*/

@@ -8,6 +8,8 @@ import MissionSummary from './components/MissionSummary';
 import './globals.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
+
 
 
 
@@ -100,16 +102,23 @@ export default function HomePage() {
   // C'est la structure visuelle de notre page, stylisée avec les variables de globals.css.
   return (
     <main className="bg-[--color-background] text-[--color-neon-lime] min-h-screen p-4">
-      <header className="text-center mb-8">
-        <h1 className="text-3xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse">
-          TERMINAL DE CONTRATS - NIGHTCITY-HQ
+      <header className="text-center mb-8 flex justify-between items-center">
+        <h1 className="text-3xl ...">
+          CONTRACTS TERMINAL - FIXER HQ
         </h1>
-        <button 
-          onClick={handleGenerateContract}
-          className="bg-[--color-neon-cyan] hover:opacity-80 text-[--color-background] font-bold py-1 px-3 rounded ml-4"
-        >
-          Générer un contrat
-        </button>
+        <div className="flex gap-4 items-center">
+          <button onClick={handleGenerateContract} className="bg-[--color-neon-cyan] hover:opacity-80 text-[--color-background] font-bold py-2 px-4 rounded">
+            Générer Contrat
+          </button>
+          {/* Ce bloc s'affiche si l'utilisateur est déconnecté */}
+          <SignedOut>
+            <a href="/sign-in" className="bg-neon-cyan text-background font-bold py-2 px-4 rounded">Connexion</a>
+          </SignedOut>
+          {/* Ce composant s'affiche si l'utilisateur est connecté (avatar + menu) */}
+          <SignedIn>
+            <UserButton afterSignOutUrl="/"/>
+          </SignedIn>
+        </div>
       </header>
 
       <div>

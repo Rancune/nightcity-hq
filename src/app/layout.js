@@ -1,5 +1,6 @@
 import { Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from '@clerk/nextjs';
 
 const robotoMono = Roboto_Mono({
   //variable: "--font-geist-sans",
@@ -10,17 +11,19 @@ const robotoMono = Roboto_Mono({
 
 
 export const metadata = {
-  title: "Fixer HQ",
+  title: "The Fixer's Grid",
   description: "Fixer contracts handling",
 };
 
 export default function RootLayout({ children }) {
   return (
+    <ClerkProvider>
     <html lang="en">
       <body className={robotoMono.className}>
         
         {children}
       </body>
     </html>
+    </ClerkProvider>
   );
 }
