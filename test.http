@@ -1,0 +1,18 @@
+### CRÉER UN NOUVEAU CONTRAT
+# @name createContract
+POST http://localhost:2077/api/contrats
+Content-Type: application/json
+
+{
+  "title": "Vol de données chez Arasaka",
+  "description": "S'infiltrer dans la tour Arasaka et voler les plans du nouveau prototype de 'Relic'.",
+  "reward": 150000,
+  "difficulty": "Légendaire"
+}
+
+### SÉPARATEUR (essentiel)
+###
+
+### LIRE TOUS LES CONTRATS
+# @name getAllContracts
+GET http://localhost:2077/api/contrats

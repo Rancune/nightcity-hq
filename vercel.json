@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/crons/purge-contracts",
+      "schedule": "0 5 * * *"
+    }
+  ]
+}
