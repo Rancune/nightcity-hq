@@ -1,7 +1,7 @@
 // src/app/api/contrats/generate/route.js
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import Contract from '../../../../../models/Contract';
+import Contract from '@/models/Contract';
 import { generateContractLore } from '../../../../Lib/ai';
 
 async function connectDb() {

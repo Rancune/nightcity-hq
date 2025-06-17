@@ -1,7 +1,7 @@
 // src/app/api/crons/purge-contracts/route.js
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import Contract from '../../../../models/Contract'; // Vérifie que le chemin est bon
+import Contract from '@/models/Contract';
 
 async function connectDb() {
   if (mongoose.connection.readyState >= 1) return;

@@ -1,7 +1,7 @@
 // src/app/api/contrats/route.js
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import Contract from '../../../../models/Contract'; // Ajuste le chemin si besoin
+import Contract from '@/models/Contract';
 
 // Connexion à la base de données
 async function connectDb() {
