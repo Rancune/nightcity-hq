@@ -25,7 +25,8 @@ async function getContractDetails(id) {
 }
 
 // La page elle-même
-export default async function ContractDetailsPage({ params }) {
+export default async function ContractDetailsPage(props) {
+  const params = await props.params;
   // On passe l'ID à notre fonction
   const contract = await getContractDetails(await params.id);
 
