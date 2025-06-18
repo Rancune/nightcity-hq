@@ -2,7 +2,7 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
 
-export default clerkMiddleware((auth, request) => {
+export default clerkMiddleware(async (auth, request) => {
   // On log des infos sur chaque requête qui passe
   if (!request.nextUrl.pathname.startsWith('/_next')) {
     console.log('\n--- REQUÊTE INTERCEPTÉE ---');

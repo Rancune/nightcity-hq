@@ -20,7 +20,9 @@ export default function HomePage() {
   const [contrats, setContrats] = useState([]);
   const [erreur, setErreur] = useState(null);
   const [playerProfile, setPlayerProfile] = useState(null);
-
+  // === NOUVEAU HOOK ===
+  // On récupère le statut de l'authentification
+  const { isSignedIn, isLoaded, userId } = useAuth();
 
   //const argentActuel = 12500; // Valeur fictive, remplace par ta source réelle
   //const reputationActuelle = 78; // Idem
@@ -29,43 +31,19 @@ export default function HomePage() {
   //const coutTotal = 1500;
   //const gainPotentiel = 3000;
 
-  // === NOUVEAU HOOK ===
-  // On récupère le statut de l'authentification
-  const { isSignedIn, isLoaded, userId } = useAuth();
+
 
 //console.log("URL DE connard L'API UTILISÉE PAR LE SERVEUR:", process.env.NEXT_PUBLIC_API_URL);
   // --- EFFET AU CHARGEMENT ---
   // Cette fonction s'exécute une seule fois, quand le composant est affiché pour la première fois.
   useEffect(() => {
     const initializeSession = async () => {
-      try {
-        console.log("Synchronisation de la session du joueur...");
-        const syncResponse = await fetch('/api/player/sync', { method: 'POST' });
-        if (!syncResponse.ok) throw new Error("La synchronisation du joueur a échoué");
-        const profileData = await syncResponse.json();
-        setPlayerProfile(profileData);
-        console.log("Synchronisation terminée avec succès pour le profil:", profileData);
-
-        console.log("Récupération de la liste des contrats...");
-        const contractsResponse = await fetch('/api/contrats');
-        if (!contractsResponse.ok) throw new Error('La réponse du réseau des Fixers est corrompue...');
-        const contractsData = await contractsResponse.json();
-        setContrats(contractsData);
-        console.log("Contrats récupérés.");
-
-      } catch (e) {
-        console.error("Erreur lors de l'initialisation:", e);
-        setErreur(e.message);
+      if (isLoaded && isSignedIn && userId) {
+        await fetch('/api/player/sync', { method: 'POST' });
+        await fetchContracts(); // On appelle notre nouvelle fonction
       }
     };
-
-    
-    // On attend que Clerk soit chargé, que l'utilisateur soit connecté, ET que son ID soit disponible.
-    if (isLoaded && isSignedIn && userId) {
-      initializeSession();
-    }
-
-  // On ajoute userId au tableau des dépendances
+    initializeSession();
   }, [isLoaded, isSignedIn, userId]); // Se lance une seule fois au chargement
 
 
@@ -76,17 +54,28 @@ export default function HomePage() {
       if (!reponse.ok) {
         throw new Error("La génération a échoué");
       }
-      // Pour rafraîchir la liste, on rappelle la fonction qui récupère les contrats.
-      // Pour cela, il faut légèrement modifier notre useEffect.
-      // C'est une petite refactorisation nécessaire.
-
-      // Solution simple pour l'instant : on recharge la page pour voir le nouveau contrat.
-      window.location.reload();
-
+      // Au lieu de recharger, on rafraîchit simplement la liste des contrats !
+      await fetchContracts();
     } catch (error) {
       console.error("Erreur lors de la génération:", error);
     }
   };
+
+
+  // On isole la logique de récupération des contrats dans sa propre fonction
+  const fetchContracts = async () => {
+    try {
+      console.log("Récupération de la liste des contrats...");
+      const contractsResponse = await fetch('/api/contrats');
+      if (!contractsResponse.ok) throw new Error('La réponse du réseau est corrompue...');
+      const contractsData = await contractsResponse.json();
+      setContrats(contractsData);
+    } catch (e) {
+      console.error("Erreur lors de la récupération des contrats:", e);
+      setErreur(e.message);
+    }
+  };
+
 
   // --- LOGIQUE D'INTERACTION ---
   // Fonction appelée quand on clique sur le bouton "Accepter".
