@@ -118,6 +118,12 @@ export default function HomePage() {
             <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded">
                 <span>{playerProfile ? `${playerProfile.eddies.toLocaleString()} €$` : '--- €$'}</span>
             </div>
+             {/* NOUVEAU LIEN VERS L'ÉCURIE */}
+            <Link href="/netrunners">
+                <button className="bg-[--color-neon-cyan] hover:opacity-80 text-background font-bold py-2 px-4 rounded">
+                    Mon Écurie
+                </button>
+            </Link>
             <button 
               onClick={handleGenerateContract}
               className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded"
