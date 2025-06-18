@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
     "@google/generative-ai": "^0.24.1",
+    "@headlessui/react": "^2.2.4",
     "dotenv": "^16.5.0",
     "mongoose": "^8.15.2",
     "next": "15.3.3",
