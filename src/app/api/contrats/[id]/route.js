@@ -2,11 +2,8 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Contract from '@/models/Contract';
+import connectDb from '@/Lib/database'; 
 
-async function connectDb() {
-  if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(process.env.MONGO_URI);
-}
 
 // === NOUVELLE FONCTION GET ===
 // Pour récupérer un seul contrat par son ID

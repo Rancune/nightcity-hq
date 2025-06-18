@@ -2,14 +2,9 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Contract from '@/models/Contract';
+import connectDb from '@/Lib/database';
 
-// Connexion à la base de données
-async function connectDb() {
-  if (mongoose.connection.readyState >= 1) {
-    return; // Si déjà connecté, on ne fait rien
-  }
-  await mongoose.connect(process.env.MONGO_URI);
-}
+
 
 // Équivalent de app.get('/api/contrats', ...)
 export async function GET() {

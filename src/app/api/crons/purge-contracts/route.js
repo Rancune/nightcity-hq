@@ -2,11 +2,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Contract from '@/models/Contract';
-
-async function connectDb() {
-  if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(process.env.MONGO_URI);
-}
+import connectDb from '@/Lib/database';
 
 export async function GET(request) {
   // --- SÉCURITÉ ---

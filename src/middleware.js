@@ -14,7 +14,7 @@ export default clerkMiddleware((auth, request) => {
     console.log('Badge de session Clerk présent dans le cookie ?', hasSessionCookie);
 
     // On demande au gardien d'identifier l'utilisateur à ce stade précis
-    const { userId } = auth();
+    const { userId } = await auth();
     console.log('Résultat de auth() DANS LE MIDDLEWARE:', userId);
     console.log('--- FIN INTERCEPTION ---\n');
   }

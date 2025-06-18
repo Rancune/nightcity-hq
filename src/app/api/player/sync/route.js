@@ -3,11 +3,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server'; // L'outil de Clerk pour l'auth côté serveur
 import PlayerProfile from '@/models/PlayerProfile'; 
 import mongoose from 'mongoose';
+import connectDb from '@/Lib/database';
 
-async function connectDb() {
-  if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(process.env.MONGO_URI);
-}
 
 // On utilise POST car cette action peut créer une nouvelle ressource
 export async function POST() {
