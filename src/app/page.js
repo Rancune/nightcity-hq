@@ -94,8 +94,8 @@ export default function HomePage() {
     <>
       <main className="min-h-screen p-4">
         <header className="text-center mb-8 flex justify-between items-center">
-          <h1 className="text-3xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse">
-            CONTRATS TERMINAL - FIXER-HQ
+          <h1 className="text-3xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse text-center">
+            CONTRATS TERMINAL - FIXER-HQ - V 0.4
           </h1>
           <div className="flex gap-6 items-center">
             <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded">
