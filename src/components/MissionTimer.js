@@ -1,13 +1,13 @@
 // src/components/MissionTimer.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function MissionTimer({ totalDuration, startTime }) {
-  const calculateRemaining = () => {
+  const calculateRemaining = useCallback(() => {
     if (!startTime || !totalDuration) return 0;
     const elapsedSeconds = Math.floor((new Date() - new Date(startTime)) / 1000);
     return totalDuration - elapsedSeconds;
-  };
+  }, [startTime, totalDuration]);
 
   const [remainingTime, setRemainingTime] = useState(calculateRemaining());
 
@@ -19,7 +19,7 @@ export default function MissionTimer({ totalDuration, startTime }) {
 
     // On nettoie l'intervalle
     return () => clearInterval(timerId);
-  }, [startTime, totalDuration]);
+  }, [calculateRemaining]);
 
   // On calcule les minutes et secondes pour l'affichage
   const minutes = Math.floor(remainingTime / 60);

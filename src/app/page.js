@@ -113,7 +113,7 @@ export default function HomePage() {
               Générer Contrat
             </button>
             <SignedOut>
-              <a href="/sign-in" className="bg-neon-cyan text-background font-bold py-2 px-4 rounded">Connexion</a>
+              <Link href="/sign-in" className="bg-neon-cyan text-background font-bold py-2 px-4 rounded">Connexion</Link>
             </SignedOut>
             <SignedIn>
               <UserButton afterSignOutUrl="/"/>
