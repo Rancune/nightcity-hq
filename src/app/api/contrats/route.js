@@ -1,19 +1,41 @@
 // src/app/api/contrats/route.js
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import Contract from '@/models/Contract';
+import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
+import Contract from '@/models/Contract';
+import { updatePlayerTimers } from '@/Lib/trp'; // On importe notre nouvelle fonction
 
-
-
-// Équivalent de app.get('/api/contrats', ...)
 export async function GET() {
   try {
+    const { userId } = await auth();
+
+    // On se connecte à la BDD quoiqu'il arrive
     await connectDb();
-    const contracts = await Contract.find();
-    return NextResponse.json(contracts, { status: 200 });
+
+    // Si l'utilisateur n'est pas connecté, on ne lui montre que les offres publiques
+    if (!userId) {
+      const publicContracts = await Contract.find({ status: 'Proposé' }).lean();
+      return NextResponse.json(publicContracts);
+    }
+
+    // Si l'utilisateur est connecté, on lance d'abord le "tick" de l'horloge
+    await updatePlayerTimers(userId);
+
+    // --- LA REQUÊTE FINALE ET CORRIGÉE ---
+    const contracts = await Contract.find({
+      $or: [
+        // Contrats publics disponibles
+        { status: 'Proposé', ownerId: null },
+        // OU contrats qui appartiennent au joueur (qu'ils soient assignés, actifs, etc.)
+        { ownerId: userId }
+      ]
+    }).sort({ createdAt: -1 }).lean();
+
+    return NextResponse.json(contracts);
+
   } catch (error) {
-    return NextResponse.json({ message: "Erreur lors de la récupération des contrats" }, { status: 500 });
+    console.error("[API GET /contrats] Erreur:", error);
+    return new NextResponse("Erreur interne du serveur", { status: 500 });
   }
 }
 

@@ -1,7 +1,7 @@
 // src/app/api/netrunners/route.js
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import connectDb from '@/lib/database';
+import connectDb from '@/Lib/database';
 import Netrunner from '@/models/Netrunner';
 
 // GET : Pour récupérer la liste des runners du joueur connecté

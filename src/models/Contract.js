@@ -8,8 +8,13 @@ const contractSchema = new Schema({
   
   // À qui est proposé ce contrat. Peut être null (offre publique).
   ownerId: { type: String, default: null }, 
+  assignedRunner: { type: Schema.Types.ObjectId, ref: 'Netrunner', default: null },
   
-  status: { type: String, enum: ['Proposé', 'Actif', 'Terminé', 'Échoué', 'Expiré'], default: 'Proposé' },
+  status: { 
+  type: String, 
+  enum: ['Proposé', 'Assigné', 'Actif', 'Terminé', 'Échoué', 'Expiré'], // On ajoute 'Assigné' à la liste
+  default: 'Proposé' 
+},
   
   // La récompense peut être plus complexe qu'un simple chiffre
   reward: {

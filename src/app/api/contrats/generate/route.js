@@ -1,35 +1,48 @@
 // src/app/api/contrats/generate/route.js
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import Contract from '@/models/Contract';
-import { generateContractLore } from '../../../../Lib/ai';
+import Contract from '@/models/Contract'; // On utilise l'alias
+import { generateContractLore } from '@/Lib/ai';
 import connectDb from '@/Lib/database';
 
-// Fonction qui s'exécute quand on appelle cette route en POST
 export async function POST() {
-    console.log("[API] Route de génération de contrat déclenchée.");
   try {
     await connectDb();
-    console.log("[API] Appel du module IA pour le lore...");
-        // --- PARTIE 1 : APPEL À L'IA ---
-    const { title, description } = await generateContractLore(); // On récupère le lore de l'IA
-    console.log("[API] Lore reçu de l'IA:", { title, description });
 
-    // --- PARTIE 2 : GÉNÉRATION ALÉATOIRE ---
-    const difficulties = ['Facile', 'Moyen', 'Difficile', 'Légendaire'];
-    const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
-    const randomReward = Math.floor(Math.random() * (50000 - 5000 + 1) + 5000);
+    // --- PARTIE 1 : LORE PAR IA (ne change pas) ---
+    const { title, description } = await generateContractLore();
 
-    const expiration = new Date();
-    expiration.setDate(expiration.getDate() + 7);
+    // --- PARTIE 2 : GÉNÉRATION DE DONNÉES DE GAMEPLAY v2.0 ---
+    const corpos = ['Arasaka', 'Militech', 'Kang Tao', 'NetWatch'];
+    const randomCorpo = corpos[Math.floor(Math.random() * corpos.length)];
 
-    // --- PARTIE 3 : COMBINAISON ET SAUVEGARDE ---
+    // Récompense en eddies et réputation
+    const randomRewardEddies = Math.floor(Math.random() * (50000 - 5000 + 1) + 5000);
+    const randomRewardRep = Math.floor(Math.random() * (200 - 50 + 1) + 50);
+
+    // Durée pour accepter le contrat (entre 1 et 3 heures de jeu actif)
+    // 1h de jeu = 3600 secondes TRP
+    const randomAcceptanceDeadline = Math.floor(Math.random() * (10800 - 3600 + 1) + 3600);
+
+    // --- PARTIE 3 : CRÉATION DU NOUVEAU CONTRAT STRUCTURÉ ---
     const newContractData = {
-      title: title, // Titre généré par l'IA
-      description: description, // Description générée par l'IA
-      reward: randomReward,
-      difficulty: randomDifficulty,
-      expiresAt: expiration,
+      title: title,
+      description: description,
+      status: 'Proposé', // Le statut initial
+      archetype: 'PIRATAGE_RAPIDE_v1', // On utilise l'archétype que tu as défini
+      targetCorpo: randomCorpo,
+
+      // La récompense est maintenant un objet !
+      reward: {
+        eddies: randomRewardEddies,
+        reputation: randomRewardRep,
+      },
+
+      // On définit le timer d'acceptation
+      acceptance_deadline_trp: randomAcceptanceDeadline,
+
+      // On pourrait aussi générer les autres champs ici (timer de complétion, etc.)
+      consequence_tier: Math.floor(Math.random() * 2) + 1, // Tier 1 ou 2
     };
 
     const contract = new Contract(newContractData);
@@ -37,7 +50,7 @@ export async function POST() {
 
     return NextResponse.json(contract, { status: 201 });
   } catch (error) {
-    console.error("[API] ERREUR DANS LA ROUTE DE GÉNÉRATION:", error);
-    return NextResponse.json({ message: "Erreur lors de la génération du contrat" }, { status: 500 });
+    console.error("Erreur lors de la génération du contrat v2:", error);
+    return new NextResponse("Erreur interne du serveur", { status: 500 });
   }
 }

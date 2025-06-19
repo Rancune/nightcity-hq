@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserButton, SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
 import AssignRunnerModal from '@/components/AssignRunnerModal';
+import ContractTimer from '@/components/ContractTimer';
 
 export default function HomePage() {
   const [contrats, setContrats] = useState([]);
@@ -93,7 +94,7 @@ export default function HomePage() {
       <main className="min-h-screen p-4">
         <header className="text-center mb-8 flex justify-between items-center">
           <h1 className="text-3xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse">
-            TERMINAL DE CONTRATS - NIGHTCITY-HQ
+            CONTRATS TERMINAL - FIXER-HQ
           </h1>
           <div className="flex gap-6 items-center">
             <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded">
@@ -136,8 +137,16 @@ export default function HomePage() {
                   </div>
                 </Link>
                 <div className="flex items-center flex-shrink-0">
-                  <span className="text-[--color-text-secondary] italic w-32 text-center">-- {contrat.status.toUpperCase()} --</span>
-                  {contrat.status === 'Proposé' && (
+                  {/* NOUVELLE LOGIQUE D'AFFICHAGE */}
+                    {contrat.status === 'Assigné' && contrat.completion_timer_trp > 0 ? (
+                      // Si le contrat est assigné et a un timer, on affiche le composant Timer
+                      <ContractTimer initialDuration={contrat.completion_timer_trp} />
+                    ) : (
+                      // Sinon, on affiche le statut comme avant
+                      <span className="text-[--color-text-secondary] italic w-32 text-center">
+                        -- {contrat.status.toUpperCase()} --
+                      </span>
+                    )}                  {contrat.status === 'Proposé' && (
                     <button 
                       onClick={(e) => {
                         e.preventDefault();

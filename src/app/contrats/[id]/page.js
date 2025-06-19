@@ -1,34 +1,31 @@
 // src/app/contrats/[id]/page.js
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { updatePlayerTimers } from '@/Lib/trp';
+import connectDb from '@/Lib/database';
+import Contract from '@/models/Contract';
 
-// On modifie légèrement la fonction pour qu'elle prenne "id" en argument
-async function getContractDetails(id) {
+// Cette page est un Server Component, elle peut directement parler à la BDD.
+export default async function ContractDetailsPage({ params }) {
+  let contract = null;
+
   try {
-    // On s'assure que la variable d'environnement est bien lue
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl) {
-      throw new Error("La variable d'environnement de l'API n'est pas définie.");
+    // --- DÉCLENCHEMENT DU TICK TRP ---
+    const { userId } = await auth();
+    if (userId) {
+      await updatePlayerTimers(userId);
     }
-    
-    const res = await fetch(`${apiUrl}/api/contrats/${id}`, { cache: 'no-store' });
-    
-    if (!res.ok) {
-      // Si l'API renvoie une erreur (404, 500), on la propage
-      throw new Error(`Erreur de l'API: ${res.statusText}`);
-    }
-    
-    return res.json();
-  } catch (error) {
-    console.error("Erreur dans getContractDetails:", error);
-    return null; // On renvoie null en cas d'échec du fetch
-  }
-}
+    // ------------------------------------
 
-// La page elle-même
-export default async function ContractDetailsPage(props) {
-  const params = await props.params;
-  // On passe l'ID à notre fonction
-  const contract = await getContractDetails(await params.id);
+    // On récupère les détails du contrat directement depuis la BDD
+    // C'est plus performant que de passer par notre propre API
+    await connectDb();
+    contract = await Contract.findById(params.id).lean();
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la page de détails:", error);
+    // On laisse 'contract' à null, la page affichera un message d'erreur.
+  }
 
   if (!contract) {
     return (
@@ -41,12 +38,17 @@ export default async function ContractDetailsPage(props) {
     );
   }
 
-  // Le reste du JSX pour afficher le contrat reste le même
   return (
     <main className="min-h-screen p-8">
       <header className="mb-8">
         <h1 className="text-4xl text-[--color-neon-cyan] font-bold">{contract.title}</h1>
-        <p className="text-[--color-text-secondary]">Statut : {contract.status} | Difficulté : {contract.difficulty || 'Non spécifiée'}</p>
+        {/* On affiche le temps restant pour accepter, s'il y en a un */}
+        {contract.status === 'Proposé' && contract.acceptance_deadline_trp && (
+          <p className="text-lg text-[--color-neon-yellow] animate-pulse">
+            Temps restant pour accepter : {Math.floor(contract.acceptance_deadline_trp / 60)} minutes TRP
+          </p>
+        )}
+        <p className="text-[--color-text-secondary]">Statut : {contract.status}</p>
       </header>
       
       <div className="bg-white/5 p-6 rounded-lg">
@@ -55,7 +57,7 @@ export default async function ContractDetailsPage(props) {
       </div>
       
       <div className="mt-8">
-        <p className="text-2xl text-[--color-neon-pink]">Récompense : {contract.reward.eddies} €$</p>
+        <p className="text-2xl text-[--color-neon-pink]">Récompense : {contract.reward.eddies.toLocaleString()} €$</p>
       </div>
 
       <Link href="/" className="mt-12 inline-block text-[--color-neon-cyan] hover:underline">
