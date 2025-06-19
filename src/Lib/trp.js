@@ -35,7 +35,7 @@ export async function updatePlayerTimers(clerkId) {
     {
       $inc: { 
         acceptance_deadline_trp: -trpElapsedSeconds,
-        completion_timer_trp: -trpElapsedSeconds
+        // completion_timer_trp: -trpElapsedSeconds
       }
     }
   );
@@ -43,14 +43,13 @@ export async function updatePlayerTimers(clerkId) {
   // --- Vérification des expirations ---
   // On met à jour le statut des contrats dont le minuteur d'acceptation est terminé
   await Contract.updateMany(
-    { ownerId: clerkId, status: 'Proposé', acceptance_deadline_trp: { $lte: 0 } },
-    { $set: { status: 'Expiré' } }
+  { 
+    // La condition de temps est la même
+    acceptance_deadline_trp: { $lte: 0 },
+    status: 'Proposé',
+    // MAIS on cible les contrats publics OU ceux privés du joueur
+    $or: [{ ownerId: null }, { ownerId: clerkId }] 
+  },
+  { $set: { status: 'Expiré' } } // On change leur statut
   );
-  // On pourrait faire de même pour le 'completion_timer_trp' et le statut 'Échoué'
-
-  // On met à jour la dernière date de présence du joueur
-  player.lastSeen = now;
-  await player.save();
-
-  console.log("[TRP] Mise à jour des minuteurs terminée.");
 }

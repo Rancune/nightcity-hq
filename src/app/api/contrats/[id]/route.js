@@ -34,37 +34,49 @@ export async function GET(request) {
 export async function PUT(request, { params }) {
   try {
     const { userId } = await auth();
-    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
+    if (!userId) {
+      return new NextResponse("Non autorisé", { status: 401 });
+    }
 
     const { id: contractId } = params;
-    const { netrunnerId } = await request.json();
-    if (!netrunnerId) return new NextResponse("ID du Netrunner manquant", { status: 400 });
+    const { netrunnerId } = await request.json(); 
+
+    if (!netrunnerId) {
+      return new NextResponse("ID du Netrunner manquant", { status: 400 });
+    }
 
     await connectDb();
 
     const runner = await Netrunner.findOne({ _id: netrunnerId, ownerId: userId, status: 'Disponible' });
-    if (!runner) return new NextResponse("Netrunner invalide ou non disponible.", { status: 404 });
+    if (!runner) {
+      return new NextResponse("Netrunner invalide ou non disponible.", { status: 404 });
+    }
 
-    
+    // --- LA CORRECTION EST ICI ---
     const updatedContract = await Contract.findOneAndUpdate(
       { _id: contractId, status: 'Proposé' },
       { 
         $set: {
           status: 'Assigné',
-          ownerId: userId, 
+          ownerId: userId,
           assignedRunner: netrunnerId,
+          // On initialise le minuteur de mission !
+          initial_completion_duration_trp: 300, // Durée de 5 minutes (300s) pour l'exemple
+          completion_timer_started_at: new Date(), // On enregistre l'heure de début
         }
       },
       { new: true }
     );
-    // ----------------------------
+    // -----------------------------
 
-    if (!updatedContract) return new NextResponse("Contrat non trouvé ou déjà assigné.", { status: 404 });
+    if (!updatedContract) {
+      return new NextResponse("Contrat non trouvé ou déjà assigné.", { status: 404 });
+    }
 
     runner.status = 'En mission';
     runner.assignedContract = contractId;
     await runner.save();
-    
+
     return NextResponse.json({ contract: updatedContract, runner });
 
   } catch (error) {

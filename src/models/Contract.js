@@ -28,7 +28,9 @@ const contractSchema = new Schema({
   acceptance_deadline_trp: { type: Number, default: null }, 
 
   // Compte à rebours en secondes TRP pour compléter la mission
-  completion_timer_trp: { type: Number, default: null }, 
+  initial_completion_duration_trp: { type: Number, default: null }, 
+  // NOUVEAU CHAMP : Le timestamp réel du début du minuteur de complétion
+  completion_timer_started_at: { type: Date, default: null },
 
   // Comment le timer de complétion se déclenche
   timer_trigger: {

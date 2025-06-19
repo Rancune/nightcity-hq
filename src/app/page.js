@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserButton, SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
 import AssignRunnerModal from '@/components/AssignRunnerModal';
-import ContractTimer from '@/components/ContractTimer';
+import AcceptanceTimer from '@/components/AcceptanceTimer';
+import MissionTimer from '@/components/MissionTimer';
 
 export default function HomePage() {
   const [contrats, setContrats] = useState([]);
@@ -101,7 +102,7 @@ export default function HomePage() {
                 <span>{playerProfile ? `${playerProfile.eddies.toLocaleString()} €$` : '--- €$'}</span>
             </div>
             <Link href="/netrunners">
-              <button className="bg-[--color-neon-cyan] hover:opacity-80 text-background font-bold py-2 px-4 rounded">
+              <button className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded">
                   Mon Écurie
               </button>
             </Link>
@@ -137,22 +138,35 @@ export default function HomePage() {
                   </div>
                 </Link>
                 <div className="flex items-center flex-shrink-0">
-                  {/* NOUVELLE LOGIQUE D'AFFICHAGE */}
-                    {contrat.status === 'Assigné' && contrat.completion_timer_trp > 0 ? (
-                      // Si le contrat est assigné et a un timer, on affiche le composant Timer
-                      <ContractTimer initialDuration={contrat.completion_timer_trp} />
-                    ) : (
-                      // Sinon, on affiche le statut comme avant
-                      <span className="text-[--color-text-secondary] italic w-32 text-center">
-                        -- {contrat.status.toUpperCase()} --
-                      </span>
-                    )}                  {contrat.status === 'Proposé' && (
+                  {/* === NOUVELLE LOGIQUE D'AFFICHAGE DE STATUT/TIMER === */}
+                    {
+                      contrat.status === 'Proposé' && contrat.acceptance_deadline_trp > 0 ? (
+                        <div className="text-center w-40">
+                          <span className="text-xs text-text-secondary">Accepter avant </span>
+                          <AcceptanceTimer duration={contrat.acceptance_deadline_trp} />
+                        </div>
+                      ) : 
+                      contrat.status === 'Assigné' && contrat.initial_completion_duration_trp > 0 ? (
+                        <div className="text-center w-32">
+                          <span className="text-xs text-text-secondary">Mission en cours </span>
+                          <MissionTimer 
+                            totalDuration={contrat.initial_completion_duration_trp}
+                            startTime={contrat.completion_timer_started_at}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-text-secondary italic w-32 text-center">
+                          -- {contrat.status.toUpperCase()} --
+                        </span>
+                      )
+                    }               
+                    {contrat.status === 'Proposé' && (
                     <button 
                       onClick={(e) => {
                         e.preventDefault();
                         openAssignModal(contrat._id);
                       }}
-                      className="bg-[--color-neon-cyan] hover:opacity-80 text-background font-bold py-1 px-3 rounded ml-4"
+                      className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded"
                     >
                       Accepter
                     </button>

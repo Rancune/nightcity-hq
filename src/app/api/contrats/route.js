@@ -23,13 +23,15 @@ export async function GET() {
 
     // --- LA REQUÊTE FINALE ET CORRIGÉE ---
     const contracts = await Contract.find({
-      $or: [
-        // Contrats publics disponibles
-        { status: 'Proposé', ownerId: null },
-        // OU contrats qui appartiennent au joueur (qu'ils soient assignés, actifs, etc.)
-        { ownerId: userId }
-      ]
-    }).sort({ createdAt: -1 }).lean();
+        $or: [
+          // 1. Contrats publics qui sont encore valides
+          { status: 'Proposé', ownerId: null },
+          // 2. OU contrats qui appartiennent au joueur ET qui sont actifs/en cours
+          { ownerId: userId, status: { $in: ['Proposé', 'Assigné', 'Actif'] } }
+        ]
+    })
+    .sort({ createdAt: -1 })
+    .lean();
 
     return NextResponse.json(contracts);
 

@@ -4,6 +4,8 @@ import { auth } from '@clerk/nextjs/server';
 import { updatePlayerTimers } from '@/Lib/trp';
 import connectDb from '@/Lib/database';
 import Contract from '@/models/Contract';
+import MissionTimer from '@/components/MissionTimer';
+
 
 // Cette page est un Server Component, elle peut directement parler à la BDD.
 export default async function ContractDetailsPage({ params }) {
@@ -20,7 +22,7 @@ export default async function ContractDetailsPage({ params }) {
     // On récupère les détails du contrat directement depuis la BDD
     // C'est plus performant que de passer par notre propre API
     await connectDb();
-    contract = await Contract.findById(params.id).lean();
+    contract = await Contract.findById(await params.id).lean();
 
   } catch (error) {
     console.error("Erreur lors de la récupération de la page de détails:", error);
@@ -42,13 +44,19 @@ export default async function ContractDetailsPage({ params }) {
     <main className="min-h-screen p-8">
       <header className="mb-8">
         <h1 className="text-4xl text-[--color-neon-cyan] font-bold">{contract.title}</h1>
-        {/* On affiche le temps restant pour accepter, s'il y en a un */}
-        {contract.status === 'Proposé' && contract.acceptance_deadline_trp && (
-          <p className="text-lg text-[--color-neon-yellow] animate-pulse">
-            Temps restant pour accepter : {Math.floor(contract.acceptance_deadline_trp / 60)} minutes TRP
-          </p>
+
+        {/* AFFICHER LE TIMER DE MISSION SI ACTIF */}
+        {contract.status === 'Assigné' && contract.initial_completion_duration_trp > 0 ? (
+          <div className="text-center w-32">
+            <span className="text-xs text-text-secondary">Mission en cours </span>
+            <MissionTimer 
+              totalDuration={contract.initial_completion_duration_trp}
+              startTime={contract.completion_timer_started_at}
+            />
+          </div>
+        ) : (
+          <p className="text-[--color-text-secondary]">Statut : {contract.status}</p>
         )}
-        <p className="text-[--color-text-secondary]">Statut : {contract.status}</p>
       </header>
       
       <div className="bg-white/5 p-6 rounded-lg">

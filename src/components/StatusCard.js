@@ -1,4 +1,5 @@
 // components/StatusCard.jsx
+'use client'; 
 import React from 'react';
 
 const StatusCard = ({ money, reputation }) => {
