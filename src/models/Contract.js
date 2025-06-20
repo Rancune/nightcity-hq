@@ -12,9 +12,15 @@ const contractSchema = new Schema({
   
   status: { 
   type: String, 
-  enum: ['Proposé', 'Assigné', 'Actif', 'Terminé', 'Échoué', 'Expiré'], // On ajoute 'Assigné' à la liste
+  enum: ['Proposé', 'Assigné', 'Actif', 'Terminé', 'Échoué', 'Expiré', 'En attente de rapport'], // On ajoute 'Assigné' à la liste
   default: 'Proposé' 
 },
+  // NOUVEAU CHAMP pour stocker le résultat
+  resolution_outcome: {
+    type: String,
+    enum: ['Succès', 'Échec', 'En attente de rapport'],
+    default: null
+  },
   
   // La récompense peut être plus complexe qu'un simple chiffre
   reward: {

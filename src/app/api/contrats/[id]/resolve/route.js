@@ -6,7 +6,9 @@ import Contract from '@/models/Contract';
 import Netrunner from '@/models/Netrunner';
 import PlayerProfile from '@/models/PlayerProfile';
 
-export async function POST(request, { params }) { // On utilise la signature standard de Next.js
+export async function POST(request, props) {
+  const params = await props.params;
+  // On utilise la signature standard de Next.js
   try {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
@@ -17,7 +19,7 @@ export async function POST(request, { params }) { // On utilise la signature sta
     const contract = await Contract.findById(contractId).populate('assignedRunner');
 
     // CORRECTION 1 : On vérifie que le contrat est bien assigné au bon joueur
-    if (!contract || contract.assignedPlayer !== userId) {
+    if (!contract || contract.ownerId !== userId) {
       return new NextResponse("Contrat invalide ou n'appartient pas au joueur.", { status: 404 });
     }
 

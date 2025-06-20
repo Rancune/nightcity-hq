@@ -1,37 +1,41 @@
 // src/components/MissionTimer.js
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export default function MissionTimer({ totalDuration, startTime }) {
-  const calculateRemaining = useCallback(() => {
+export default function MissionTimer({ totalDuration, startTime, onTimerEnd }) {
+  const calculateRemaining = () => {
     if (!startTime || !totalDuration) return 0;
     const elapsedSeconds = Math.floor((new Date() - new Date(startTime)) / 1000);
     return totalDuration - elapsedSeconds;
-  }, [startTime, totalDuration]);
+  };
 
   const [remainingTime, setRemainingTime] = useState(calculateRemaining());
+  const hasTriggered = useRef(false);
 
   useEffect(() => {
-    // On met à jour l'état toutes les secondes
+    if (remainingTime <= 0) {
+      if (!hasTriggered.current) {
+        hasTriggered.current = true;
+        if (onTimerEnd) onTimerEnd();
+      }
+      return;
+    }
+
     const timerId = setInterval(() => {
-      setRemainingTime(calculateRemaining());
+      setRemainingTime(prevTime => prevTime - 1);
     }, 1000);
 
-    // On nettoie l'intervalle
     return () => clearInterval(timerId);
-  }, [calculateRemaining]);
+  }, [remainingTime, startTime, totalDuration, onTimerEnd]);
 
-  // On calcule les minutes et secondes pour l'affichage
+  // On calcule les minutes et secondes pour l'affichage directement ici
   const minutes = Math.floor(remainingTime / 60);
   const seconds = Math.floor(remainingTime % 60);
 
-  // --- LA CORRECTION FINALE EST ICI ---
+  // LA CORRECTION DÉFINITIVE : On construit l'affichage en morceaux, sans fonction de formatage.
   return (
     <span className="font-mono text-lg text-red-500 animate-pulse">
-      {remainingTime <= 0 ? (
-        "00:00"
-      ) : (
-        // Au lieu d'une chaîne formatée, on renvoie des morceaux de JSX
+      {remainingTime <= 0 ? '00:00' : (
         <>
           {String(minutes).padStart(2, '0')}:
           {String(seconds).padStart(2, '0')}

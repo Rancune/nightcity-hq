@@ -98,7 +98,19 @@ export default function HomePage() {
       } catch (error) {
         console.error("Erreur lors de la génération:", error);
       }
-    };
+  };
+
+  // NOUVELLE FONCTION POUR RÉCLAMER LA RÉCOMPENSE
+  const handleClaimContract = async (contractId) => {
+    // On appelle la route 'resolve' qui applique maintenant les conséquences
+    const response = await fetch(`/api/contrats/${contractId}/resolve`, { method: 'POST' });
+    if (response.ok) {
+      fetchData(); // On rafraîchit la liste, le contrat devrait disparaître
+    } else {
+      alert("Erreur lors de la réclamation de la récompense.");
+    }
+  };
+
 
   return (
     <>
@@ -162,8 +174,17 @@ export default function HomePage() {
                           <MissionTimer 
                             totalDuration={contrat.initial_completion_duration_trp}
                             startTime={contrat.completion_timer_started_at}
+                            // Le timer appelle maintenant la route 'timesup'
+                            onTimerEnd={() => fetch(`/api/contrats/${contrat._id}/timesup`, { method: 'POST' }).then(() => fetchData())}
                           />
                         </div>
+                      ) :
+                       contrat.status === 'En attente de rapport' ? (
+                    // NOUVEAU BOUTON "RÉCLAMER"
+                        <button onClick={(e) => { e.preventDefault(); handleClaimContract(contrat._id); }}
+                          className={`font-bold py-1 px-3 rounded ml-4 ${contrat.resolution_outcome === 'Succès' ? 'bg-green-500' : 'bg-red-500'}`}>
+                          {contrat.resolution_outcome === 'Succès' ? 'RÉCUPÉRER GAINS' : 'VOIR RAPPORT D\'ÉCHEC'}
+                        </button>
                       ) : (
                         <span className="text-text-secondary italic w-32 text-center">
                           -- {contrat.status.toUpperCase()} --

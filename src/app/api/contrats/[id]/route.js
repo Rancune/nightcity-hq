@@ -61,7 +61,7 @@ export async function PUT(request, { params }) {
           ownerId: userId,
           assignedRunner: netrunnerId,
           // On initialise le minuteur de mission !
-          initial_completion_duration_trp: 300, // Durée de 5 minutes (300s) pour l'exemple
+          initial_completion_duration_trp: 10, // Timer de 10 secondes pour l'exemple
           completion_timer_started_at: new Date(), // On enregistre l'heure de début
         }
       },
