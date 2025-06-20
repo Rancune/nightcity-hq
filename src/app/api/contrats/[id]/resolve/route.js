@@ -6,7 +6,8 @@ import Contract from '@/models/Contract';
 import PlayerProfile from '@/models/PlayerProfile';
 import { generateResolutionLore } from '@/Lib/ai';
 
-export async function POST(request, { params }) {
+export async function POST(request, props) {
+  const params = await props.params;
   try {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });

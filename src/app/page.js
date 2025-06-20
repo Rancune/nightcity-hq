@@ -156,13 +156,13 @@ export default function HomePage() {
                   {
                     contrat.status === 'Proposé' && contrat.acceptance_deadline_trp > 0 ? (
                       <div className="text-center w-40">
-                        <span className="text-xs text-text-secondary">Accepter avant</span>
+                        <span className="text-xs text-text-secondary">Accepter avant </span>
                         <AcceptanceTimer duration={contrat.acceptance_deadline_trp} />
                       </div>
                     ) : 
                     contrat.status === 'Assigné' && contrat.initial_completion_duration_trp > 0 ? (
                       <div className="text-center w-32">
-                        <span className="text-xs text-text-secondary">Mission en cours</span>
+                        <span className="text-xs text-text-secondary">Mission en cours </span>
                         <MissionTimer 
                           totalDuration={contrat.initial_completion_duration_trp}
                           startTime={contrat.completion_timer_started_at}
