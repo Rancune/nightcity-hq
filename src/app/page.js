@@ -19,9 +19,20 @@ export default function HomePage() {
 
   const { isSignedIn, isLoaded, userId } = useAuth();
 
-  const fetchData = async () => {
+  // On fusionne toute la logique de récupération de données ici
+  const fetchAllData = async () => {
     try {
       setErreur(null);
+      console.log("PAGE.JS: Début de la récupération de toutes les données.");
+
+      // ÉTAPE 1 : On se synchronise et on récupère le profil
+      const syncResponse = await fetch('/api/player/sync', { method: 'POST' });
+      if (!syncResponse.ok) throw new Error("La synchronisation du joueur a échoué.");
+      const profileData = await syncResponse.json();
+      setPlayerProfile(profileData);
+      console.log("PAGE.JS: Profil joueur synchronisé et mis à jour.", profileData);
+
+      // ÉTAPE 2 : On récupère les contrats ET les runners en parallèle
       const [contractsRes, runnersRes] = await Promise.all([
         fetch('/api/contrats'),
         fetch('/api/netrunners')
@@ -33,20 +44,19 @@ export default function HomePage() {
       
       setContrats(contractsData);
       setRunners(runnersData);
+      console.log("PAGE.JS: Contrats et runners récupérés.");
+
     } catch (e) {
-      console.error("Erreur lors de la récupération des données:", e);
+      console.error("PAGE.JS: ERREUR DANS fetchAllData:", e);
       setErreur(e.message);
     }
   };
   
   useEffect(() => {
-    const initializeSession = async () => {
-      if (isLoaded && isSignedIn && userId) {
-        await fetch('/api/player/sync', { method: 'POST' });
-        await fetchData();
-      }
-    };
-    initializeSession();
+    // On ne lance l'initialisation que si Clerk est chargé ET que l'utilisateur est connecté
+    if (isLoaded && isSignedIn && userId) {
+      fetchAllData();
+    }
   }, [isLoaded, isSignedIn, userId]);
 
   const openAssignModal = (contractId) => {
@@ -73,7 +83,7 @@ export default function HomePage() {
       
       console.log("Assignation réussie !");
       closeAssignModal();
-      fetchData();
+      fetchAllData();
     } catch (error) {
       console.error("Erreur lors de l'assignation:", error);
       setErreur(error.message);
@@ -84,7 +94,7 @@ export default function HomePage() {
       try {
         const reponse = await fetch('/api/contrats/generate', { method: 'POST' });
         if (!reponse.ok) throw new Error("La génération a échoué");
-        await fetchData();
+        await fetchAllData();
       } catch (error) {
         console.error("Erreur lors de la génération:", error);
       }

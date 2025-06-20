@@ -38,7 +38,7 @@ export async function PUT(request, { params }) {
       return new NextResponse("Non autorisé", { status: 401 });
     }
 
-    const { id: contractId } = params;
+    const { id: contractId } = await params;
     const { netrunnerId } = await request.json(); 
 
     if (!netrunnerId) {

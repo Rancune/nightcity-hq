@@ -22,10 +22,24 @@ export default function NetrunnersPage() {
     }
   }, [isLoaded, isSignedIn]);
 
+  // Il faut passer la fonction setPlayerProfile depuis la page d'accueil,
+  // ou utiliser un gestionnaire d'état global. Pour l'instant, faisons simple :
+  // On va juste rafraîchir toutes les données.
+
+  // Mais pour une meilleure expérience, on devrait idéalement avoir un état global.
+  // Pour ce cas, on va supposer que l'utilisateur retournera à la page d'accueil
+  // pour voir son solde mis à jour. On se concentre sur la logique backend.
+
+  // La fonction handleRecruit actuelle qui appelle fetchRunners est déjà bonne pour rafraîchir la liste.
   const handleRecruit = async () => {
-    await fetch('/api/netrunners', { method: 'POST' });
-    fetchRunners(); // On rafraîchit la liste après le recrutement
+      const response = await fetch('/api/netrunners', { method: 'POST' });
+      if (!response.ok) {
+          const errorData = await response.json();
+          alert(errorData.message || "Erreur de recrutement"); // Affiche une alerte si pas assez de fonds
+      }
+      fetchRunners(); // Rafraîchit la liste des runners
   };
+
 
   return (
     <main className="min-h-screen p-8">

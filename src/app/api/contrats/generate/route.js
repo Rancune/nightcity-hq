@@ -24,6 +24,12 @@ export async function POST() {
     // 1h de jeu = 3600 secondes TRP
     const randomAcceptanceDeadline = Math.floor(Math.random() * (10800 - 3600 + 1) + 3600);
 
+    // --- NOUVELLE PARTIE : GÉNÉRATION DES COMPÉTENCES REQUISES ---
+    const requiredHacking = Math.floor(Math.random() * 5) + 1; // Compétence requise entre 1 et 5
+    const requiredStealth = Math.floor(Math.random() * 5) + 1;
+    const requiredCombat = Math.floor(Math.random() * 5) + 1;
+
+
     // --- PARTIE 3 : CRÉATION DU NOUVEAU CONTRAT STRUCTURÉ ---
     const newContractData = {
       title: title,
@@ -37,6 +43,11 @@ export async function POST() {
         eddies: randomRewardEddies,
         reputation: randomRewardRep,
       },
+
+      // On ajoute les compétences requises
+      requiredHacking: requiredHacking,
+      requiredStealth: requiredStealth,
+      requiredCombat: requiredCombat,
 
       // On définit le timer d'acceptation
       acceptance_deadline_trp: randomAcceptanceDeadline,
