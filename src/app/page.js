@@ -99,6 +99,14 @@ export default function HomePage() {
       const data = await response.json();
       setDebriefingContract(data.updatedContract);
       setShowDebriefing(true);
+
+      // --- ON AFFICHE LA NOTIFICATION DE LEVEL UP ! ---
+      if (data.levelUpInfo) {
+        const { newLevel, skillUp, runnerName } = data.levelUpInfo;
+        // On utilise une simple alerte, mais tu pourrais créer une belle notification plus tard
+        alert(`LEVEL UP !\n\n${runnerName} passe au niveau ${newLevel} !\n\nCompétence améliorée : +1 en ${skillUp.toUpperCase()}`);
+      }
+    // ---------------------------------------------
     } else {
       setErreur("Erreur lors de la réclamation de la récompense.");
     }

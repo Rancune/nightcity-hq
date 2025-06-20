@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 
+
+
 export default function NetrunnersPage() {
   const [runners, setRunners] = useState([]);
   const { isSignedIn, isLoaded } = useAuth();
 
   const fetchRunners = async () => {
-    const response = await fetch('/api/netrunners');
+    // On ajoute l'option { cache: 'no-store' } pour forcer la récupération de données fraîches
+    const response = await fetch('/api/netrunners', { cache: 'no-store' });
     if (response.ok) {
       const data = await response.json();
       setRunners(data);
@@ -40,6 +43,18 @@ export default function NetrunnersPage() {
       fetchRunners(); // Rafraîchit la liste des runners
   };
 
+  // NOUVELLE FONCTION POUR SOIGNER UN RUNNER
+  const handleHealRunner = async (runnerId) => {
+    const response = await fetch(`/api/netrunners/${runnerId}/heal`, { method: 'POST' });
+
+    if (response.ok) {
+      //alert("Opération réussie ! Votre runner est de nouveau disponible.");
+      fetchRunners(); // On rafraîchit la liste pour voir le nouveau statut
+    } else {
+      const errorData = await response.json();
+      alert(`Échec de l'opération : ${errorData.message}`);
+    }
+  };
 
   return (
     <main className="min-h-screen p-8">
@@ -53,20 +68,51 @@ export default function NetrunnersPage() {
           Recruter un nouveau Runner (500 €$)
         </button>
       </div>
-
+      {/*  SECTION RUNNERS */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {runners.map(runner => (
+           <Link href={`/netrunners/${runner._id}`} key={runner._id}>
+            <div className="bg-white/5 p-4 rounded-lg border border-[--color-border-dark] flex flex-col justify-between h-full cursor-pointer hover:border-neon-cyan transition-colors">
+            
           <div key={runner._id} className="bg-white/5 p-4 rounded-lg border border-[--color-border-dark]">
             <h2 className="text-2xl text-[--color-text-primary] font-bold">{runner.name}</h2>
-            <p className={`mt-2 ${runner.status === 'Disponible' ? 'text-[--color-neon-lime]' : 'text-yellow-500'}`}>
-              Statut : {runner.status}
-            </p>
+            <p className={`mt-2 font-bold ${
+                runner.status === 'Disponible' ? 'text-neon-lime' : 
+                runner.status === 'En mission' ? 'text-cyber-blue' : 'text-red-500'
+              }`}>
+                Statut : {runner.status}
+              </p>
+             {/*  SECTION XP */}
+            <div className="mt-4">
+              <p className="text-sm text-text-secondary">XP: {runner.xp} / {runner.xpToNextLevel}</p>
+              <div className="w-full bg-black/50 rounded-full h-2.5 mt-1 border border-gray-700">
+                <div 
+                  className="bg-neon-cyan h-2.5 rounded-full" 
+                  style={{ width: `${(runner.xp / runner.xpToNextLevel) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            {/*  SECTION COMPÉTENCES */}
             <div className="mt-4 space-y-2">
               <p>Hacking : <span className="text-white">{runner.skills.hacking} / 10</span></p>
               <p>Stealth : <span className="text-white">{runner.skills.stealth} / 10</span></p>
               <p>Combat : <span className="text-white">{runner.skills.combat} / 10</span></p>
             </div>
+            {/* --- NOUVELLE PARTIE : LE BOUTON DE SOIN --- */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              {runner.status === 'Grillé' && (
+                <button 
+                  onClick={() => handleHealRunner(runner._id)}
+                  className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors"
+                >
+                  Payer Charcudoc (1,000 €$)
+                </button>
+              )}
+            </div>
           </div>
+          </div>
+          </Link>
         ))}
       </div>
     </main>

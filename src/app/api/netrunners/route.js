@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
 import Netrunner from '@/models/Netrunner';
 import PlayerProfile from '@/models/PlayerProfile';
+import { updatePlayerTimers } from '@/Lib/trp';
 
 // GET : Pour récupérer la liste des runners du joueur connecté
 export async function GET() {
@@ -13,8 +14,12 @@ export async function GET() {
       return new NextResponse("Non autorisé", { status: 401 });
     }
 
+    // ON DÉCLENCHE LE TICK DE L'HORLOGE ICI AUSSI
+    await updatePlayerTimers(userId);
+
     await connectDb();
-    const runners = await Netrunner.find({ ownerId: userId });
+    // On ajoute .lean() par bonne pratique pour la performance
+    const runners = await Netrunner.find({ ownerId: userId }).lean(); 
     return NextResponse.json(runners);
 
   } catch (error) {
@@ -43,9 +48,13 @@ export async function POST() {
     const firstNames = ["Jax", "Cyra", "Kael", "Nyx", "Rogue", "Spike", "Vex"];
     const lastNames = ["Vector", "Byte", "Chrome", "Neon", "Silas", "Zero", "Glitch"];
 
+    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const runnerName = `${randomFirstName} ${randomLastName}`;
+
     const newRunner = new Netrunner({
       ownerId: userId,
-      name: `<span class="math-inline">\{firstNames\[Math\.floor\(Math\.random\(\) \* firstNames\.length\)\]\} "</span>{lastNames[Math.floor(Math.random() * lastNames.length)]}"`,
+      name: runnerName,
       // --- LA PARTIE IMPORTANTE ---
       // On génère des compétences aléatoires entre 1 et 5
       skills: {

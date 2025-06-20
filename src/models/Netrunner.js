@@ -24,8 +24,15 @@ const netrunnerSchema = new Schema({
     combat: { type: Number, default: 1, min: 1, max: 10 },
   },
 
-  // À quel contrat est-il assigné en ce moment ?
-  assignedContract: { type: Schema.Types.ObjectId, ref: 'Contract', default: null },
+  // À quel contrat est-il assigné en ce moment ? Voir assignedRunner dans Contract.js
+ // assignedContract: { type: Schema.Types.ObjectId, ref: 'Contract', default: null },
+
+   // Leveling system
+  level: { type: Number, default: 1 },
+  xp: { type: Number, default: 0 },
+  xpToNextLevel: { type: Number, default: 100 }, // Expérience requise pour passer au niveau 2
+
+
 
 }, { timestamps: true });
 
