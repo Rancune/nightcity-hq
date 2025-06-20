@@ -17,16 +17,18 @@ export async function POST() {
       return new NextResponse("Non autorisé - Utilisateur non connecté", { status: 401 });
     }
 
-    let player = await PlayerProfile.findOne({ clerkId: userId });
+    let player = await PlayerProfile.findOne({ clerkId: userId }).lean();
 
-    if (!player) {
-      console.log(`[API SYNC] Création d'un nouveau profil pour l'utilisateur ${userId}`);
-      player = new PlayerProfile({
+     if (!player) {
+      console.log(`Création d'un nouveau profil pour l'utilisateur ${userId}`);
+      // La logique de création ne change pas, mais le 'player' retourné sera maintenant
+      // géré correctement car la recherche initiale est fiabilisée.
+      const newPlayer = new PlayerProfile({
         clerkId: userId,
-        // On utilise l'optional chaining (?.) pour ne pas planter si user est null.
-        handle: user?.username || `Fixer-${userId.slice(-4)}`, 
+        handle: user?.username || `Fixer-${userId.slice(-4)}`,
       });
-      await player.save();
+      await newPlayer.save();
+      player = newPlayer.toObject(); // On convertit le nouveau document en objet simple
     }
 
     return NextResponse.json(player);

@@ -44,9 +44,19 @@ const contractSchema = new Schema({
     enum: ['on_accept', 'on_zone_entry', 'on_hostile_action'],
     default: 'on_accept'
   },
-  
+  // Compétences requises
+  requiredSkills: {
+    hacking: { type: Number, default: 0 },
+    stealth: { type: Number, default: 0 },
+    combat: { type: Number, default: 0 },
+  },
+
+
   // Le niveau de conséquence en cas d'échec
   consequence_tier: { type: Number, min: 1, max: 4, default: 1 },
+
+  // Le log de débriefing
+  debriefing_log: { type: String, default: null },
 
 }, { timestamps: true });
 

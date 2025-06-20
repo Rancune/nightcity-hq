@@ -27,7 +27,7 @@ export async function GET() {
           // 1. Contrats publics qui sont encore valides
           { status: 'Proposé', ownerId: null },
           // 2. OU contrats qui appartiennent au joueur ET qui sont actifs/en cours
-          { ownerId: userId, status: { $in: ['Proposé', 'Assigné', 'Actif'] } }
+          { ownerId: userId, status: { $in: ['Proposé', 'Assigné', 'Actif', 'En attente de rapport'] } }
         ]
     })
     .sort({ createdAt: -1 })

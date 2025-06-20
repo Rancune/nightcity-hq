@@ -17,43 +17,38 @@ export async function POST() {
     const randomCorpo = corpos[Math.floor(Math.random() * corpos.length)];
 
     // Récompense en eddies et réputation
-    const randomRewardEddies = Math.floor(Math.random() * (50000 - 5000 + 1) + 5000);
-    const randomRewardRep = Math.floor(Math.random() * (200 - 50 + 1) + 50);
+     const randomRewardEddies = Math.floor(Math.random() * (50000 - 5000 + 1) + 5000);
+     const randomRewardRep = Math.floor(Math.random() * (200 - 50 + 1) + 50);
+
 
     // Durée pour accepter le contrat (entre 1 et 3 heures de jeu actif)
-    // 1h de jeu = 3600 secondes TRP
+    // 1h de jeu = 3600 secondes TRP . 
+    // Ici on change la durée d'acceptation pour que les joueurs aient plus de temps pour accepter le contrat si besoin
     const randomAcceptanceDeadline = Math.floor(Math.random() * (10800 - 3600 + 1) + 3600);
 
-    // --- NOUVELLE PARTIE : GÉNÉRATION DES COMPÉTENCES REQUISES ---
-    const requiredHacking = Math.floor(Math.random() * 5) + 1; // Compétence requise entre 1 et 5
-    const requiredStealth = Math.floor(Math.random() * 5) + 1;
-    const requiredCombat = Math.floor(Math.random() * 5) + 1;
+        // === GÉNÉRATION DES COMPÉTENCES REQUISES ===
+    const requiredHacking = Math.floor(Math.random() * 7) + 2; // Compétence requise entre 2 et 8
+    const requiredStealth = Math.floor(Math.random() * 7) + 2;
+    const requiredCombat = Math.floor(Math.random() * 7) + 2;
 
 
     // --- PARTIE 3 : CRÉATION DU NOUVEAU CONTRAT STRUCTURÉ ---
     const newContractData = {
-      title: title,
-      description: description,
-      status: 'Proposé', // Le statut initial
-      archetype: 'PIRATAGE_RAPIDE_v1', // On utilise l'archétype que tu as défini
-      targetCorpo: randomCorpo,
-
-      // La récompense est maintenant un objet !
-      reward: {
-        eddies: randomRewardEddies,
-        reputation: randomRewardRep,
-      },
-
-      // On ajoute les compétences requises
-      requiredHacking: requiredHacking,
-      requiredStealth: requiredStealth,
-      requiredCombat: requiredCombat,
-
-      // On définit le timer d'acceptation
+      title,
+      description,
+      status: 'Proposé',
+      archetype: 'PIRATAGE_RAPIDE_v1',
+      targetCorpo: randomCorpo, // Exemple
+      reward: { eddies: randomRewardEddies, reputation: randomRewardRep },
       acceptance_deadline_trp: randomAcceptanceDeadline,
+      consequence_tier: Math.floor(Math.random() * 2) + 1,
 
-      // On pourrait aussi générer les autres champs ici (timer de complétion, etc.)
-      consequence_tier: Math.floor(Math.random() * 2) + 1, // Tier 1 ou 2
+      // On ajoute l'objet de compétences requises ici
+      requiredSkills: {
+        hacking: requiredHacking,
+        stealth: requiredStealth,
+        combat: requiredCombat,
+      },
     };
 
     const contract = new Contract(newContractData);
