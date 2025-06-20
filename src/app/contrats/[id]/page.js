@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import ContractDetailsView from '@/components/ContractDetailsView';
 
-export default async function ContractDetailsPage({ params }) {
-  
+export default async function ContractDetailsPage(props) {
+  const params = await props.params;
+
   let contract = null;
 
   try {
@@ -23,6 +24,6 @@ export default async function ContractDetailsPage({ params }) {
   } catch (error) {
     console.error("Erreur lors du fetch dans la page de détails:", error);
   }
-  
+
   return <ContractDetailsView initialContract={contract} />;
 }

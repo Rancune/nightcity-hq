@@ -6,33 +6,43 @@ import Contract from '@/models/Contract';
 import Netrunner from '@/models/Netrunner';
 import PlayerProfile from '@/models/PlayerProfile';
 
-export async function POST(request, { params }) {
+export async function POST(request, { params }) { // On utilise la signature standard de Next.js
   try {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
     await connectDb();
 
-    const contractId = params.id;
-    // On récupère le contrat ET les données du runner assigné en une seule requête !
+    const contractId = await params.id;
     const contract = await Contract.findById(contractId).populate('assignedRunner');
 
-    if (!contract || contract.ownerId !== userId) {
+    // CORRECTION 1 : On vérifie que le contrat est bien assigné au bon joueur
+    if (!contract || contract.assignedPlayer !== userId) {
       return new NextResponse("Contrat invalide ou n'appartient pas au joueur.", { status: 404 });
     }
 
+    // CORRECTION 2 : On déclare la variable 'runner' en l'extrayant du contrat peuplé
     const runner = contract.assignedRunner;
 
-    // --- LA LOGIQUE DU JET DE DÉS ---
-    let successScore = 0;
-    if (runner.skills.hacking >= contract.requiredSkills.hacking) successScore++;
-    if (runner.skills.stealth >= contract.requiredSkills.stealth) successScore++;
-    if (runner.skills.combat >= contract.requiredSkills.combat) successScore++;
+    // On ajoute une sécurité si le runner n'a pas été trouvé
+    if (!runner) {
+      return new NextResponse("Runner assigné introuvable.", { status: 404 });
+    }
 
-    // On définit le succès si au moins 2 des 3 compétences sont suffisantes
+    const runnerSkills = runner.skills || {};
+    const contractSkills = contract.requiredSkills || {};
+
+    console.log("Compétences du Runner:", runnerSkills);
+    console.log("Compétences Requises:", contractSkills);
+
+    let successScore = 0;
+    if ((runnerSkills.hacking || 0) >= (contractSkills.hacking || 1)) successScore++;
+    if ((runnerSkills.stealth || 0) >= (contractSkills.stealth || 1)) successScore++;
+    if ((runnerSkills.combat || 0) >= (contractSkills.combat || 1)) successScore++;
+
     const isSuccess = successScore >= 2;
 
-    console.log(`[RESOLVE] Runner: ${runner.name}, Succès: ${isSuccess} (${successScore}/3)`);
+    console.log(`[RESOLVE] Runner: ${runner.name}, Succès: <span class="math-inline">\{isSuccess\} \(</span>{successScore}/3)`);
 
     if (isSuccess) {
       // --- CONSÉQUENCES DU SUCCÈS ---
