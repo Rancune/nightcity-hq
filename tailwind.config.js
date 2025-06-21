@@ -5,33 +5,28 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  theme: {
+   theme: {
     extend: {
-      // ... ta section 'colors'
-
+      // ... colors
       animation: {
         scanline: 'scanline 10s linear infinite',
-        // On ajoute notre nouvelle animation complexe
         typing: 'typing 2s steps(30, end), blink .75s step-end infinite',
+        // NOUVELLE ANIMATION DE GLITCH
+        glitch: 'glitch 1.5s linear infinite',
       },
       keyframes: {
-        scanline: {
-          '0%': { transform: 'translateY(0%)' },
-          '100%': { transform: 'translateY(100%)' },
-        },
-        // Les étapes clés pour l'effet de frappe
-        typing: {
-          from: { width: '0' },
-          to: { width: '100%' }
-        },
-        // Les étapes clés pour le clignotement du curseur
-        blink: {
-          'from, to': { borderColor: 'transparent' },
-          '50%': { borderColor: 'var(--color-neon-lime)' }, // On utilise nos variables CSS !
+        // ... scanline, typing, blink
+        // NOUVELLES ÉTAPES CLÉS POUR LE GLITCH
+        glitch: {
+          '0%': { transform: 'translate(0)' },
+          '20%': { transform: 'translate(-3px, 3px)' },
+          '40%': { transform: 'translate(-3px, -3px)' },
+          '60%': { transform: 'translate(3px, 3px)' },
+          '80%': { transform: 'translate(3px, -3px)' },
+          'to': { transform: 'translate(0)' },
         }
       }
     },
   },
   plugins: [],
 };
-

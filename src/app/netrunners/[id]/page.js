@@ -35,16 +35,6 @@ export default async function RunnerDetailsPage({ params }) {
 
   return (
     <main className="min-h-screen p-8">
-      <header className="mb-8">
-        <h1 className="text-4xl text-neon-cyan font-bold">{runner.name}</h1>
-        <p className={`text-xl font-bold ${
-          runner.status === 'Disponible' ? 'text-neon-lime' : 
-          runner.status === 'En mission' ? 'text-cyber-blue' : 'text-red-500'
-        }`}>
-          Niv. {runner.level} | Statut : {runner.status}
-        </p>
-      </header>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Colonne des stats */}
         <div className="md:col-span-1 bg-white/5 p-6 rounded-lg">

@@ -8,12 +8,13 @@ import AcceptanceTimer from '@/components/AcceptanceTimer';
 import MissionTimer from '@/components/MissionTimer';
 import AssignRunnerModal from '@/components/AssignRunnerModal';
 import DebriefingModal from '@/components/DebriefingModal';
+import '../app/globals.css';
+
 
 export default function HomePage() {
   // --- États du composant ---
   const [contrats, setContrats] = useState([]);
   const [runners, setRunners] = useState([]);
-  const [playerProfile, setPlayerProfile] = useState(null);
   const [erreur, setErreur] = useState(null);
   
   // États pour la modale d'assignation
@@ -32,25 +33,22 @@ export default function HomePage() {
 
     try {
       setErreur(null);
-      const [contractsRes, runnersRes, profileRes] = await Promise.all([
+      const [contractsRes, runnersRes] = await Promise.all([
         fetch('/api/contrats'),
-        fetch('/api/netrunners'),
-        fetch('/api/player/sync', { method: 'POST' })
+        fetch('/api/netrunners')
       ]);
 
-      if (!contractsRes.ok || !runnersRes.ok || !profileRes.ok) {
+      if (!contractsRes.ok || !runnersRes.ok) {
         throw new Error('Erreur réseau lors de la récupération des données.');
       }
       
-      const [contractsData, runnersData, profileData] = await Promise.all([
+      const [contractsData, runnersData] = await Promise.all([
         contractsRes.json(),
-        runnersRes.json(),
-        profileRes.json()
+        runnersRes.json()
       ]);
       
       setContrats(contractsData);
       setRunners(runnersData);
-      setPlayerProfile(profileData);
     } catch (e) {
       console.error("Erreur lors de la récupération des données:", e);
       setErreur(e.message);
@@ -70,11 +68,6 @@ export default function HomePage() {
   const closeAssignModal = () => {
     setIsAssignModalOpen(false);
     setSelectedContractId(null);
-  };
-
-  const handleGenerateContract = async () => {
-    await fetch('/api/contrats/generate', { method: 'POST' });
-    fetchData();
   };
 
   const handleAssignRunner = async (netrunnerId) => {
@@ -116,34 +109,6 @@ export default function HomePage() {
   return (
     <>
       <main className="min-h-screen p-4">
-        <header className="text-center mb-8 flex justify-between items-center">
-          <h1 className="text-3xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse">
-            TERMINAL DE CONTRATS - NIGHTCITY-HQ
-          </h1>
-          <div className="flex gap-6 items-center">
-            <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded">
-              <span>{playerProfile?.eddies?.toLocaleString() || '---'} €$</span>
-            </div>
-            <Link href="/netrunners">
-              <button className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded">
-                Mon Écurie
-              </button>
-            </Link>
-            <button 
-              onClick={handleGenerateContract}
-              className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded"
-            >
-              Générer Contrat
-            </button>
-            <SignedOut>
-              <Link href="/sign-in" className="bg-neon-cyan text-background font-bold py-2 px-4 rounded">Connexion</Link>
-            </SignedOut>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/"/>
-            </SignedIn>
-          </div>
-        </header>
-        
         <div>
           {erreur && (
             <div className="text-[--color-neon-pink] border border-[--color-neon-pink] p-4 my-4">
@@ -180,7 +145,7 @@ export default function HomePage() {
                     ) : 
                     contrat.status === 'En attente de rapport' ? (
                       <button onClick={(e) => { e.preventDefault(); handleClaimReward(contrat._id); }}
-                        className={`font-bold py-2 px-4 rounded animate-pulse ${contrat.resolution_outcome === 'Succès' ? 'bg-green-500 hover:bg-green-400' : 'bg-red-600 hover:bg-red-500'}`}>
+                        className={`font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-[0_0_15px_currentColor] glitch-on-hover ${contrat.resolution_outcome === 'Succès' ? 'bg-green-500 hover:bg-green-400' : 'bg-red-600 hover:bg-red-500'}`}>
                         {contrat.resolution_outcome === 'Succès' ? 'VOIR RAPPORT' : 'VOIR RAPPORT'}
                       </button>
                     ) : (
@@ -190,7 +155,7 @@ export default function HomePage() {
                   {contrat.status === 'Proposé' && (
                     <button 
                       onClick={(e) => { e.preventDefault(); openAssignModal(contrat._id); }}
-                      className="bg-[--color-neon-cyan] hover:opacity-80 text-background font-bold py-1 px-3 rounded ml-4"
+                      className="bg-[--color-neon-cyan] text-background font-bold py-1 px-3 rounded ml-4 transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-cyan)] glitch-on-hover"
                     >
                       Accepter
                     </button>

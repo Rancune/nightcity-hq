@@ -2,6 +2,7 @@
 'use client';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Typewriter from './Typewriter';
 
 export default function DebriefingModal({ isOpen, onClose, contract }) {
   // S'il n'y a pas de contrat, on n'affiche rien.
@@ -26,14 +27,17 @@ export default function DebriefingModal({ isOpen, onClose, contract }) {
 
               <div className="mt-4 bg-black/30 p-4 rounded">
                 <p className="text-md text-text-primary italic">
-                  "{contract.debriefing_log || 'Aucun rapport détaillé disponible.'}"
+                  "<Typewriter text={contract.debriefing_log || 'Aucun rapport détaillé disponible.'} speed={30} />"
                 </p>
               </div>
 
               <div className="mt-4">
                 <h4 className="font-bold text-text-primary">Conséquences :</h4>
                 <p className="text-text-secondary">
-                  {isSuccess ? `+ <span class="math-inline">\{contract\.reward\.eddies\.toLocaleString\(\)\} €</span> | + ${contract.reward.reputation} Réputation` : `- 50 Réputation | Runner Grillé 2h`}
+                  <Typewriter 
+                    text={isSuccess ? `+ ${contract.reward.eddies.toLocaleString()} €$ | + ${contract.reward.reputation} Réputation` : `- 50 Réputation | Runner Grillé 2h`} 
+                    speed={25} 
+                  />
                 </p>
               </div>
 

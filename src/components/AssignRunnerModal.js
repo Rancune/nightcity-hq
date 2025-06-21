@@ -2,6 +2,7 @@
 'use client';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Typewriter from './Typewriter';
 
 
 export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign }) {
@@ -23,7 +24,7 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign }
 
                 <div className="mt-2">
                   <p className="text-sm text-text-secondary mb-4">
-                    Choisissez un agent disponible pour cette mission. Leurs compétences détermineront leurs chances de succès.
+                    <Typewriter text="Choisissez un agent disponible pour cette mission. Leurs compétences détermineront leurs chances de succès." speed={30} />
                   </p>
                   <ul className="space-y-3">
                     {runners.map(runner => (
@@ -34,7 +35,9 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign }
                         >
                           <div>
                             <p className="font-bold text-text-primary">{runner.name}</p>
-                            <p className="text-xs text-text-secondary">Hacking: {runner.skills.hacking} | Stealth: {runner.skills.stealth} | Combat: {runner.skills.combat}</p>
+                            <p className="text-xs text-text-secondary">
+                              <Typewriter text={`Hacking: ${runner.skills.hacking} | Stealth: ${runner.skills.stealth} | Combat: ${runner.skills.combat}`} speed={20} />
+                            </p>
                           </div>
                           <span className="text-neon-lime font-bold text-lg">&rarr;</span>
                         </button>

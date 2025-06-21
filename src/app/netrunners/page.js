@@ -58,13 +58,8 @@ export default function NetrunnersPage() {
 
   return (
     <main className="min-h-screen p-8">
-      <header className="mb-8 flex justify-between items-center">
-        <h1 className="text-4xl text-[--color-neon-cyan] font-bold">Mon Écurie de Netrunners</h1>
-        <Link href="/" className="text-[--color-neon-cyan] hover:underline">&larr; Retour aux contrats</Link>
-      </header>
-
       <div className="mb-8">
-        <button onClick={handleRecruit} className="bg-[--color-neon-pink] hover:opacity-80 text-white font-bold py-2 px-4 rounded">
+        <button onClick={handleRecruit} className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:bg-neon-cyan hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
           Recruter un nouveau Runner (500 €$)
         </button>
       </div>

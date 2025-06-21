@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Typewriter from './Typewriter';
 
 // Ce composant reçoit le contrat initial en tant que "prop"
 export default function ContractDetailsView({ initialContract }) {
@@ -34,7 +35,7 @@ export default function ContractDetailsView({ initialContract }) {
 
       <div className="bg-white/5 p-6 rounded-lg">
         <h2 className="text-2xl text-[--color-text-primary] mb-4">Description du Contrat</h2>
-        <p className="text-[--color-text-secondary] whitespace-pre-wrap">{contract.description}</p>
+        <Typewriter text={contract.description} speed={10} className="text-neon-vert whitespace-pre-wrap" />
       </div>
 
       <div className="mt-8">
