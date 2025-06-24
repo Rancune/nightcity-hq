@@ -1,18 +1,18 @@
 // src/middleware.js
-import { authMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export default authMiddleware({
-  // Les routes listées ici seront accessibles publiquement.
-  // Toutes les autres routes nécessiteront une authentification.
-  // Si votre page d'accueil (/) doit être privée, ne la mettez PAS dans cette liste.
-  publicRoutes: [
-    // Si vous utilisez des webhooks, leur route doit être publique.
-    // Par exemple: "/api/webhooks/clerk"
-  ],
+// Cette fonction nous aide à définir facilement quelles routes sont publiques.
+const isPublicRoute = createRouteMatcher([
+  // Listez ici toutes les routes qui doivent rester accessibles sans connexion.
+  // Par exemple, si vous avez des webhooks :
+  // '/api/webhooks(.*)'
+]);
 
-  // Spécifiez l'URL de connexion pour que la redirection automatique
-  // fonctionne correctement avec votre sous-domaine Clerk.
-  signInUrl: "https://accounts.fixer.rancune.games/sign-in",
+export default clerkMiddleware((auth, req) => {
+  // On protège toutes les routes qui ne sont PAS définies comme publiques.
+  if (!isPublicRoute(req)) {
+    auth().protect(); // C'est la nouvelle fonction magique !
+  }
 });
 
 export const config = {
