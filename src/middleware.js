@@ -1,11 +1,8 @@
 // src/middleware.js
-import { clerkMiddleware } from "@clerk/nextjs/server";
-
-// C'est la méthode la plus simple et la plus recommandée par Clerk v5.
-export default clerkMiddleware({
-  // En laissant ce tableau vide, vous protégez TOUT votre site par défaut.
-  publicRoutes: [] 
-});
+// Désactivé temporairement pour diagnostiquer les erreurs 404
+export default function middleware() {
+  return;
+}
 
 export const config = {
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
