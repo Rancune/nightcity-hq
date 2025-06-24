@@ -131,11 +131,11 @@ export default function ProfilePage() {
 
         {/* Échelle de réputation */}
         <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark] mb-8">
-          <h2 className="text-2xl text-[--color-neon-pink] font-bold mb-4">L'Échelle de Night City</h2>
+          <h2 className="text-2xl text-[--color-neon-pink] font-bold mb-4">L&apos;Échelle de Night City</h2>
           <div className="space-y-4">
             {[
               { level: 1, title: "Rumeur de la Rue", min: 0, max: 150, color: "text-gray-400" },
-              { level: 2, title: "Nom qui Circule", min: 151, max: 500, color: "text-blue-400" },
+              { level: 2, title: "Nom qui Circule", min: 151, max: 500, color: "text-blue-400" }, 
               { level: 3, title: "Faiseur de Rois", min: 501, max: 1200, color: "text-purple-400" },
               { level: 4, title: "Légende de Night City", min: 1201, max: "∞", color: "text-yellow-400" }
             ].map((tier) => (

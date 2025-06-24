@@ -287,7 +287,7 @@ export default function ContractDetailsView({ initialContract }) {
                         Aucun programme utilisable.
                       </p>
                       <p className="text-[--color-text-secondary] text-xs mt-1">
-                        Va au marché noir pour t'équiper.
+                        Va au marché noir pour t&apos;équiper.
                       </p>
                     </div>
                   )}
@@ -296,7 +296,7 @@ export default function ContractDetailsView({ initialContract }) {
                 <div className="text-center py-8">
                   <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p className="text-[--color-text-secondary] text-sm">
-                    Chargement de l'inventaire...
+                    Chargement de l&apos;inventaire...
                   </p>
                 </div>
               )}
