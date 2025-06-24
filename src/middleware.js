@@ -1,8 +1,8 @@
 // src/middleware.js
 // Désactivé temporairement pour diagnostiquer les erreurs 404
-import { authMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default authMiddleware({
+export default clerkMiddleware({
   // Les routes listées ici seront accessibles publiquement
   publicRoutes: [
     // Routes des crons qui ont leur propre authentification

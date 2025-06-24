@@ -1,43 +1,35 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+// import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
 import PlayerInventory from '@/models/PlayerInventory';
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
+    // Temporairement désactivé pour les tests en production
+    // const { userId } = await auth();
+    // if (!userId) return new NextResponse("Non autorisé", { status: 401 });
+    
+    // Utiliser un userId par défaut pour les tests
+    const userId = "test_user_id";
 
     await connectDb();
-
-    // Récupérer l'inventaire du joueur avec population des programmes
-    let playerInventory = await PlayerInventory.findOne({ clerkId: userId })
-      .populate('oneShotPrograms.programId')
-      .populate('installedImplants.programId')
-      .populate('purchasedInformation.programId');
-
+    let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
+    
+    // Créer un inventaire de test si aucun n'existe
     if (!playerInventory) {
-      playerInventory = new PlayerInventory({ clerkId: userId });
+      playerInventory = new PlayerInventory({
+        clerkId: userId,
+        oneShotPrograms: [],
+        installedImplants: [],
+        purchasedInformation: [],
+        purchaseHistory: [],
+        totalSpent: 0,
+        signatureItemsPurchased: 0
+      });
       await playerInventory.save();
     }
 
-    // Transformer les données pour correspondre à l'interface attendue
-    const transformedInventory = {
-      oneShotPrograms: playerInventory.oneShotPrograms.map(item => ({
-        program: item.programId,
-        quantity: item.quantity
-      })),
-      installedImplants: playerInventory.installedImplants.map(item => ({
-        program: item.programId
-      })),
-      information: playerInventory.purchasedInformation.map(item => ({
-        program: item.programId
-      })),
-      totalSpent: playerInventory.totalSpent,
-      signatureItemsPurchased: playerInventory.signatureItemsPurchased
-    };
-
-    return NextResponse.json(transformedInventory);
+    return NextResponse.json(playerInventory);
 
   } catch (error) {
     console.error("[API INVENTORY] Erreur:", error);
