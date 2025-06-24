@@ -5,95 +5,111 @@ import Link from 'next/link';
 import { SignedIn, SignedOut, UserButton, useAuth } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import LoadingOverlay from './LoadingOverlay';
+import ButtonWithLoading from './ButtonWithLoading';
 
 // Notre composant gère maintenant ses propres données
 export default function Header() {
   const [playerProfile, setPlayerProfile] = useState(null);
-  const { isSignedIn, isLoaded, userId } = useAuth();
+  const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
 
   const fetchPlayerProfile = async () => {
-    if (!isSignedIn || !userId) return;
-    
     try {
-      const response = await fetch('/api/player/sync', { method: 'POST' });
+      const response = await fetch('/api/player/reputation');
       if (response.ok) {
         const data = await response.json();
-        setPlayerProfile(data);
+        setPlayerProfile(data.playerProfile);
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération du profil:', error);
-    }
-  };
-
-  const handleGenerateContract = async () => {
-    try {
-      await fetch('/api/contrats/generate', { method: 'POST' });
-      // Optionnel : rafraîchir les données après génération
-      fetchPlayerProfile();
-      router.push('/');
-    } catch (error) {
-      console.error('Erreur lors de la génération du contrat:', error);
+      console.error('Erreur lors du chargement du profil:', error);
     }
   };
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       fetchPlayerProfile();
+      // Recharger le profil toutes les 5 secondes pour les mises à jour
+      const interval = setInterval(fetchPlayerProfile, 5000);
+      return () => clearInterval(interval);
     }
-  }, [isLoaded, isSignedIn, userId]);
+  }, [isLoaded, isSignedIn]);
+
+  const handleGenerateContract = async () => {
+    setIsGeneratingContract(true);
+    try {
+      const response = await fetch('/api/contrats/generate', { method: 'POST' });
+      if (response.ok) {
+        // Recharger le profil après génération
+        await fetchPlayerProfile();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la génération du contrat:', error);
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  };
 
   return (
-    <header className="relative w-full p-4 mb-8">
-      {/* --- Zone d'Authentification (en haut à droite) --- */}
-      <div className="absolute top-4 right-4 flex items-center gap-4 z-20">
-        <SignedOut>
-          <Link href="/sign-in" className="bg-neon-cyan text-background font-bold py-2 px-4 rounded hover:opacity-90">
-            Connexion
-          </Link>
-        </SignedOut>
-        <SignedIn>
-          <UserButton afterSignOutUrl="/"/>
-        </SignedIn>
-      </div>
+    <>
+      <header className="bg-black/80 backdrop-blur-sm border-b border-[--color-border-dark] p-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Logo et titre - collé à gauche */}
+          <div className="flex items-center">
+            <Link href="/" className="text-2xl text-[--color-neon-cyan] font-bold hover:text-white transition-colors">
+              NIGHT CITY HQ
+            </Link>
+          </div>
 
-      {/* --- Titre Principal (centré) --- */}
-      <div className="text-center">
-        <h1 className="text-4xl text-[--color-neon-cyan] font-bold tracking-widest animate-pulse">
-          FIXER-HQ
-        </h1>
-        <p className="text-sm text-[--color-text-secondary]">Terminal de Contrats Fixer - v0.5</p>
-      </div>
+          {/* Menu principal avec les boutons - centré */}
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Dashboard
+              </button>
+            </Link>
+            <Link href="/contrats">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Contrats
+              </button>
+            </Link>
+            <Link href="/netrunners">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Mon Écurie
+              </button>
+            </Link>
+            <Link href="/marche-noir">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Marché Noir
+              </button>
+            </Link>
+            <Link href="/profile">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Profil
+              </button>
+            </Link>
+          </div>
 
-      {/* --- Zone d'Actions (en dessous du titre, centrée) --- */}
-      <div className="mt-20 flex justify-between items-center gap-6">
-        
-        {/* Menu principal avec les boutons */}
-        <div className="flex items-center gap-4">
-          <Link href="/netrunners">
-            <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-neon-cyan hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
-              Mon Écurie
-            </button>
-          </Link>
-          <button 
-            onClick={handleGenerateContract}
-            className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-neon-cyan hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover"
-          >
-            Générer Contrat
-          </button>
-          <Link href="/marche-noir">
-            <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-neon-cyan hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
-              Marché Noir
-            </button>
-          </Link>
+          {/* Eddies, réputation et authentification - collés à droite */}
+          <div className="flex items-center gap-4">
+            <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded w-32 text-center">
+              <span>{playerProfile?.eddies?.toLocaleString() || '---'} €$</span>
+            </div>
+            <div className="text-lg text-[--color-neon-cyan] font-bold border-2 border-[--color-neon-cyan] p-2 rounded w-32 text-center">
+              <div className="text-sm">{playerProfile?.reputationTitle || 'Rumeur de la Rue'}</div>
+              <div>{playerProfile?.reputationPoints?.toLocaleString() || '---'} PR</div>
+            </div>
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
-
-        {/* Le solde d'eddies est maintenant seul à droite */}
-        <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded">
-          <span>{playerProfile?.eddies?.toLocaleString() || '---'} €$</span>
-        </div>
-
-      </div>
-    </header>
+      </header>
+      
+      {/* Loading Overlay pour la génération de contrats */}
+      <LoadingOverlay 
+        isVisible={isGeneratingContract} 
+        message="GÉNÉRATION DE CONTRAT EN COURS..." 
+      />
+    </>
   );
 }

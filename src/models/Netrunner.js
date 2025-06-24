@@ -32,7 +32,11 @@ const netrunnerSchema = new Schema({
   xp: { type: Number, default: 0 },
   xpToNextLevel: { type: Number, default: 100 }, // Expérience requise pour passer au niveau 2
 
-
+  // Implants installés sur le runner
+  installedImplants: [{
+    programId: { type: Schema.Types.ObjectId, ref: 'Program' },
+    installedAt: { type: Date, default: Date.now }
+  }],
 
 }, { timestamps: true });
 

@@ -20,7 +20,14 @@ export async function GET() {
     await connectDb();
     // On ajoute .lean() par bonne pratique pour la performance
     const runners = await Netrunner.find({ ownerId: userId }).lean(); 
-    return NextResponse.json(runners);
+    
+    // Initialiser le champ installedImplants pour les runners qui ne l'ont pas
+    const runnersWithImplants = runners.map(runner => ({
+      ...runner,
+      installedImplants: runner.installedImplants || []
+    }));
+    
+    return NextResponse.json(runnersWithImplants);
 
   } catch (error) {
     console.error("[API GET /netrunners] Erreur:", error);

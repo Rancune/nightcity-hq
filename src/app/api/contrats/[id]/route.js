@@ -60,13 +60,13 @@ export async function PUT(request, { params }) {
           status: 'Assigné',
           ownerId: userId,
           assignedRunner: netrunnerId,
-          // On initialise le minuteur de mission !
-          initial_completion_duration_trp: 10, // Timer de 10 secondes pour l'exemple
+          // Timer de 5 secondes pour les tests
+          initial_completion_duration_trp: 5, // 5 secondes pour les tests
           completion_timer_started_at: new Date(), // On enregistre l'heure de début
         }
       },
       { new: true }
-    );
+    ).populate('assignedRunner'); // Populate les données du runner assigné
     // -----------------------------
 
     if (!updatedContract) {

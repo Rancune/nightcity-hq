@@ -2,26 +2,38 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectDb from '@/Lib/database';
-
-
+import { auth } from '@clerk/nextjs/server';
+import PlayerProfile from '@/models/PlayerProfile';
+import { generateMarketStock } from '@/Lib/market';
 
 export async function GET() {
-  console.log("\n--- TEST DE VARIABLE D'ENVIRONNEMENT ---");
-  const testVar = process.env.TEST_VARIABLE;
-  const mongoVarDefined = !!process.env.MONGO_URI;
-  const clerkVarDefined = !!process.env.CLERK_SECRET_KEY;
-  const geminiVarDefined = !!process.env.GEMINI_API_KEY;
+  try {
+    const { userId } = await auth();
+    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
-  console.log('TEST_VARIABLE:', testVar);
-  console.log('MONGO_URI est définie ?', mongoVarDefined);
-  console.log('CLERK_SECRET_KEY est définie ?', clerkVarDefined);
-  console.log('GEMINI_API_KEY est définie ?', geminiVarDefined);
-  console.log("---------------------------------------\n");
+    await connectDb();
+    
+    // Récupérer le profil du joueur
+    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
+    if (!playerProfile) {
+      return new NextResponse("Profil joueur non trouvé", { status: 404 });
+    }
 
-  return NextResponse.json({ 
-    test: testVar || "Variable de test NON TROUVÉE",
-    mongo: mongoVarDefined,
-    clerk: clerkVarDefined,
-    gemini: geminiVarDefined
-  });
+    // Générer du stock pour le marché noir
+    await generateMarketStock();
+
+    return NextResponse.json({
+      success: true,
+      message: "Environnement de test initialisé",
+      playerProfile: {
+        eddies: playerProfile.eddies,
+        reputationPoints: playerProfile.reputationPoints,
+        reputationTitle: playerProfile.reputationTitle
+      }
+    });
+
+  } catch (error) {
+    console.error("[API TEST-ENV] Erreur:", error);
+    return new NextResponse("Erreur interne du serveur", { status: 500 });
+  }
 }

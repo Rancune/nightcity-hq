@@ -30,6 +30,7 @@ export async function GET() {
           { ownerId: userId, status: { $in: ['Proposé', 'Assigné', 'Actif', 'En attente de rapport'] } }
         ]
     })
+    .populate('assignedRunner')
     .sort({ createdAt: -1 })
     .lean();
 

@@ -4,7 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import Typewriter from './Typewriter';
 
-export default function DebriefingModal({ isOpen, onClose, contract }) {
+export default function DebriefingModal({ isOpen, onClose, contract, reputationInfo }) {
   // S'il n'y a pas de contrat, on n'affiche rien.
   if (!contract) return null;
 
@@ -35,7 +35,10 @@ export default function DebriefingModal({ isOpen, onClose, contract }) {
                 <h4 className="font-bold text-text-primary">Conséquences :</h4>
                 <p className="text-text-secondary">
                   <Typewriter 
-                    text={isSuccess ? `+ ${contract.reward.eddies.toLocaleString()} €$ | + ${contract.reward.reputation} Réputation` : `- 50 Réputation | Runner Grillé 2h`} 
+                    text={isSuccess 
+                      ? `+ ${contract.reward.eddies.toLocaleString()} €$ | + ${reputationInfo?.gained || 0} Réputation` 
+                      : `- ${reputationInfo?.lost || 0} Réputation | Runner Grillé 2h`
+                    } 
                     speed={25} 
                   />
                 </p>
