@@ -76,7 +76,7 @@ export default async function RunnerDetailsPage({ params }) {
       </div>
 
       <Link href="/netrunners" className="mt-12 inline-block text-[--color-neon-cyan] hover:underline">
-        &larr; Retour à l'écurie
+        &larr; Retour à l&apos;écurie
       </Link>
     </main>
   );

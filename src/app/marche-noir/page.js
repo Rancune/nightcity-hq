@@ -142,7 +142,7 @@ export default function MarcheNoirPage() {
       <main className="min-h-screen p-8">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-[--color-text-secondary] mt-4">Connexion à l'Intermédiaire...</p>
+          <p className="text-[--color-text-secondary] mt-4">Connexion à l&apos;Intermédiaire...</p>
         </div>
       </main>
     );
@@ -159,7 +159,7 @@ export default function MarcheNoirPage() {
                 👤
               </div>
               <div>
-                <h1 className="text-3xl text-[--color-neon-cyan] font-bold">L'Intermédiaire</h1>
+                <h1 className="text-3xl text-[--color-neon-cyan] font-bold">L&apos;Intermédiaire</h1>
                 <p className="text-[--color-text-secondary]">Contact mystérieux du marché noir</p>
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function MarcheNoirPage() {
                       <h4 className="text-xs text-[--color-neon-cyan] font-bold mb-1">Effets:</h4>
                       <div className="space-y-1 text-xs text-[--color-text-secondary]">
                         {program.effects.skip_skill_check && (
-                          <div>• Garantit le succès d'un test</div>
+                          <div>• Garantit le succès d&apos;un test</div>
                         )}
                         {program.effects.add_bonus_roll > 0 && (
                           <div>• +{program.effects.add_bonus_roll} bonus au jet</div>
@@ -308,7 +308,7 @@ export default function MarcheNoirPage() {
                     Aucun programme disponible pour le moment.
                   </p>
                   <p className="text-sm text-[--color-text-secondary]">
-                    L'Intermédiaire fait ses courses. Reviens plus tard.
+                    L&apos;Intermédiaire fait ses courses. Reviens plus tard.
                   </p>
                 </div>
               )}
@@ -453,7 +453,7 @@ export default function MarcheNoirPage() {
                 <div className="text-center py-8">
                   <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p className="text-[--color-text-secondary] text-sm">
-                    Chargement de l'inventaire...
+                    Chargement de l&apos;inventaire...
                   </p>
                 </div>
               )}
