@@ -1,25 +1,18 @@
 // src/middleware.js
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from 'next/server';
+import { authMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware(async (auth, request) => {
-  // On log des infos sur chaque requête qui passe
-  if (!request.nextUrl.pathname.startsWith('/_next')) {
-   // console.log('\n--- REQUÊTE INTERCEPTÉE ---');
-    //console.log('METHODE:', request.method, '| URL:', request.nextUrl.pathname);
+export default authMiddleware({
+  // Les routes listées ici seront accessibles publiquement.
+  // Toutes les autres routes nécessiteront une authentification.
+  // Si votre page d'accueil (/) doit être privée, ne la mettez PAS dans cette liste.
+  publicRoutes: [
+    // Si vous utilisez des webhooks, leur route doit être publique.
+    // Par exemple: "/api/webhooks/clerk"
+  ],
 
-    // On vérifie si le cookie de session est bien présent dans les en-têtes
-    const cookie = request.headers.get('cookie');
-    const hasSessionCookie = cookie ? cookie.includes('__session') : false;
-    //console.log('Badge de session Clerk présent dans le cookie ?', hasSessionCookie);
-
-    // On demande au gardien d'identifier l'utilisateur à ce stade précis
-    const { userId } = await auth();
-    //console.log('Résultat de auth() DANS LE MIDDLEWARE:', userId);
-    //console.log('--- FIN INTERCEPTION ---\n');
-  }
-
-  return NextResponse.next();
+  // Spécifiez l'URL de connexion pour que la redirection automatique
+  // fonctionne correctement avec votre sous-domaine Clerk.
+  signInUrl: "https://accounts.fixer.rancune.games/sign-in",
 });
 
 export const config = {
