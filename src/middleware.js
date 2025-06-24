@@ -1,5 +1,5 @@
 // src/middleware.js
-import { authMiddleware } from "@clerk/nextjs/server";
+import { authMiddleware } from "@clerk/nextjs";
 
 export default authMiddleware({
   // Les routes listées ici seront accessibles publiquement.
