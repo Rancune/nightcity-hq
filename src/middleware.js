@@ -1,18 +1,15 @@
 // src/middleware.js
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// Cette fonction nous aide à définir facilement quelles routes sont publiques.
-const isPublicRoute = createRouteMatcher([
-  // Listez ici toutes les routes qui doivent rester accessibles sans connexion.
-  // Par exemple, si vous avez des webhooks :
-  // '/api/webhooks(.*)'
-]);
-
-export default clerkMiddleware((auth, req) => {
-  // On protège toutes les routes qui ne sont PAS définies comme publiques.
-  if (!isPublicRoute(req)) {
-    auth().protect(); // C'est la nouvelle fonction magique !
-  }
+// Ceci est la méthode la plus simple et la plus recommandée par Clerk v5.
+// On n'utilise PAS de callback complexe, mais un simple objet de configuration.
+export default clerkMiddleware({
+  // publicRoutes définit les routes qui NE sont PAS protégées.
+  // En laissant ce tableau vide, vous protégez TOUT votre site.
+  publicRoutes: [
+    // Laissez ici les routes qui doivent absolument être publiques
+    // Ex: "/api/webhooks/some-service"
+  ]
 });
 
 export const config = {
