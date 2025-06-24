@@ -2,10 +2,10 @@
 import mongoose from 'mongoose';
 
 
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('La variable MONGO_URI est manquante dans .env.local');
+  throw new Error('La variable MONGODB_URI est manquante dans .env.local');
 }
 
 let cached = global.mongoose;

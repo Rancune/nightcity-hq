@@ -8,32 +8,22 @@ import { generateMarketStock } from '@/Lib/market';
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
-
-    await connectDb();
-    
-    // Récupérer le profil du joueur
-    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
-    if (!playerProfile) {
-      return new NextResponse("Profil joueur non trouvé", { status: 404 });
-    }
-
-    // Générer du stock pour le marché noir
-    await generateMarketStock();
+    const envCheck = {
+      MONGODB_URI: process.env.MONGODB_URI ? '✅ Configurée' : '❌ Manquante',
+      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY ? '✅ Configurée' : '❌ Manquante',
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? '✅ Configurée' : '❌ Manquante',
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? '✅ Configurée' : '❌ Manquante',
+      CRON_SECRET: process.env.CRON_SECRET ? '✅ Configurée' : '❌ Manquante',
+    };
 
     return NextResponse.json({
-      success: true,
-      message: "Environnement de test initialisé",
-      playerProfile: {
-        eddies: playerProfile.eddies,
-        reputationPoints: playerProfile.reputationPoints,
-        reputationTitle: playerProfile.reputationTitle
-      }
+      message: 'Test des variables d\'environnement',
+      envCheck,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error("[API TEST-ENV] Erreur:", error);
+    console.error("[TEST ENV] Erreur:", error);
     return new NextResponse("Erreur interne du serveur", { status: 500 });
   }
 }
