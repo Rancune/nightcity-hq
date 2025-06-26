@@ -46,10 +46,41 @@ export async function generateContractLore() {
     return parsedJson;
   } catch (error) {
     console.error("[IA] ERREUR LORS DE LA COMMUNICATION AVEC GEMINI:", error);
-    return {
-      title: "Contrat de Récupération Standard",
-      description: "Le client a perdu un colis. Infiltrez-vous, récupérez-le. Discrétion requise."
-    };
+    
+    // Gestion spécifique des erreurs de service
+    if (error.status === 503) {
+      console.error("[IA] Service Gemini temporairement indisponible (503). Utilisation du fallback.");
+    } else if (error.message && error.message.includes('overloaded')) {
+      console.error("[IA] Service Gemini surchargé. Utilisation du fallback.");
+    }
+    
+    // Fallback avec des contrats prédéfinis
+    const fallbackContracts = [
+      {
+        title: "Infiltration Arasaka",
+        description: "Un contact mystérieux veut des données sensibles de la tour Arasaka. Infiltrez les systèmes de sécurité, récupérez les fichiers et sortez sans vous faire repérer. Les ICE sont redoutables, choomba."
+      },
+      {
+        title: "Sabotage Militech",
+        description: "Un rival corporatiste paie bien pour que l'usine Militech ait des problèmes. Détruisez les systèmes de production, faites sauter les générateurs. Discrétion requise, les gardes sont armés jusqu'aux dents."
+      },
+      {
+        title: "Récupération de Marchandise",
+        description: "Un fixer a perdu un colis important dans les bas-fonds. Trouvez-le avant que les gangs ne s'en emparent. Le contenu vaut une fortune en eddies, mais attention aux vautours."
+      },
+      {
+        title: "Assassinat Ciblé",
+        description: "Un corpo de Kang Tao doit disparaître. Il fréquente les clubs huppés du centre-ville. Éliminez-le proprement, faites-le passer pour un accident. Pas de témoins, pas de traces."
+      },
+      {
+        title: "Vol de Prototype",
+        description: "NetWatch développe un nouveau virus de contrôle mental. Récupérez le prototype avant qu'ils ne le testent sur la population. Les labos sont ultra-sécurisés, mais les récompenses sont énormes."
+      }
+    ];
+    
+    const randomContract = fallbackContracts[Math.floor(Math.random() * fallbackContracts.length)];
+    console.log("[IA] Utilisation du contrat de fallback:", randomContract.title);
+    return randomContract;
   }
 }
 
@@ -82,7 +113,19 @@ export async function generateResolutionLore(contractTitle, runnerName, isSucces
 
   } catch (error) {
     console.error("[IA] ERREUR LORS DE LA GÉNÉRATION DU RAPPORT:", error);
-    // On retourne un texte d'erreur générique en cas de problème.
-    return "Le rapport de mission n'a pas pu être généré à cause d'une erreur interne.";
+    
+    // Gestion spécifique des erreurs de service
+    if (error.status === 503) {
+      console.error("[IA] Service Gemini temporairement indisponible (503). Utilisation du fallback.");
+    } else if (error.message && error.message.includes('overloaded')) {
+      console.error("[IA] Service Gemini surchargé. Utilisation du fallback.");
+    }
+    
+    // Fallback avec des rapports prédéfinis
+    if (isSuccess) {
+      return `${runnerName} a accompli la mission avec succès. Le contrat "${contractTitle}" est terminé, les objectifs atteints. Le client est satisfait et les eddies sont dans la poche.`;
+    } else {
+      return `${runnerName} a échoué dans la mission "${contractTitle}". Les complications ont été trop importantes et le contrat a dû être abandonné. Le client n'est pas content, mais c'est le risque du métier.`;
+    }
   }
 }
