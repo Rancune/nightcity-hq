@@ -94,7 +94,8 @@ export default function ContractDetailsView({ initialContract }) {
       router.push('/'); // Redirige vers la page d'accueil
       router.refresh(); // Force le rafraîchissement des données
     } else {
-      alert("Erreur lors de la résolution du contrat.");
+      const errorMessage = await response.text();
+      alert(`Erreur lors de la résolution du contrat : ${errorMessage}`);
     }
   };
 

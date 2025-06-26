@@ -52,10 +52,11 @@ export default function NetrunnersPage() {
   const handleRecruit = async () => {
       const response = await fetch('/api/netrunners', { method: 'POST' });
       if (!response.ok) {
-          const errorData = await response.json();
-          alert(errorData.message || "Erreur de recrutement"); // Affiche une alerte si pas assez de fonds
+          const errorMessage = await response.text();
+          alert(errorMessage || "Erreur de recrutement"); // Affiche une alerte si pas assez de fonds
+      } else {
+          fetchRunners(); // Rafraîchit la liste des runners seulement en cas de succès
       }
-      fetchRunners(); // Rafraîchit la liste des runners
   };
 
   // NOUVELLE FONCTION POUR SOIGNER UN RUNNER
@@ -66,8 +67,8 @@ export default function NetrunnersPage() {
       //alert("Opération réussie ! Votre runner est de nouveau disponible.");
       fetchRunners(); // On rafraîchit la liste pour voir le nouveau statut
     } else {
-      const errorData = await response.json();
-      alert(`Échec de l'opération : ${errorData.message}`);
+      const errorMessage = await response.text();
+      alert(`Échec de l'opération : ${errorMessage}`);
     }
   };
 

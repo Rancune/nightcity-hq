@@ -47,6 +47,9 @@ export default function MarcheNoirPage() {
         // Recharger les données du marché
         await fetchMarketData();
         alert(`Stock généré ! ${data.newPrograms?.length || 0} nouveaux programmes disponibles.`);
+      } else {
+        const errorMessage = await response.text();
+        alert(`Erreur lors de la génération du stock : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de la génération du stock:', error);
@@ -65,6 +68,9 @@ export default function MarcheNoirPage() {
         // Recharger les données du marché
         await fetchMarketData();
         alert(`Marché initialisé ! ${data.programsCreated} programmes créés.`);
+      } else {
+        const errorMessage = await response.text();
+        alert(`Erreur lors de l'initialisation : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de l\'initialisation:', error);

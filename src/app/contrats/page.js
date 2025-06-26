@@ -98,9 +98,13 @@ export default function ContratsPage() {
       if (response.ok) {
         closeAssignModal();
         fetchData();
+      } else {
+        const errorMessage = await response.text();
+        alert(`Erreur lors de l'assignation : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de l\'assignation:', error);
+      alert('Erreur lors de l\'assignation du runner');
     }
   };
 
