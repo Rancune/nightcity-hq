@@ -2,7 +2,7 @@
 // Désactivé temporairement pour diagnostiquer les erreurs 404
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware({
+const myMiddleware = clerkMiddleware({
   // Les routes listées ici seront accessibles publiquement
   publicRoutes: [
     // Routes des crons qui ont leur propre authentification
@@ -22,6 +22,11 @@ export default clerkMiddleware({
   signInUrl: "https://accounts.fixer.rancune.games/sign-in",
   frontendApi: process.env.NEXT_PUBLIC_CLERK_FRONTEND_API,
 });
+
+export default function (req, ev) {
+  console.log("[MIDDLEWARE] Clerk middleware triggered for:", req.nextUrl.pathname);
+  return myMiddleware(req, ev);
+}
 
 export const config = {
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
