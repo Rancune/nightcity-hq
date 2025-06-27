@@ -46,6 +46,8 @@ export async function POST() {
     const RECRUIT_COST = 500;
     const player = await PlayerProfile.findOne({ clerkId: userId });
 
+    console.log(`[API POST /netrunners] userId: ${userId}, eddies: ${player ? player.eddies : 'player not found'}`);
+
     if (!player || player.eddies < RECRUIT_COST) {
       return new NextResponse("Fonds insuffisants pour recruter.", { status: 400 });
     }
