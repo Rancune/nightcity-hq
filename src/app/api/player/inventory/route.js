@@ -1,21 +1,17 @@
 import { NextResponse } from 'next/server';
-// import { auth } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
 import PlayerInventory from '@/models/PlayerInventory';
 
 export async function GET() {
   try {
-    // Temporairement désactivé pour les tests en production
-    // const { userId } = await auth();
-    // if (!userId) return new NextResponse("Non autorisé", { status: 401 });
-    
-    // Utiliser un userId par défaut pour les tests
-    const userId = "test_user_id";
+    const { userId } = await auth();
+    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
     await connectDb();
     let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
-    
-    // Créer un inventaire de test si aucun n'existe
+
+    // Créer un inventaire si aucun n'existe
     if (!playerInventory) {
       playerInventory = new PlayerInventory({
         clerkId: userId,
