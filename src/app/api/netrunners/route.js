@@ -37,6 +37,7 @@ export async function GET() {
 
 // POST : Pour recruter (générer) un nouveau runner
 export async function POST() {
+  console.log("[API POST /netrunners] Handler called");
   try {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
