@@ -1,26 +1,22 @@
 import { NextResponse } from 'next/server';
-// import { auth } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
 import PlayerProfile from '@/models/PlayerProfile';
 import { generateReputationReport } from '@/Lib/reputation';
 
 export async function GET() {
   try {
-    // Temporairement désactivé pour les tests en production
-    // const { userId } = await auth();
-    // if (!userId) return new NextResponse("Non autorisé", { status: 401 });
-    
-    // Utiliser un userId par défaut pour les tests
-    const userId = "test_user_id";
+    const { userId } = await auth();
+    if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
     await connectDb();
     let playerProfile = await PlayerProfile.findOne({ clerkId: userId });
-    
-    // Créer un profil de test si aucun n'existe
+
+    // Créer un profil si aucun n'existe
     if (!playerProfile) {
       playerProfile = new PlayerProfile({
         clerkId: userId,
-        handle: "TestUser",
+        handle: `runner_${userId.slice(-6)}`,
         eddies: 1000,
         reputationPoints: 50,
         reputationTitle: "Débutant",
