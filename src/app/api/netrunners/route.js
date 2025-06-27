@@ -39,12 +39,19 @@ export async function GET() {
 export async function POST() {
   try {
     const { userId } = await auth();
+    console.log("[API POST /netrunners] userId from auth:", userId);
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
     await connectDb();
 
     const RECRUIT_COST = 500;
     const player = await PlayerProfile.findOne({ clerkId: userId });
+
+    if (!player) {
+      console.log("[API POST /netrunners] Player not found for userId:", userId);
+    }
+
+    console.log(`[API POST /netrunners] userId: ${userId}, eddies: ${player ? player.eddies : 'player not found'}`);
 
     if (!player || player.eddies < RECRUIT_COST) {
       return new NextResponse("Fonds insuffisants pour recruter.", { status: 400 });
