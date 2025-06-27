@@ -45,10 +45,17 @@ export async function POST() {
     await connectDb();
 
     const RECRUIT_COST = 500;
-    const player = await PlayerProfile.findOne({ clerkId: userId });
+    let player = await PlayerProfile.findOne({ clerkId: userId });
 
     if (!player) {
-      console.log("[API POST /netrunners] Player not found for userId:", userId);
+      // Crée un nouveau profil joueur avec le solde de départ
+      player = new PlayerProfile({
+        clerkId: userId,
+        eddies: 1000, // montant de départ
+        // Ajoute ici d'autres champs par défaut si besoin
+      });
+      await player.save();
+      console.log("[API POST /netrunners] Nouveau profil joueur créé pour:", userId);
     }
 
     console.log(`[API POST /netrunners] userId: ${userId}, eddies: ${player ? player.eddies : 'player not found'}`);
