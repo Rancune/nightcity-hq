@@ -48,14 +48,16 @@ export async function POST() {
     let player = await PlayerProfile.findOne({ clerkId: userId });
 
     if (!player) {
-      // Crée un nouveau profil joueur avec le solde de départ
+      // Crée un nouveau profil joueur avec le solde de départ et un handle unique
+      const uniqueHandle = `runner_${userId.slice(-6)}`;
       player = new PlayerProfile({
         clerkId: userId,
         eddies: 1000, // montant de départ
+        handle: uniqueHandle,
         // Ajoute ici d'autres champs par défaut si besoin
       });
       await player.save();
-      console.log("[API POST /netrunners] Nouveau profil joueur créé pour:", userId);
+      console.log("[API POST /netrunners] Nouveau profil joueur créé pour:", userId, "avec handle:", uniqueHandle);
     }
 
     console.log(`[API POST /netrunners] userId: ${userId}, eddies: ${player ? player.eddies : 'player not found'}`);
