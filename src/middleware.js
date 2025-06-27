@@ -14,6 +14,7 @@ export default clerkMiddleware({
     "/api/auth/sign-up",
     "/api/auth/sign-out",
     "/api/auth/sign-in/callback",
+    "/"
   ],
 
   // Spécifiez l'URL de connexion pour que la redirection automatique

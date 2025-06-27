@@ -101,6 +101,14 @@ export default function Header() {
               <div>{playerProfile?.reputationPoints?.toLocaleString() || '---'} PR</div>
             </div>
             <UserButton afterSignOutUrl="/" />
+            <SignedOut>
+              <a
+                href="https://accounts.fixer.rancune.games/sign-in"
+                className="bg-[--color-neon-cyan] text-black font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-cyan)] glitch-on-hover"
+              >
+                Se connecter
+              </a>
+            </SignedOut>
           </div>
         </div>
       </header>
