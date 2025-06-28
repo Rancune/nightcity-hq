@@ -104,6 +104,11 @@ export default function ContratsPage() {
     setSelectedContractId(null);
   };
 
+  // Fonction pour récupérer le contrat sélectionné
+  const getSelectedContract = () => {
+    return contrats.find(contract => contract._id === selectedContractId);
+  };
+
   const handleAssignRunner = async (netrunnerId) => {
     if (!selectedContractId) return;
     try {
@@ -360,7 +365,7 @@ export default function ContratsPage() {
             <div className="flex gap-2">
               <button
                 onClick={testRewards}
-                className="bg-[--color-neon-cyan] text-background font-bold py-3 px-4 rounded hover:bg-white transition-all text-sm"
+                className="bg-[--color-neon-cyan] text-background font-bold py-3 px-4 rounded hover:bg-white hover:text-background transition-all text-sm"
               >
                 Test Rewards
               </button>
@@ -582,7 +587,7 @@ export default function ContratsPage() {
               {/* Actions */}
               <div className="flex gap-2">
                 <Link href={`/contrats/${contrat._id}`}>
-                  <button className="flex-1 bg-[--color-neon-cyan] text-background font-bold py-2 px-4 rounded text-sm hover:bg-white transition-all">
+                  <button className="flex-1 bg-[--color-neon-cyan] text-background font-bold py-2 px-4 rounded text-sm hover:bg-white hover:text-background transition-all">
                     Détails
                   </button>
                 </Link>
@@ -641,6 +646,7 @@ export default function ContratsPage() {
         onClose={closeAssignModal}
         onAssign={handleAssignRunner}
         runners={netrunners.filter(r => r.status === 'Disponible')}
+        contract={getSelectedContract()}
       />
       
       <DebriefingModal

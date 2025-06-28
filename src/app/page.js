@@ -247,7 +247,7 @@ export default function DashboardPage() {
             </Link>
             
             <Link href="/netrunners">
-              <button className="w-full bg-[--color-neon-cyan] text-background font-bold py-3 px-6 rounded hover:bg-white transition-all">
+              <button className="w-full bg-[--color-neon-cyan] text-background font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all">
                 Mon Écurie
               </button>
             </Link>

@@ -4,36 +4,30 @@ import ButtonWithLoading from '@/components/ButtonWithLoading';
 import Typewriter from '@/components/Typewriter';
 
 export default function MarcheNoirPage() {
-  const [programs, setPrograms] = useState([]);
-  const [playerInventory, setPlayerInventory] = useState(null);
-  const [playerReputation, setPlayerReputation] = useState(0);
+  const [marketData, setMarketData] = useState(null);
+  const [playerProfile, setPlayerProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState({});
-  const [infoLoading, setInfoLoading] = useState({});
-  const [infoResult, setInfoResult] = useState(null);
-  const [vendorMessage, setVendorMessage] = useState('Bienvenue dans le marché noir, runner. Que puis-je faire pour toi ?');
+  const [activeVendor, setActiveVendor] = useState('charcudoc');
+  const [vendorMessage, setVendorMessage] = useState('Bienvenue dans le Marché de l\'Ombre, Fixer. Choisis ton vendeur.');
+  const [rotatingStock, setRotatingStock] = useState(false);
+  const [timeUntilRestock, setTimeUntilRestock] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   const fetchMarketData = async () => {
     try {
-      const [programsResponse, inventoryResponse, profileResponse] = await Promise.all([
+      const [marketResponse, profileResponse] = await Promise.all([
         fetch('/api/market/programs'),
-        fetch('/api/player/inventory'),
         fetch('/api/player/profile')
       ]);
 
-      if (programsResponse.ok) {
-        const programsData = await programsResponse.json();
-        setPrograms(programsData);
-      }
-
-      if (inventoryResponse.ok) {
-        const inventoryData = await inventoryResponse.json();
-        setPlayerInventory(inventoryData);
+      if (marketResponse.ok) {
+        const marketData = await marketResponse.json();
+        setMarketData(marketData);
       }
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
-        setPlayerReputation(profileData.reputationPoints || 0);
+        setPlayerProfile(profileData);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
@@ -42,53 +36,51 @@ export default function MarcheNoirPage() {
     }
   };
 
-  const forceGenerateStock = async () => {
-    try {
-      const response = await fetch('/api/market/generate-stock', {
-        method: 'POST'
-      });
-      if (response.ok) {
-        await fetchMarketData();
-        setVendorMessage('Stock régénéré, runner. Nouveaux items disponibles.');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la génération du stock:', error);
-    }
-  };
+  // Timer countdown pour le restock
+  useEffect(() => {
+    const updateCountdown = () => {
+      if (marketData?.marketState?.nextRotation) {
+        const now = new Date().getTime();
+        const nextRotation = new Date(marketData.marketState.nextRotation).getTime();
+        const timeLeft = nextRotation - now;
 
-  const initMarket = async () => {
-    try {
-      const response = await fetch('/api/market/init', {
-        method: 'POST'
-      });
-      if (response.ok) {
-        await fetchMarketData();
-        setVendorMessage('Marché initialisé, runner. Bienvenue dans le réseau souterrain.');
+        if (timeLeft > 0) {
+          const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+          const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+          
+          setTimeUntilRestock({ hours, minutes, seconds });
+        } else {
+          setTimeUntilRestock({ hours: 0, minutes: 0, seconds: 0 });
+        }
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'initialisation du marché:', error);
-    }
-  };
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [marketData]);
 
   useEffect(() => {
     fetchMarketData();
   }, []);
 
-  const handlePurchase = async (programId) => {
-    setPurchasing(prev => ({ ...prev, [programId]: true }));
+  const handlePurchase = async (itemId) => {
+    setPurchasing(prev => ({ ...prev, [itemId]: true }));
     try {
-      const response = await fetch('/api/market/purchase', {
+      const response = await fetch('/api/market/buy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ programId }),
+        body: JSON.stringify({ itemId }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        setVendorMessage(`Transaction réussie, runner. ${result.program.name} ajouté à ton inventaire.`);
-        await fetchMarketData();
+        setVendorMessage(`Transaction réussie ! ${result.item.name} ajouté à ton inventaire.`);
+        await fetchMarketData(); // Recharger les données
       } else {
         const error = await response.text();
         setVendorMessage(`Erreur: ${error}`);
@@ -96,34 +88,45 @@ export default function MarcheNoirPage() {
     } catch (error) {
       setVendorMessage('Erreur de connexion au réseau.');
     } finally {
-      setPurchasing(prev => ({ ...prev, [programId]: false }));
+      setPurchasing(prev => ({ ...prev, [itemId]: false }));
     }
   };
 
-  const handleUseInformation = async (info) => {
-    setInfoLoading(prev => ({ ...prev, [info.program?._id]: true }));
+  const handleRotateStock = async () => {
+    setRotatingStock(true);
     try {
-      const response = await fetch('/api/market/use-information', {
+      const response = await fetch('/api/market/rotate-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ informationId: info.program._id }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setInfoResult({ success: true, contract: data.contract });
-        await fetchMarketData();
+        const result = await response.json();
+        setVendorMessage('Stock régénéré avec succès ! Tous les objets Signature sont de nouveau disponibles.');
+        await fetchMarketData(); // Recharger les données
       } else {
         const error = await response.text();
-        setInfoResult({ success: false, message: error });
+        setVendorMessage(`Erreur lors de la régénération: ${error}`);
       }
     } catch (error) {
-      setInfoResult({ success: false, message: 'Erreur lors de l\'utilisation du datashard.' });
+      setVendorMessage('Erreur de connexion au réseau.');
     } finally {
-      setInfoLoading(prev => ({ ...prev, [info.program?._id]: false }));
+      setRotatingStock(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const getRarityColor = (rarity) => {
@@ -146,13 +149,23 @@ export default function MarcheNoirPage() {
     }
   };
 
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case 'one_shot': return '💊';
-      case 'implant': return '🔧';
-      case 'information': return '💾';
-      case 'signature': return '⭐';
-      default: return '📦';
+  const getVendorColor = (vendorKey) => {
+    switch (vendorKey) {
+      case 'charcudoc': return 'text-red-400';
+      case 'netrunner_fantome': return 'text-cyan-400';
+      case 'informatrice': return 'text-green-400';
+      case 'anarchiste': return 'text-orange-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getVendorBgColor = (vendorKey) => {
+    switch (vendorKey) {
+      case 'charcudoc': return 'bg-red-400/10 border-red-400/30';
+      case 'netrunner_fantome': return 'bg-cyan-400/10 border-cyan-400/30';
+      case 'informatrice': return 'bg-green-400/10 border-green-400/30';
+      case 'anarchiste': return 'bg-orange-400/10 border-orange-400/30';
+      default: return 'bg-gray-400/10 border-gray-400/30';
     }
   };
 
@@ -161,25 +174,38 @@ export default function MarcheNoirPage() {
       <main className="min-h-screen p-8">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-[--color-text-secondary] mt-4">Connexion à l&apos;Intermédiaire...</p>
+          <p className="text-[--color-text-secondary] mt-4">Connexion au Marché de l'Ombre...</p>
         </div>
       </main>
     );
   }
 
+  if (!marketData || !playerProfile) {
+    return (
+      <main className="min-h-screen p-8">
+        <div className="text-center">
+          <p className="text-[--color-text-secondary]">Erreur de chargement du marché</p>
+        </div>
+      </main>
+    );
+  }
+
+  const activeVendorData = marketData.market[activeVendor];
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   return (
     <main className="min-h-screen p-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
-        {/* En-tête avec l'Intermédiaire */}
+        {/* En-tête */}
         <div className="mb-8">
           <div className="bg-black/50 p-6 rounded-lg border-2 border-[--color-neon-cyan]">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-[--color-neon-cyan] rounded-full flex items-center justify-center text-2xl">
-                👤
+                🏪
               </div>
               <div>
-                <h1 className="text-3xl text-[--color-neon-cyan] font-bold">L&apos;Intermédiaire</h1>
-                <p className="text-[--color-text-secondary]">Contact mystérieux du marché noir</p>
+                <h1 className="text-3xl text-[--color-neon-cyan] font-bold">Le Marché de l'Ombre</h1>
+                <p className="text-[--color-text-secondary]">L'arsenal du Fixer</p>
               </div>
             </div>
             
@@ -189,317 +215,179 @@ export default function MarcheNoirPage() {
               </p>
             </div>
             
-            <div className="mt-4 flex gap-4 text-sm">
-              <span className="text-[--color-neon-pink]">
-                Réputation requise: {playerReputation} PR
-              </span>
-              <span className="text-[--color-text-secondary]">
-                Stock disponible: {programs.length} items
-              </span>
-              <button
-                onClick={initMarket}
-                className="bg-green-600 text-white font-bold py-2 px-3 rounded text-xs hover:bg-green-500 transition-all"
-              >
-                Init Marché
-              </button>
-              <button
-                onClick={forceGenerateStock}
-                className="bg-[--color-neon-pink] text-white font-bold py-2 px-3 rounded text-xs hover:bg-white hover:text-background transition-all"
-              >
-                Debug: Générer Stock
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Layout principal avec deux colonnes */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Colonne du marché (2/3 de l'espace) */}
-          <div className="lg:col-span-2">
-            <div className="bg-black/30 p-6 rounded-lg border border-[--color-border-dark] mb-6">
-              <h2 className="text-2xl text-[--color-neon-cyan] font-bold mb-4 flex items-center gap-2">
-                <span className="text-2xl">🛒</span>
-                Marché Noir
-              </h2>
-              
-              {/* Grille des programmes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {programs.map((program) => (
-                  <div 
-                    key={program._id} 
-                    className={`bg-white/5 p-4 rounded-lg border-2 ${getRarityBorder(program.rarity)} hover:border-[--color-neon-cyan] transition-all hover:bg-white/10`}
-                  >
-                    {/* En-tête du programme */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{getCategoryIcon(program.category)}</span>
-                        <div>
-                          <h3 className="text-base text-[--color-text-primary] font-bold">{program.name}</h3>
-                          <span className={`text-xs font-bold ${getRarityColor(program.rarity)}`}>
-                            {program.rarity.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                      {program.isSignature && (
-                        <span className="text-yellow-400 text-xs font-bold bg-yellow-400/20 px-2 py-1 rounded">
-                          SIGNATURE
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-[--color-text-secondary] text-xs mb-3 line-clamp-2">
-                      {program.description}
-                    </p>
-
-                    {/* Effets */}
-                    <div className="mb-3">
-                      <h4 className="text-xs text-[--color-neon-cyan] font-bold mb-1">Effets:</h4>
-                      <div className="space-y-1 text-xs text-[--color-text-secondary]">
-                        {program.effects.skip_skill_check && (
-                          <div>• Garantit le succès d&apos;un test</div>
-                        )}
-                        {program.effects.add_bonus_roll > 0 && (
-                          <div>• +{program.effects.add_bonus_roll} bonus au jet</div>
-                        )}
-                        {program.effects.reveal_skill && (
-                          <div>• Révèle une compétence requise</div>
-                        )}
-                        {program.effects.reduce_difficulty > 0 && (
-                          <div>• Réduit la difficulté de -{program.effects.reduce_difficulty}</div>
-                        )}
-                        {program.effects.permanent_skill_boost && (
-                          <div>• +{program.effects.permanent_skill_boost.value} {program.effects.permanent_skill_boost.skill}</div>
-                        )}
-                        {program.effects.unlocks_contract && (
-                          <div>• Débloque un contrat exclusif</div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Prix et stock */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-[--color-neon-pink] font-bold text-sm">
-                        {program.price.toLocaleString('en-US')} €$
-                      </div>
-                      <div className="text-[--color-text-secondary] text-xs">
-                        Stock: {program.stock}/{program.maxStock}
-                      </div>
-                    </div>
-
-                    {/* Réputation requise */}
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[--color-text-secondary]">Réputation:</span>
-                        <span className={`font-bold ${playerReputation >= program.reputationRequired ? 'text-green-400' : 'text-red-400'}`}>
-                          {program.reputationRequired} PR
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bouton d'achat */}
-                    <ButtonWithLoading
-                      onClick={() => handlePurchase(program._id)}
-                      isLoading={purchasing[program._id] || false}
-                      loadingText="ACHAT..."
-                      disabled={playerReputation < program.reputationRequired || program.stock === 0}
-                      className={`w-full font-bold py-2 px-3 rounded text-sm transition-all ${
-                        playerReputation >= program.reputationRequired && program.stock > 0
-                          ? 'bg-[--color-neon-cyan] text-background hover:bg-white'
-                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {playerReputation < program.reputationRequired 
-                        ? 'Réputation insuffisante' 
-                        : program.stock === 0 
-                          ? 'Stock épuisé' 
-                          : 'Acheter'
-                      }
-                    </ButtonWithLoading>
+            {/* Timer countdown pour le restock */}
+            {marketData.marketState && (
+              <div className="mt-4 p-3 bg-gradient-to-r from-[--color-neon-cyan]/10 to-[--color-neon-pink]/10 rounded-lg border border-[--color-neon-cyan]/30">
+                <div className="text-center">
+                  <div className="text-xs text-[--color-text-secondary] mb-1">
+                    ⏰ Prochain Restock
                   </div>
-                ))}
+                  <div className="flex justify-center items-center gap-2 text-lg font-mono">
+                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.hours).padStart(2, '0')}</span>
+                      <span className="text-[--color-text-secondary] text-xs ml-1">h</span>
+                    </div>
+                    <span className="text-[--color-text-secondary]">:</span>
+                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.minutes).padStart(2, '0')}</span>
+                      <span className="text-[--color-text-secondary] text-xs ml-1">m</span>
+                    </div>
+                    <span className="text-[--color-text-secondary]">:</span>
+                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.seconds).padStart(2, '0')}</span>
+                      <span className="text-[--color-text-secondary] text-xs ml-1">s</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-[--color-text-secondary] mt-1">
+                    Restock automatique à {marketData.marketState.config?.rotationHour || 3}h00
+                  </div>
+                </div>
               </div>
+            )}
 
-              {/* Message si aucun programme */}
-              {programs.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-[--color-text-secondary] text-lg mb-4">
-                    Aucun programme disponible pour le moment.
-                  </p>
-                  <p className="text-sm text-[--color-text-secondary]">
-                    L&apos;Intermédiaire fait ses courses. Reviens plus tard.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Colonne de l'inventaire (1/3 de l'espace) */}
-          <div className="lg:col-span-1">
-            <div className="bg-black/30 p-6 rounded-lg border border-[--color-border-dark] sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
-              <h2 className="text-2xl text-[--color-neon-cyan] font-bold mb-4 flex items-center gap-2">
-                <span className="text-2xl">🎒</span>
-                Ton Inventaire
-              </h2>
-              
-              {playerInventory ? (
-                <div className="space-y-6">
-                  {/* Programmes One-Shot */}
-                  {(playerInventory.oneShotPrograms?.length || 0) > 0 && (
-                    <div>
-                      <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
-                        <span>💊</span>
-                        Programmes One-Shot
-                      </h3>
-                      <div className="space-y-2">
-                        {playerInventory.oneShotPrograms.map((item, index) => (
-                          <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
-                            <div className="mb-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[--color-text-primary] text-sm font-medium">
-                                  {item.program?.name || 'Programme inconnu'}
-                                </span>
-                                <span className="text-[--color-neon-cyan] font-bold text-lg">x{item.quantity}</span>
-                              </div>
-                              <div className={`text-xs ${getRarityColor(item.program?.rarity)}`}>
-                                {item.program?.rarity?.toUpperCase()}
-                              </div>
-                            </div>
-                            <p className="text-xs text-[--color-text-secondary] mb-3 line-clamp-2">
-                              {item.program?.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Implants Installés */}
-                  {(playerInventory.installedImplants?.length || 0) > 0 && (
-                    <div>
-                      <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
-                        <span>🔧</span>
-                        Implants Installés
-                      </h3>
-                      <div className="space-y-2">
-                        {playerInventory.installedImplants.map((implant, index) => (
-                          <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="text-[--color-text-primary] text-sm font-medium">Implant #{index + 1}</span>
-                                <div className="text-xs text-[--color-text-secondary] mt-1">
-                                  {implant.program?.name || 'Implant inconnu'}
-                                </div>
-                              </div>
-                              <span className="text-green-400 text-sm">✓ Installé</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Informations */}
-                  {(playerInventory.purchasedInformation?.length || 0) > 0 && (
-                    <div>
-                      <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
-                        <span>💾</span>
-                        Informations
-                      </h3>
-                      <div className="space-y-2">
-                        {playerInventory.purchasedInformation.map((info, index) => (
-                          <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
-                            <div className="mb-2 flex justify-between items-center">
-                              <span className="text-[--color-text-primary] text-sm font-medium">
-                                {info.program?.name || 'Information inconnue'}
-                              </span>
-                              <span className="text-blue-400 text-sm">📄</span>
-                            </div>
-                            <p className="text-xs text-[--color-text-secondary] mb-3 line-clamp-2">
-                              {info.program?.description}
-                            </p>
-                            <ButtonWithLoading
-                              onClick={() => handleUseInformation(info)}
-                              isLoading={infoLoading[info.program?._id] || false}
-                              loadingText="UTILISATION..."
-                              className="w-full text-xs font-bold py-2 px-3 rounded transition-all bg-blue-600 text-white hover:bg-blue-500"
-                            >
-                              Utiliser
-                            </ButtonWithLoading>
-                          </div>
-                        ))}
-                      </div>
-                      {infoResult && (
-                        <div className={`mt-4 p-3 rounded ${infoResult.success ? 'bg-green-900/30 text-green-300' : 'bg-red-900/30 text-red-300'}`}>
-                          {infoResult.success ? (
-                            <>
-                              Contrat exclusif généré !
-                              <br />
-                              <a href={`/contrats/${infoResult.contract._id}`} className="underline text-[--color-neon-cyan]">Voir le contrat</a>
-                            </>
-                          ) : (
-                            <>{infoResult.message}</>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Inventaire vide */}
-                  {((playerInventory.oneShotPrograms?.length || 0) === 0 && 
-                    (playerInventory.installedImplants?.length || 0) === 0 && 
-                    (playerInventory.purchasedInformation?.length || 0) === 0) && (
-                    <div className="text-center py-8">
-                      <div className="text-4xl mb-2">🎒</div>
-                      <p className="text-[--color-text-secondary] text-sm">
-                        Ton inventaire est vide.
-                      </p>
-                      <p className="text-[--color-text-secondary] text-xs mt-1">
-                        Achète des programmes pour commencer.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Statistiques */}
-                  <div className="bg-black/20 p-4 rounded border border-[--color-border-dark]">
-                    <h4 className="text-sm text-[--color-neon-cyan] font-bold mb-3">Statistiques</h4>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-[--color-text-secondary]">Total dépensé:</span>
-                        <span className="text-[--color-neon-pink] font-bold">
-                          {playerInventory.totalSpent?.toLocaleString('en-US') || 0} €$
-                        </span>
-                      </div>
-                      {(playerInventory.signatureItemsPurchased || 0) > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-[--color-text-secondary]">Items signature:</span>
-                          <span className="text-yellow-400 font-bold">
-                            {playerInventory.signatureItemsPurchased}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-[--color-text-secondary]">Total items:</span>
-                        <span className="text-[--color-neon-cyan] font-bold">
-                          {(playerInventory.oneShotPrograms?.length || 0) + 
-                           (playerInventory.installedImplants?.length || 0) + 
-                           (playerInventory.purchasedInformation?.length || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-[--color-text-secondary] text-sm">
-                    Chargement de l&apos;inventaire...
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Bouton de régénération en développement */}
+            {isDevelopment && (
+              <div className="mt-4">
+                <ButtonWithLoading
+                  onClick={handleRotateStock}
+                  isLoading={rotatingStock}
+                  loadingText="RÉGÉNÉRATION..."
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded transition-all"
+                >
+                  🔄 Régénérer le Stock (DEV)
+                </ButtonWithLoading>
+                <p className="text-xs text-orange-400 mt-1">
+                  Bouton visible uniquement en développement
+                </p>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Sélection des vendeurs */}
+        <div className="mb-8">
+          <h2 className="text-2xl text-[--color-text-primary] font-bold mb-4">Vendeurs</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(marketData.vendors).map(([vendorKey, vendor]) => (
+              <button
+                key={vendorKey}
+                onClick={() => {
+                  setActiveVendor(vendorKey);
+                  setVendorMessage(`${vendor.name} : ${vendor.description}`);
+                }}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  activeVendor === vendorKey 
+                    ? getVendorBgColor(vendorKey) + ' border-opacity-100' 
+                    : 'bg-black/30 border-[--color-border-dark] hover:border-opacity-50'
+                }`}
+              >
+                <div className="text-2xl mb-2">{vendor.icon}</div>
+                <h3 className={`font-bold ${getVendorColor(vendorKey)}`}>{vendor.name}</h3>
+                <p className="text-xs text-[--color-text-secondary] mt-1">{vendor.specialty}</p>
+                <p className="text-xs text-[--color-text-secondary] mt-2">
+                  {marketData.market[vendorKey]?.items?.length || 0} items
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Catalogue du vendeur actif */}
+        {activeVendorData && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl text-[--color-text-primary] font-bold mb-2">
+                {activeVendorData.icon} {activeVendorData.name}
+              </h2>
+              <p className="text-[--color-text-secondary]">{activeVendorData.description}</p>
+            </div>
+
+            {activeVendorData.items.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-[--color-text-secondary]">
+                  Aucun objet disponible pour ton niveau de Street Cred.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeVendorData.items.map((item) => {
+                  const canAfford = playerProfile.eddies >= item.cost;
+                  const hasStreetCred = playerProfile.reputationPoints >= item.streetCredRequired;
+                  const isAvailable = !item.isSignature || (item.available !== false);
+                  
+                  return (
+                    <div
+                      key={item.id}
+                      className={`bg-black/30 p-4 rounded-lg border-2 transition-all ${
+                        getRarityBorder(item.rarity)
+                      } ${!canAfford || !hasStreetCred || !isAvailable ? 'opacity-50' : 'hover:border-opacity-100'}`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-lg text-[--color-text-primary] font-bold">{item.name}</h3>
+                        <span className={`text-sm font-bold ${getRarityColor(item.rarity)}`}>
+                          {item.rarity.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-[--color-text-secondary] mb-4">
+                        {item.description}
+                      </p>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Prix:</span>
+                          <span className={canAfford ? 'text-green-400' : 'text-red-400'}>
+                            {item.cost.toLocaleString('en-US')} €$
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Street Cred requis:</span>
+                          <span className={hasStreetCred ? 'text-green-400' : 'text-red-400'}>
+                            {item.streetCredRequired} PR
+                          </span>
+                        </div>
+                        {item.isSignature && (
+                          <div className="flex justify-between text-sm">
+                            <span>Stock:</span>
+                            <span className={item.available ? 'text-green-400' : 'text-red-400'}>
+                              {item.currentStock || 0} disponible
+                            </span>
+                          </div>
+                        )}
+                        {item.dailyLimit && (
+                          <div className="flex justify-between text-sm">
+                            <span>Limite quotidienne:</span>
+                            <span className={item.dailyLimit.remaining > 0 ? 'text-green-400' : 'text-red-400'}>
+                              {item.dailyLimit.current}/{item.dailyLimit.max} par jour
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <ButtonWithLoading
+                        onClick={() => handlePurchase(item.id)}
+                        isLoading={purchasing[item.id]}
+                        loadingText="ACHAT..."
+                        disabled={!canAfford || !hasStreetCred || !isAvailable || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
+                        className={`w-full font-bold py-2 px-4 rounded transition-all ${
+                          canAfford && hasStreetCred && isAvailable && (!item.dailyLimit || item.dailyLimit.remaining > 0)
+                            ? 'bg-[--color-neon-pink] text-white hover:bg-white hover:text-background'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {!canAfford ? 'Fonds insuffisants' : 
+                         !hasStreetCred ? 'Street Cred insuffisant' : 
+                         !isAvailable ? 'Stock épuisé' :
+                         (item.dailyLimit && item.dailyLimit.remaining <= 0) ? 'Limite quotidienne atteinte' :
+                         `Acheter (${item.cost.toLocaleString('en-US')} €$)`}
+                      </ButtonWithLoading>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

@@ -9,14 +9,14 @@ import RunnerSelectionModal from '@/components/RunnerSelectionModal';
 export default function NetrunnersPage() {
   const [runners, setRunners] = useState([]);
   const [playerInventory, setPlayerInventory] = useState(null);
-  const [draggedItem, setDraggedItem] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [installingImplants, setInstallingImplants] = useState({});
-  const [showRunnerModal, setShowRunnerModal] = useState(false);
-  const [selectedImplant, setSelectedImplant] = useState(null);
   const [activeTab, setActiveTab] = useState('equipe');
   const [recruitmentPool, setRecruitmentPool] = useState([]);
   const [selectedDeadRunner, setSelectedDeadRunner] = useState(null);
+  const [showImplantModal, setShowImplantModal] = useState(false);
+  const [selectedRunner, setSelectedRunner] = useState(null);
+  const [selectedImplants, setSelectedImplants] = useState([]);
+  const [installingImplants, setInstallingImplants] = useState(false);
   const { isSignedIn, isLoaded } = useAuth();
 
   const fetchRunners = async () => {
@@ -116,105 +116,73 @@ export default function NetrunnersPage() {
     }
   };
 
-  const handleInstallImplant = async (runnerId, implant) => {
-    setInstallingImplants(prev => ({ ...prev, [`${runnerId}-${implant.program._id}`]: true }));
-    try {
-      const response = await fetch(`/api/netrunners/${runnerId}/install-implant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ programId: implant.program._id })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        alert(`Implant ${data.implant.name} installé sur ${data.runnerName} !\nCoût de pose: ${data.installationCost} €$\nSolde restant: ${data.remainingEddies} €$`);
-        fetchRunners();
-        fetchInventory();
+  const handleOpenImplantModal = (runner) => {
+    setSelectedRunner(runner);
+    setSelectedImplants([]);
+    setShowImplantModal(true);
+  };
+
+  const handleCloseImplantModal = () => {
+    setShowImplantModal(false);
+    setSelectedRunner(null);
+    setSelectedImplants([]);
+  };
+
+  const handleToggleImplantSelection = (implant) => {
+    setSelectedImplants(prev => {
+      const isSelected = prev.some(selected => selected.program._id === implant.program._id);
+      if (isSelected) {
+        return prev.filter(selected => selected.program._id !== implant.program._id);
       } else {
-        const error = await response.text();
-        alert(`Erreur: ${error}`);
+        return [...prev, implant];
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'installation:', error);
-      alert('Erreur lors de l\'installation de l\'implant');
-    } finally {
-      setInstallingImplants(prev => ({ ...prev, [`${runnerId}-${implant.program._id}`]: false }));
-      setShowRunnerModal(false);
-      setSelectedImplant(null);
+    });
+  };
+
+  const handleInstallSelectedImplants = async () => {
+    if (selectedImplants.length === 0) {
+      alert('Aucun implant sélectionné');
+      return;
     }
-  };
 
-  const handleShowRunnerSelection = (implant) => {
-    setSelectedImplant(implant);
-    setShowRunnerModal(true);
-  };
+    setInstallingImplants(true);
+    const results = [];
+    let successCount = 0;
+    let errorCount = 0;
 
-  const handleSelectRunner = (runnerId) => {
-    if (selectedImplant) {
-      handleInstallImplant(runnerId, selectedImplant);
-    }
-  };
-
-  // Gestion du drag & drop
-  const handleDragStart = (e, item) => {
-    setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify(item));
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = async (e, runnerId) => {
-    e.preventDefault();
-    try {
-      const droppedData = e.dataTransfer.getData('text/plain');
-      const item = JSON.parse(droppedData);
-      setLoading(true);
-      if (item && item.category === 'implant') {
-        const response = await fetch(`/api/netrunners/${runnerId}/install-implant`, {
+    for (const implant of selectedImplants) {
+      try {
+        const response = await fetch(`/api/netrunners/${selectedRunner._id}/install-implant`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ programId: item.program._id })
+          body: JSON.stringify({ programId: implant.program._id })
         });
+        
         if (response.ok) {
           const data = await response.json();
-          alert(`Implant ${data.implant.name} installé sur ${data.runnerName} !\nCoût de pose: ${data.installationCost} €$\nSolde restant: ${data.remainingEddies} €$`);
-          fetchRunners();
-          fetchInventory();
+          results.push(`✅ ${implant.program.name} installé (Coût: ${data.installationCost} €$)`);
+          successCount++;
         } else {
           const error = await response.text();
-          alert(`Erreur: ${error}`);
+          results.push(`❌ ${implant.program.name}: ${error}`);
+          errorCount++;
         }
-      } else if (item && item.category === 'one_shot') {
-        const response = await fetch(`/api/netrunners/${runnerId}/use-program`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ programId: item.program._id })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          alert(`Programme one-shot ${item.program.name} utilisé sur ${data.runnerName} !`);
-          fetchRunners();
-          fetchInventory();
-        } else {
-          const error = await response.text();
-          alert(`Erreur: ${error}`);
-        }
+      } catch (error) {
+        results.push(`❌ ${implant.program.name}: Erreur de connexion`);
+        errorCount++;
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'application:', error);
-      alert('Erreur lors de l\'application du programme');
-    } finally {
-      setLoading(false);
-      setDraggedItem(null);
     }
-  };
 
-  const handleDragEnd = (e) => {
-    setDraggedItem(null);
+    // Afficher les résultats
+    const resultMessage = `Installation terminée:\n\n${results.join('\n')}\n\nSuccès: ${successCount} | Erreurs: ${errorCount}`;
+    alert(resultMessage);
+
+    // Recharger les données
+    await fetchRunners();
+    await fetchInventory();
+    
+    setInstallingImplants(false);
+    handleCloseImplantModal();
   };
 
   const getRarityColor = (rarity) => {
@@ -246,8 +214,6 @@ export default function NetrunnersPage() {
           <div 
             key={runner._id} 
             className="bg-white/5 p-4 rounded-lg border border-[--color-border-dark] hover:border-neon-cyan transition-colors"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, runner._id)}
           >
             <div className="flex justify-between items-start mb-3">
               <div>
@@ -319,15 +285,21 @@ export default function NetrunnersPage() {
               </div>
             )}
 
-            {/* Zone de drop */}
-            <div className="border-2 border-dashed border-[--color-border-dark] rounded p-2 text-center text-xs text-[--color-text-secondary] mb-3 min-h-[40px] flex items-center justify-center">
-              {draggedItem ? 'Dépose l\'implant ici' : 'Glisse un implant ici'}
+            {/* Bouton Chrome pour ajouter des implants */}
+            <div className="mb-3">
+              <button 
+                onClick={() => handleOpenImplantModal(runner)}
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold py-2 px-4 rounded hover:from-yellow-300 hover:to-yellow-500 transition-all duration-300 text-sm flex items-center justify-center gap-2"
+              >
+                <span>🔧</span>
+                Ajouter un Implant
+              </button>
             </div>
 
             {/* Boutons d'action */}
             <div className="space-y-2">
               <Link href={`/netrunners/${runner._id}`}>
-                <button className="w-full bg-[--color-neon-cyan] text-background font-bold py-2 px-4 rounded hover:bg-white transition-colors text-sm">
+                <button className="w-full bg-[--color-neon-cyan] text-background font-bold py-2 px-4 rounded hover:bg-white hover:text-background transition-colors text-sm">
                   Voir détails
                 </button>
               </Link>
@@ -386,7 +358,7 @@ export default function NetrunnersPage() {
               onClick={() => handleRecruit(recruit)}
               isLoading={loading}
               loadingText="RECRUTEMENT..."
-              className="w-full bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded hover:bg-neon-cyan hover:text-background transition-colors"
+              className="w-full bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded hover:bg-white hover:text-background transition-colors"
             >
               Recruter
             </ButtonWithLoading>
@@ -544,7 +516,6 @@ export default function NetrunnersPage() {
                     {/* Debug info */}
                     <div className="text-xs text-gray-500 mb-4">
                       <p>Debug - Implants: {playerInventory.implants?.length || 0}</p>
-                      <p>Debug - One-Shot: {playerInventory.oneShotPrograms?.length || 0}</p>
                     </div>
                     
                     {/* Implants */}
@@ -571,57 +542,9 @@ export default function NetrunnersPage() {
                               <p className="text-xs text-[--color-text-secondary] mt-2 line-clamp-2">
                                 {implant.program?.description}
                               </p>
-                              <div className="text-xs text-[--color-neon-cyan] mt-2 mb-2">
+                              <div className="text-xs text-[--color-neon-cyan] mt-2">
                                 Coût de pose: 2,000 €$
                               </div>
-                              <div className="flex gap-2">
-                                <div 
-                                  className="flex-1 border-2 border-dashed border-[--color-border-dark] rounded p-2 text-center text-xs text-[--color-text-secondary] cursor-move hover:border-neon-cyan transition-colors"
-                                  draggable
-                                  onDragStart={(e) => handleDragStart(e, { ...implant, category: 'implant' })}
-                                  onDragEnd={handleDragEnd}
-                                >
-                                  Glisser
-                                </div>
-                                <ButtonWithLoading
-                                  onClick={() => handleShowRunnerSelection(implant)}
-                                  isLoading={Object.values(installingImplants).some(Boolean)}
-                                  loadingText="POSE..."
-                                  disabled={livingRunners.filter(r => r.status === 'Disponible').length === 0}
-                                  className="flex-1 bg-[--color-neon-cyan] text-background font-bold py-2 px-3 rounded hover:bg-white transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  Installer
-                                </ButtonWithLoading>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Programmes One-Shot */}
-                    {(playerInventory.oneShotPrograms?.length || 0) > 0 && (
-                      <div>
-                        <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
-                          <span>💊</span>
-                          Programmes One-Shot
-                        </h3>
-                        <div className="space-y-2">
-                          {playerInventory.oneShotPrograms.map((item, index) => (
-                            <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all cursor-move"
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, { ...item, category: 'one_shot' })}
-                              onDragEnd={handleDragEnd}
-                            >
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-[--color-text-primary] text-sm font-medium">
-                                  {item.program?.name || 'Programme inconnu'}
-                                </span>
-                                <span className="text-[--color-neon-cyan] font-bold text-lg">x{item.quantity}</span>
-                              </div>
-                              <div className={`text-xs ${getRarityColor(item.program?.rarity)}`}>{item.program?.rarity?.toUpperCase()}</div>
-                              <p className="text-xs text-[--color-text-secondary] mt-2 line-clamp-2">{item.program?.description}</p>
-                              <div className="text-xs text-[--color-neon-cyan] mt-2">Glisse sur un runner pour utiliser</div>
                             </div>
                           ))}
                         </div>
@@ -629,8 +552,7 @@ export default function NetrunnersPage() {
                     )}
 
                     {/* Inventaire vide */}
-                    {((playerInventory.implants?.length || 0) === 0 && 
-                      (playerInventory.oneShotPrograms?.length || 0) === 0) && (
+                    {(playerInventory.implants?.length || 0) === 0 && (
                       <div className="text-center py-8">
                         <div className="text-4xl mb-2">🎒</div>
                         <p className="text-[--color-text-secondary] text-sm">
@@ -672,17 +594,153 @@ export default function NetrunnersPage() {
         </div>
       </div>
 
-      {/* Modal de sélection des runners */}
-      <RunnerSelectionModal
-        isOpen={showRunnerModal}
-        onClose={() => {
-          setShowRunnerModal(false);
-          setSelectedImplant(null);
-        }}
-        runners={livingRunners}
-        implant={selectedImplant}
-        onSelectRunner={handleSelectRunner}
-      />
+      {/* Modal d'installation d'implants */}
+      {showImplantModal && selectedRunner && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 p-6 rounded-lg border border-[--color-neon-cyan] max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-2xl text-[--color-neon-cyan] font-bold">
+                  🔧 Installer des Implants
+                </h3>
+                <p className="text-[--color-text-secondary] mt-1">
+                  Sélectionne les implants à installer sur {selectedRunner.name}
+                </p>
+              </div>
+              <button 
+                onClick={handleCloseImplantModal}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Informations du runner */}
+            <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark] mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <h4 className="text-[--color-text-primary] font-bold">{selectedRunner.name}</h4>
+                  <p className="text-sm text-[--color-text-secondary]">Niveau {selectedRunner.level}</p>
+                </div>
+                <div>
+                  <p className="text-sm">Hacking: <span className="text-white">{selectedRunner.skills.hacking}/10</span></p>
+                  <p className="text-sm">Stealth: <span className="text-white">{selectedRunner.skills.stealth}/10</span></p>
+                </div>
+                <div>
+                  <p className="text-sm">Combat: <span className="text-white">{selectedRunner.skills.combat}/10</span></p>
+                  <p className="text-sm text-[--color-neon-cyan]">Puissance: {selectedRunner.skills.hacking + selectedRunner.skills.stealth + selectedRunner.skills.combat}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Liste des implants disponibles */}
+            <div className="mb-6">
+              <h4 className="text-lg text-[--color-text-primary] font-bold mb-4">
+                Implants Disponibles ({playerInventory?.implants?.length || 0})
+              </h4>
+              
+              {playerInventory?.implants && playerInventory.implants.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                  {playerInventory.implants.map((implant, index) => {
+                    const isSelected = selectedImplants.some(selected => selected.program._id === implant.program._id);
+                    return (
+                      <div 
+                        key={index}
+                        onClick={() => handleToggleImplantSelection(implant)}
+                        className={`bg-white/5 p-4 rounded-lg border cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'border-[--color-neon-cyan] bg-[--color-neon-cyan]/10' 
+                            : 'border-[--color-border-dark] hover:border-[--color-neon-cyan]/50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                              isSelected 
+                                ? 'bg-[--color-neon-cyan] border-[--color-neon-cyan]' 
+                                : 'border-gray-400'
+                            }`}>
+                              {isSelected && <span className="text-black text-xs">✓</span>}
+                            </div>
+                            <span className="text-[--color-text-primary] font-medium">
+                              {implant.program?.name || 'Implant inconnu'}
+                            </span>
+                          </div>
+                          <span className={`text-xs font-bold ${getRarityColor(implant.program?.rarity)}`}>
+                            {implant.program?.rarity?.toUpperCase()}
+                          </span>
+                        </div>
+                        
+                        <p className="text-xs text-[--color-text-secondary] mb-2 line-clamp-2">
+                          {implant.program?.description}
+                        </p>
+                        
+                        {implant.program?.effects?.permanent_skill_boost && (
+                          <div className="text-xs text-blue-300 mb-2">
+                            +{implant.program.effects.permanent_skill_boost.value} {implant.program.effects.permanent_skill_boost.skill}
+                          </div>
+                        )}
+                        
+                        <div className="text-xs text-[--color-neon-cyan]">
+                          Coût de pose: 2,000 €$
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-2">🎒</div>
+                  <p className="text-[--color-text-secondary]">
+                    Aucun implant disponible.
+                  </p>
+                  <p className="text-[--color-text-secondary] text-sm mt-1">
+                    Va au marché noir pour t'équiper.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Résumé de la sélection */}
+            {selectedImplants.length > 0 && (
+              <div className="bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]/30 rounded-lg p-4 mb-6">
+                <h4 className="text-[--color-neon-cyan] font-bold mb-2">
+                  Implants sélectionnés ({selectedImplants.length})
+                </h4>
+                <div className="space-y-1">
+                  {selectedImplants.map((implant, index) => (
+                    <div key={index} className="text-sm text-[--color-text-primary]">
+                      • {implant.program?.name} ({implant.program?.rarity?.toUpperCase()})
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm text-[--color-neon-cyan] mt-2">
+                  Coût total: {(selectedImplants.length * 2000).toLocaleString()} €$
+                </div>
+              </div>
+            )}
+
+            {/* Boutons d'action */}
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={handleCloseImplantModal}
+                className="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded transition-colors"
+              >
+                Annuler
+              </button>
+              <ButtonWithLoading
+                onClick={handleInstallSelectedImplants}
+                isLoading={installingImplants}
+                loadingText="INSTALLATION..."
+                disabled={selectedImplants.length === 0}
+                className="px-6 py-2 bg-[--color-neon-cyan] text-background font-bold rounded hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Installer {selectedImplants.length > 0 ? `(${selectedImplants.length})` : ''}
+              </ButtonWithLoading>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

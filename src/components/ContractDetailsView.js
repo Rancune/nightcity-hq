@@ -490,7 +490,7 @@ export default function ContractDetailsView({ initialContract }) {
                               className={`w-full text-xs font-bold py-2 px-3 rounded transition-all ${
                                 usedPrograms.includes(item.program._id)
                                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white'
+                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white hover:text-background'
                               }`}
                             >
                               {usedPrograms.includes(item.program._id) ? 'Utilisé' : 'Utiliser'}
@@ -536,7 +536,7 @@ export default function ContractDetailsView({ initialContract }) {
                               className={`w-full text-xs font-bold py-2 px-3 rounded transition-all ${
                                 usedPrograms.includes(info.program._id)
                                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white'
+                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white hover:text-background'
                               }`}
                             >
                               {usedPrograms.includes(info.program._id) ? 'Utilisé' : 'Utiliser'}
@@ -575,7 +575,7 @@ export default function ContractDetailsView({ initialContract }) {
                               className={`w-full text-xs font-bold py-2 px-3 rounded transition-all ${
                                 usedPrograms.includes(implant.program._id)
                                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white'
+                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white hover:text-background'
                               }`}
                             >
                               {usedPrograms.includes(implant.program._id) ? 'Installé' : 'Installer'}

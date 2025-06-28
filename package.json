@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tailwind:init": "tailwindcss init -p"
+    "tailwind:init": "tailwindcss init -p",
+    "market:rotate": "node scripts/rotate-market-stock.js",
+    "market:test": "NODE_ENV=development node scripts/rotate-market-stock.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",

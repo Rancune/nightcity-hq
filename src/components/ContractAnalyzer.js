@@ -85,7 +85,7 @@ export default function ContractAnalyzer({ contract, playerInventory, onAnalyze 
         onClick={handleAnalyze}
         isLoading={isAnalyzing}
         loadingText="ANALYSE..."
-        className="bg-[--color-neon-cyan] text-background font-bold py-1 px-3 rounded text-xs hover:bg-white transition-all"
+        className="bg-[--color-neon-cyan] text-background font-bold py-1 px-3 rounded text-xs hover:bg-white hover:text-background transition-all"
       >
         Analyser Contrat
       </ButtonWithLoading>
