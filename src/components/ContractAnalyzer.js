@@ -40,19 +40,40 @@ export default function ContractAnalyzer({ contract, playerInventory, onAnalyze 
   
   if (skillsRevealed) {
     return (
-      <div className="mb-4 p-3 bg-black/30 rounded border border-green-500/50">
-        <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées</p>
-        <div className="flex gap-2 text-xs">
+      <div className="mb-4 p-3 bg-green-400/20 rounded border border-green-500/50">
+        <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées par l'Analyseur</p>
+        <div className="space-y-2">
           {contract.requiredSkills?.hacking > 0 && (
-            <span className="text-blue-400">Hacking: {contract.requiredSkills.hacking}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💻</span>
+                <span className="text-sm text-blue-400 font-semibold">Hacking</span>
+              </div>
+              <span className="text-lg font-bold text-blue-400">{contract.requiredSkills.hacking}</span>
+            </div>
           )}
           {contract.requiredSkills?.stealth > 0 && (
-            <span className="text-green-400">Infiltration: {contract.requiredSkills.stealth}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">👁️</span>
+                <span className="text-sm text-green-400 font-semibold">Infiltration</span>
+              </div>
+              <span className="text-lg font-bold text-green-400">{contract.requiredSkills.stealth}</span>
+            </div>
           )}
           {contract.requiredSkills?.combat > 0 && (
-            <span className="text-red-400">Combat: {contract.requiredSkills.combat}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚔️</span>
+                <span className="text-sm text-red-400 font-semibold">Combat</span>
+              </div>
+              <span className="text-lg font-bold text-red-400">{contract.requiredSkills.combat}</span>
+            </div>
           )}
         </div>
+        <p className="text-xs text-green-300 mt-2">
+          Les compétences ont été révélées par l'Analyseur de Contrat.
+        </p>
       </div>
     );
   }

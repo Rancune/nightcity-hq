@@ -95,9 +95,9 @@ export default function DashboardPage() {
               <h3 className="text-lg text-[--color-text-primary] font-bold">Eddies</h3>
               <span className="text-2xl">€$</span>
             </div>
-            <p className="text-3xl text-[--color-neon-pink] font-bold">
-              {playerProfile.eddies?.toLocaleString() || '0'}
-            </p>
+            <div className="text-2xl text-[--color-neon-pink] font-bold">
+              {playerProfile.eddies?.toLocaleString('en-US') || '0'} €$
+            </div>
             <p className="text-sm text-[--color-text-secondary] mt-2">Monnaie de Night City</p>
           </div>
 
@@ -107,9 +107,12 @@ export default function DashboardPage() {
               <h3 className="text-lg text-[--color-text-primary] font-bold">Réputation</h3>
               <span className="text-2xl">PR</span>
             </div>
-            <p className="text-3xl text-[--color-neon-cyan] font-bold">
-              {playerProfile.reputationPoints?.toLocaleString() || '0'}
-            </p>
+            <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
+              <div className="text-sm text-[--color-text-secondary] mb-1">Réputation</div>
+              <div className="text-2xl text-[--color-neon-cyan] font-bold">
+                {playerProfile.reputationPoints?.toLocaleString('en-US') || '0'} PR
+              </div>
+            </div>
             <p className="text-sm text-[--color-text-secondary] mt-2">{playerProfile.reputationTitle}</p>
           </div>
 
@@ -214,7 +217,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <div className="flex justify-between text-xs text-[--color-text-secondary]">
-                        <span>{contrat.reward?.eddies?.toLocaleString()} €$</span>
+                        <span>{contrat.reward?.eddies?.toLocaleString('en-US')} €$</span>
                         <span>+{contrat.reward?.reputation || 0} PR</span>
                       </div>
                     </div>

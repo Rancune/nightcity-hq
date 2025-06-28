@@ -16,11 +16,11 @@ const MissionSummary = ({ missions, runners, cost, potentialGain }) => {
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Coût total</span>
-          <span className="text-red-600 font-semibold">{cost.toLocaleString()} €</span>
+          <span className="text-red-600 font-semibold">{cost.toLocaleString('en-US')} €</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600">Gain potentiel</span>
-          <span className="text-green-600 font-semibold">{potentialGain.toLocaleString()} €</span>
+          <span className="text-gray-600">Gain potentiel:</span>
+          <span className="text-green-600 font-semibold">{potentialGain.toLocaleString('en-US')} €</span>
         </div>
       </div>
     </div>

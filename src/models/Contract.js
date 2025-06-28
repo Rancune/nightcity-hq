@@ -51,6 +51,9 @@ const contractSchema = new Schema({
     combat: { type: Number, default: 0 },
   },
 
+  // --- SYSTÈME D'ÉCHELONS DE MENACE ---
+  threatLevel: { type: Number, min: 1, max: 5, default: 1 }, // Niveau de menace (1-5)
+
   // --- SYSTÈME DE RELATIONS DE FACTION ---
   targetFaction: { type: String, default: null }, // Faction ciblée par le contrat
   employerFaction: { type: String, default: null }, // Faction qui emploie le fixer

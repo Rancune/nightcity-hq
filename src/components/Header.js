@@ -53,59 +53,84 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-black/80 backdrop-blur-sm border-b border-[--color-border-dark] p-4 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="bg-black/80 backdrop-blur-sm border-b border-[--color-border-dark] p-3 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Logo et titre - collé à gauche */}
-          <div className="flex items-center">
-            <Link href="/" className="text-2xl text-[--color-neon-cyan] font-bold hover:text-white transition-colors">
+          <div className="flex-shrink-0">
+            <Link href="/" className="text-xl text-[--color-neon-cyan] font-bold hover:text-white transition-colors whitespace-nowrap">
               NIGHT CITY HQ
             </Link>
           </div>
 
           {/* Menu principal avec les boutons - centré */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-1 justify-center">
             <Link href="/">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Dashboard
               </button>
             </Link>
             <Link href="/contrats">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Contrats
               </button>
             </Link>
             <Link href="/netrunners">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Mon Écurie
               </button>
             </Link>
             <Link href="/marche-noir">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Marché Noir
               </button>
             </Link>
             <Link href="/faction-relations">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Relations
               </button>
             </Link>
             <Link href="/profile">
-              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Profil
               </button>
             </Link>
           </div>
 
           {/* Eddies, réputation et authentification - collés à droite */}
-          <div className="flex items-center gap-4">
-            <div className="text-lg text-[--color-neon-pink] font-bold border-2 border-[--color-neon-pink] p-2 rounded w-32 text-center">
-              <span>{playerProfile?.eddies?.toLocaleString() || '---'} €$</span>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Eddies avec design amélioré */}
+            <div className="bg-gradient-to-r from-[--color-neon-pink]/20 to-[--color-neon-pink]/10 border border-[--color-neon-pink] rounded-lg p-2 min-w-[120px]">
+              <div className="text-xs text-[--color-neon-pink]/70 uppercase tracking-wider font-semibold">
+                Eddies
+              </div>
+              <div className="text-sm text-[--color-neon-pink] font-bold">
+                <span className="text-[--color-neon-pink] font-bold">
+                  {playerProfile?.eddies?.toLocaleString('en-US') || '---'} €$
+                </span>
+              </div>
             </div>
-            <div className="text-lg text-[--color-neon-cyan] font-bold border-2 border-[--color-neon-cyan] p-2 rounded w-32 text-center">
-              <div className="text-sm">{playerProfile?.reputationTitle || 'Rumeur de la Rue'}</div>
-              <div>{playerProfile?.reputationPoints?.toLocaleString() || '---'} PR</div>
+
+            {/* Réputation avec design amélioré */}
+            <div className="bg-gradient-to-r from-[--color-neon-cyan]/20 to-[--color-neon-cyan]/10 border border-[--color-neon-cyan] rounded-lg p-2 min-w-[140px]">
+              <div className="text-xs text-[--color-neon-cyan]/70 uppercase tracking-wider font-semibold truncate">
+                {playerProfile?.reputationTitle || 'Rumeur de la Rue'}
+              </div>
+              <div className="text-sm text-[--color-neon-cyan] font-bold">
+                <div className="flex items-center gap-2">
+                  <span className="text-[--color-text-secondary] text-sm">PR:</span>
+                  <span className="text-[--color-neon-cyan] font-bold">
+                    {playerProfile?.reputationPoints?.toLocaleString('en-US') || '---'} PR
+                  </span>
+                </div>
+              </div>
             </div>
-            <UserButton afterSignOutUrl="/" />
+
+            {/* Bouton utilisateur */}
+            <div className="flex-shrink-0">
+              <UserButton afterSignOutUrl="/" />
+            </div>
+
+            {/* Bouton de connexion */}
             <SignedOut>
               <a
                 href={process.env.NEXT_PUBLIC_SIGN_IN_URL || 
@@ -114,7 +139,7 @@ export default function Header() {
                     : "https://accounts.fixer.rancune.games/sign-in"
                   )
                 }
-                className="bg-[--color-neon-cyan] text-black font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-cyan)] glitch-on-hover"
+                className="bg-[--color-neon-cyan] text-black font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-cyan)] glitch-on-hover whitespace-nowrap"
               >
                 Se connecter
               </a>

@@ -12,6 +12,10 @@ import FactionBadge from '@/components/FactionBadge';
 import { determineDifficulty, calculateReputationGain } from '@/Lib/reputation';
 import { FACTIONS } from '@/Lib/factionRelations';
 import ContractAnalyzer from '@/components/ContractAnalyzer';
+import ThreatLevelBadge from '@/components/ThreatLevelBadge';
+import { THREAT_LEVELS } from '@/Lib/threatLevels';
+import LoadingOverlay from '@/components/LoadingOverlay';
+import RequiredSkillsDisplay from '@/components/RequiredSkillsDisplay';
 
 export default function ContratsPage() {
   const [contrats, setContrats] = useState([]);
@@ -136,12 +140,6 @@ export default function ContratsPage() {
         setDebriefingContract(data.updatedContract);
         setDebriefingReputationInfo(data.reputationInfo);
         setShowDebriefing(true);
-
-        // Log de débogage pour vérifier les données
-        console.log('[DEBUG] Données de résolution:', data);
-
-        // Recharger les données après résolution
-        await fetchData();
       }
     } catch (error) {
       console.error('Erreur lors de la réclamation de la récompense:', error);
@@ -264,7 +262,46 @@ export default function ContratsPage() {
   };
 
   const getFactionName = (factionKey) => {
-    return FACTIONS[factionKey]?.name || factionKey;
+    const factionNames = {
+      'corpo': 'Corporation',
+      'street': 'Street Gang',
+      'nomad': 'Nomad Clan',
+      'government': 'Government',
+      'fixer': 'Fixer Network'
+    };
+    return factionNames[factionKey] || factionKey;
+  };
+
+  const getRequiredRunnersCount = (requiredSkills) => {
+    if (!requiredSkills || !Array.isArray(requiredSkills)) return 1;
+    
+    // Compter le nombre de compétences uniques requises
+    const uniqueSkills = new Set();
+    requiredSkills.forEach(skill => {
+      if (skill && skill.name) {
+        uniqueSkills.add(skill.name);
+      }
+    });
+    
+    // Si plus de 3 compétences différentes, il faut plusieurs runners
+    return uniqueSkills.size > 3 ? Math.ceil(uniqueSkills.size / 3) : 1;
+  };
+
+  const getRequiredSkillsList = (requiredSkills) => {
+    if (!requiredSkills || !Array.isArray(requiredSkills)) return [];
+    
+    // Retourner les compétences uniques
+    const uniqueSkills = [];
+    const seenSkills = new Set();
+    
+    requiredSkills.forEach(skill => {
+      if (skill && skill.name && !seenSkills.has(skill.name)) {
+        uniqueSkills.push(skill);
+        seenSkills.add(skill.name);
+      }
+    });
+    
+    return uniqueSkills;
   };
 
   const formatSkills = (skills) => {
@@ -418,11 +455,11 @@ export default function ContratsPage() {
                 <div className="flex justify-between">
                   <span className="text-[--color-text-secondary]">Récompense:</span>
                   <div className="text-right">
-                    <div className="text-[--color-neon-pink] font-bold">
-                      {calculateActualRewards(contrat).eddies.toLocaleString()} €$
+                    <div className="text-sm text-[--color-neon-pink] font-bold">
+                      {contrat.reward?.eddies?.toLocaleString('en-US')} €$
                     </div>
-                    <div className="text-[--color-neon-cyan] font-bold text-xs">
-                      +{calculateActualRewards(contrat).reputation} PR
+                    <div className="text-xs text-[--color-neon-cyan]">
+                      +{contrat.reward?.reputation} PR
                     </div>
                   </div>
                 </div>
@@ -449,23 +486,29 @@ export default function ContratsPage() {
                 />
               )}
 
-              {/* Compétences révélées pour les contrats acceptés */}
-              {contrat.status !== 'Proposé' && contrat.skillsRevealed && (
-                <div className="mb-4 p-3 bg-black/30 rounded border border-green-500/50">
-                  <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées</p>
-                  <div className="flex gap-2 text-xs">
-                    {contrat.requiredSkills?.hacking > 0 && (
-                      <span className="text-blue-400">Hacking: {contrat.requiredSkills.hacking}</span>
-                    )}
-                    {contrat.requiredSkills?.stealth > 0 && (
-                      <span className="text-green-400">Infiltration: {contrat.requiredSkills.stealth}</span>
-                    )}
-                    {contrat.requiredSkills?.combat > 0 && (
-                      <span className="text-red-400">Combat: {contrat.requiredSkills.combat}</span>
-                    )}
-                  </div>
+              {/* Informations sur l'équipe requise */}
+              <div className="mb-4 p-3 bg-black/20 rounded border border-[--color-border-dark]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-[--color-text-secondary]">Équipe requise:</span>
+                  <span className="text-xs text-[--color-neon-cyan] font-semibold">
+                    {getRequiredRunnersCount(contrat.requiredSkills)} runner{getRequiredRunnersCount(contrat.requiredSkills) > 1 ? 's' : ''}
+                  </span>
                 </div>
-              )}
+                
+                {/* Compétences cachées par défaut */}
+                <div className="flex flex-wrap gap-2">
+                  {getRequiredSkillsList(contrat.requiredSkills).map((skill, index) => (
+                    <div key={index} className="text-xs font-semibold px-2 py-1 rounded bg-black/30 border border-[--color-border-dark] text-[--color-text-secondary]">
+                      ???: ???
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Note sur les compétences cachées */}
+                <p className="text-xs text-[--color-text-secondary] mt-2">
+                  Utilisez des programmes pour révéler les compétences requises
+                </p>
+              </div>
 
               {/* Description */}
               <div className="mb-4">

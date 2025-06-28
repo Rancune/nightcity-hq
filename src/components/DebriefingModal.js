@@ -36,7 +36,7 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
                 <p className="text-text-secondary">
                   <Typewriter 
                     text={isSuccess 
-                      ? `+ ${contract.reward.eddies.toLocaleString()} €$ | + ${reputationInfo?.gained || 0} Réputation` 
+                      ? `+ ${contract.reward.eddies.toLocaleString('en-US')} €$ | + ${reputationInfo?.gained || 0} Réputation` 
                       : `- ${reputationInfo?.lost || 0} Réputation | Runner Grillé 2h`
                     } 
                     speed={25} 

@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Typewriter from './Typewriter';
 import ButtonWithLoading from './ButtonWithLoading';
+import ThreatLevelBadge from './ThreatLevelBadge';
+import ThreatLevelInfo from './ThreatLevelInfo';
+import RequiredSkillsDisplay from './RequiredSkillsDisplay';
+import { determineThreatLevelFromSkills } from '@/Lib/threatLevels';
 
 // Ce composant reçoit le contrat initial en tant que "prop"
 export default function ContractDetailsView({ initialContract }) {
@@ -186,13 +190,22 @@ export default function ContractDetailsView({ initialContract }) {
     activeEffects = contract.activeProgramEffects.find(e => e.clerkId === userId)?.effects || null;
   }
 
+  // Correction : calculer le niveau de menace si absent ou invalide
+  let threatLevel = contract.threatLevel;
+  if (!threatLevel || ![1,2,3,4,5].includes(threatLevel)) {
+    threatLevel = determineThreatLevelFromSkills(contract.requiredSkills || {});
+  }
+
   if (!contract) return <div>Contrat introuvable.</div>;
 
   return (
     <main className="min-h-screen p-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-4xl text-[--color-neon-cyan] font-bold">{contract.title}</h1>
+          <div className="flex items-start justify-between mb-4">
+            <h1 className="text-4xl text-[--color-neon-cyan] font-bold">{contract.title}</h1>
+            <ThreatLevelBadge threatLevel={threatLevel} showDetails={true} />
+          </div>
           <p className="text-[--color-text-secondary]">Statut : {contract.status}</p>
           <div className="flex flex-wrap gap-4 mt-2">
             <span className="bg-black/60 px-3 py-1 rounded text-xs text-[--color-neon-cyan] border border-[--color-neon-cyan]">Type de mission : <b>{contract.missionType}</b></span>
@@ -208,6 +221,11 @@ export default function ContractDetailsView({ initialContract }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Colonne principale du contrat */}
           <div className="lg:col-span-2">
+            {/* Informations sur le niveau de menace */}
+            <div className="mb-6">
+              <ThreatLevelInfo threatLevel={threatLevel} showFullDetails={true} />
+            </div>
+
             <div className="bg-white/5 p-6 rounded-lg mb-6">
               <h2 className="text-2xl text-[--color-text-primary] mb-4">Description du Contrat</h2>
               <Typewriter text={contract.description} speed={10} className="text-neon-vert whitespace-pre-wrap" />
@@ -216,28 +234,83 @@ export default function ContractDetailsView({ initialContract }) {
             <div className="bg-white/5 p-6 rounded-lg mb-6">
               <h2 className="text-2xl text-[--color-text-primary] mb-4">Récompenses</h2>
               <div className="flex gap-8 items-center">
-                <span className="text-2xl text-[--color-neon-pink] font-bold">{rewardEddies.toLocaleString()} €$</span>
+                <span className="text-2xl text-[--color-neon-pink] font-bold">
+                  {rewardEddies.toLocaleString('en-US')} €$
+                </span>
                 <span className="text-xl text-[--color-neon-cyan] font-bold">+{rewardReputation} Réputation</span>
               </div>
             </div>
 
-            {/* Compétences testées et révélées */}
+            {/* Compétences requises avec le nouveau composant */}
             <div className="bg-black/40 p-6 rounded-lg border border-[--color-neon-cyan] mb-6">
               <h3 className="text-lg text-[--color-neon-cyan] font-bold mb-3">Compétences Testées</h3>
-              <div className="flex flex-col gap-2">
-                {testedSkills.map(({ skill, value }) => {
-                  const isRevealed = revealedSkills.includes(skill) || allSkillsRevealed;
-                  return (
-                    <div key={skill} className="flex items-center gap-2">
-                      <span className="font-mono text-[--color-text-primary]">{skill.toUpperCase()}</span>
-                      <span className="text-xs text-[--color-text-secondary]">
-                        Difficulté : {isRevealed ? value : <span className="tracking-widest text-gray-500">???</span>}
-                      </span>
-                      {isRevealed && <span className="ml-2 text-green-400 text-xs font-bold">(Révélé)</span>}
-                    </div>
-                  );
-                })}
+              
+              {/* Compétences cachées par défaut */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-[--color-text-secondary]">Équipe requise:</span>
+                  <span className="text-xs text-[--color-neon-cyan] font-semibold">
+                    {Object.values(contract.requiredSkills || {}).filter(skill => skill > 0).length} runner{Object.values(contract.requiredSkills || {}).filter(skill => skill > 0).length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                
+                {/* Compétences non révélées (cachées) */}
+                <div className="space-y-2">
+                  {testedSkills.map(({ skill, value }) => {
+                    const isRevealed = revealedSkills.includes(skill) || allSkillsRevealed;
+                    return (
+                      <div key={skill} className={`p-3 rounded border ${isRevealed ? 'bg-green-400/20 border-green-400/50' : 'bg-black/30 border-[--color-border-dark]'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">
+                              {isRevealed ? (skill === 'hacking' ? '💻' : skill === 'stealth' ? '👁️' : '⚔️') : '❓'}
+                            </span>
+                            <span className={`font-semibold ${isRevealed ? 'text-green-400' : 'text-[--color-text-secondary]'}`}>
+                              {isRevealed ? (skill === 'hacking' ? 'Hacking' : skill === 'stealth' ? 'Infiltration' : 'Combat') : 'Compétence inconnue'}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            {isRevealed ? (
+                              <span className="text-lg font-bold text-green-400">{value}</span>
+                            ) : (
+                              <span className="text-lg font-bold text-gray-500 tracking-widest">???</span>
+                            )}
+                          </div>
+                        </div>
+                        {isRevealed && (
+                          <p className="text-xs text-green-300 mt-1">
+                            {skill === 'hacking' ? 'Piratage de systèmes, contournement d\'ICE, extraction de données' :
+                             skill === 'stealth' ? 'Discrétion, évitement des gardes, passage inaperçu' :
+                             'Tir de précision, neutralisation d\'ennemis, survie'}
+                          </p>
+                        )}
+                        {isRevealed && (
+                          <span className="inline-block mt-2 text-xs text-green-400 font-bold bg-green-400/20 px-2 py-1 rounded">
+                            Révélé
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+              
+              {/* Informations sur l'équipe */}
+              <div className="mt-4 p-3 bg-black/20 rounded border border-[--color-border-dark]">
+                <p className="text-xs text-[--color-text-secondary] mb-2">
+                  <strong>Note:</strong> Chaque compétence requiert un runner spécialisé. 
+                  {Object.values(contract.requiredSkills || {}).filter(skill => skill > 0).length === 1 ? 
+                    ' Cette mission peut être accomplie par un seul agent.' :
+                    Object.values(contract.requiredSkills || {}).filter(skill => skill > 0).length === 2 ?
+                    ' Cette mission nécessite une équipe de deux agents.' :
+                    ' Cette mission nécessite une équipe complète de trois agents.'
+                  }
+                </p>
+                <p className="text-xs text-[--color-text-secondary]">
+                  Les compétences non listées (valeur 0) ne sont pas testées dans cette mission.
+                </p>
+              </div>
+              
               {canUseMouchard && (
                 <div className="mt-4">
                   <ButtonWithLoading
@@ -400,10 +473,10 @@ export default function ContractDetailsView({ initialContract }) {
                               className={`w-full text-xs font-bold py-2 px-3 rounded transition-all ${
                                 usedPrograms.includes(info.program._id)
                                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                  : 'bg-blue-600 text-white hover:bg-blue-500'
+                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white'
                               }`}
                             >
-                              {usedPrograms.includes(info.program._id) ? 'Utilisé' : 'Révéler'}
+                              {usedPrograms.includes(info.program._id) ? 'Utilisé' : 'Utiliser'}
                             </ButtonWithLoading>
                           </div>
                         ))}
@@ -411,27 +484,45 @@ export default function ContractDetailsView({ initialContract }) {
                     </div>
                   )}
 
-                  {/* Inventaire vide */}
-                  {((playerInventory.oneShotPrograms?.length || 0) === 0 && 
-                    (playerInventory.information?.length || 0) === 0) && (
-                    <div className="text-center py-8">
-                      <div className="text-4xl mb-2">🎒</div>
-                      <p className="text-[--color-text-secondary] text-sm">
-                        Aucun programme utilisable.
-                      </p>
-                      <p className="text-[--color-text-secondary] text-xs mt-1">
-                        Va au marché noir pour t&apos;équiper.
-                      </p>
+                  {/* Implants */}
+                  {(playerInventory.implants?.length || 0) > 0 && (
+                    <div>
+                      <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
+                        <span>🔧</span>
+                        Implants
+                      </h3>
+                      <div className="space-y-2">
+                        {playerInventory.implants.map((implant, index) => (
+                          <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
+                            <div className="mb-2">
+                              <span className="text-[--color-text-primary] text-sm font-medium">
+                                {implant.program?.name || 'Implant inconnu'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-[--color-text-secondary] mb-3 line-clamp-2">
+                              {implant.program?.description}
+                            </p>
+                            <ButtonWithLoading
+                              onClick={() => handleUseProgram(implant, 'implant')}
+                              isLoading={loading}
+                              loadingText="INSTALLATION..."
+                              disabled={usedPrograms.includes(implant.program._id)}
+                              className={`w-full text-xs font-bold py-2 px-3 rounded transition-all ${
+                                usedPrograms.includes(implant.program._id)
+                                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                  : 'bg-[--color-neon-cyan] text-background hover:bg-white'
+                              }`}
+                            >
+                              {usedPrograms.includes(implant.program._id) ? 'Installé' : 'Installer'}
+                            </ButtonWithLoading>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-[--color-text-secondary] text-sm">
-                    Chargement de l&apos;inventaire...
-                  </p>
-                </div>
+                <p className="text-[--color-text-secondary]">Chargement de l'inventaire...</p>
               )}
             </div>
           </div>

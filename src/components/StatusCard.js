@@ -9,7 +9,7 @@ const StatusCard = ({ money, reputation }) => {
       <div className="flex justify-between">
         <div>
           <p className="text-gray-600">Argent</p>
-          <p className="text-green-600 font-semibold">{money.toLocaleString()} €</p>
+          <p className="text-green-600 font-semibold">{money.toLocaleString('en-US')} €</p>
         </div>
         <div>
           <p className="text-gray-600">Réputation</p>

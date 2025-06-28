@@ -30,16 +30,37 @@ export async function POST(request, props) {
       return new NextResponse("Contrat non valide pour cette action.", { status: 404 });
     }
 
-    // --- TEST DES COMPÉTENCES DU RUNNER ---
-    const skillTest = testRunnerSkills(contract.assignedRunner, contract.requiredSkills);
+    // --- SYSTÈME D'ÉQUIPE D'INFILTRATION ---
+    // Pour l'instant, on garde la compatibilité avec un seul runner
+    // TODO: Implémenter le système multi-runners dans une future version
+    
+    // Récupérer les effets actifs du joueur
+    const playerEffects = contract.activeProgramEffects?.find(e => e.clerkId === userId)?.effects || {};
+    
+    // Test des compétences du runner assigné
+    const skillTest = testRunnerSkills(contract.assignedRunner, contract.requiredSkills, playerEffects);
     const isSuccess = skillTest.isSuccess;
     
     // Log de débogage pour vérifier les récompenses
     console.log(`[DEBUG] Récompenses du contrat:`, {
       eddies: contract.reward?.eddies,
       reputation: contract.reward?.reputation,
-      requiredSkills: contract.requiredSkills
+      requiredSkills: contract.requiredSkills,
+      threatLevel: contract.threatLevel
     });
+    
+    // Log détaillé des résultats de test avec effets
+    console.log(`[RESOLVE] Test de compétences pour ${contract.assignedRunner.name}:`);
+    Object.entries(skillTest.skillResults).forEach(([skill, result]) => {
+      const effectsInfo = [];
+      if (result.effects.bonusApplied > 0) effectsInfo.push(`+${result.effects.bonusApplied} bonus`);
+      if (result.effects.difficultyReduced > 0) effectsInfo.push(`-${result.effects.difficultyReduced} difficulté`);
+      if (result.effects.autoSuccess) effectsInfo.push('succès forcé');
+      
+      console.log(`  ${skill}: ${result.actual}/${result.required} (${Math.round(result.chance * 100)}% chance) → ${result.success ? 'SUCCÈS' : 'ÉCHEC'} ${effectsInfo.length > 0 ? `[${effectsInfo.join(', ')}]` : ''}`);
+    });
+    console.log(`[RESOLVE] Taux de réussite: ${Math.round(skillTest.successRate * 100)}% → ${isSuccess ? 'SUCCÈS' : 'ÉCHEC'}`);
+    console.log(`[RESOLVE] Niveau de menace: ${contract.threatLevel}`);
     
     // Mettre à jour le résultat du contrat
     contract.resolution_outcome = isSuccess ? 'Succès' : 'Échec';
@@ -50,254 +71,90 @@ export async function POST(request, props) {
     const contractData = {
       description: contract.description,
       requiredSkills: contract.requiredSkills,
-      reward: contract.reward
+      reward: contract.reward,
+      threatLevel: contract.threatLevel
     };
     const debriefingText = await generateResolutionLore(contract.title, contract.assignedRunner.name, isSuccess, contractData);
     contract.debriefing_log = debriefingText;
 
-    if (isSuccess) {
-        // --- CONSÉQUENCES DU SUCCÈS ---
-        console.log("[RESOLVE] La mission est un SUCCÈS.");
-        contract.status = 'Terminé';
+    // --- MISE À JOUR DU PROFIL JOUEUR ---
+    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
+    if (playerProfile) {
+      if (isSuccess) {
+        // Succès
+        playerProfile.eddies += contract.reward.eddies;
+        playerProfile.reputationPoints += contract.reward.reputation;
+        playerProfile.missionsCompleted += 1;
+        playerProfile.totalReputationGained += contract.reward.reputation;
         
         // Mettre à jour le statut du runner
-        contract.assignedRunner.status = skillTest.runnerStatus;
-        contract.assignedRunner.assignedContract = null;
-
-        // --- LOGIQUE D'EXPÉRIENCE ---
-        const xpGained = 50 + (contract.reward.reputation || 0);
-        contract.assignedRunner.xp += xpGained;
-        console.log(`[XP] Le runner ${contract.assignedRunner.name} gagne ${xpGained} XP.`);
-
-        // Vérification de la montée en niveau
-        if (contract.assignedRunner.xp >= contract.assignedRunner.xpToNextLevel) {
-          contract.assignedRunner.level += 1;
-          contract.assignedRunner.xp -= contract.assignedRunner.xpToNextLevel;
-          contract.assignedRunner.xpToNextLevel = Math.floor(contract.assignedRunner.xpToNextLevel * 1.5);
-
-          // Le runner gagne +1 dans une compétence aléatoire !
-          const skills = ['hacking', 'stealth', 'combat'];
-          const randomSkillUp = skills[Math.floor(Math.random() * skills.length)];
-          contract.assignedRunner.skills[randomSkillUp] += 1;
-
-          const levelUpInfo = { 
-            newLevel: contract.assignedRunner.level, 
-            skillUp: randomSkillUp, 
-            runnerName: contract.assignedRunner.name 
-          };
-          console.log(`[LEVEL UP] ${levelUpInfo.runnerName} passe au niveau ${levelUpInfo.newLevel} ! +1 en ${levelUpInfo.skillUp}.`);
-        }
-
-        // --- SYSTÈME DE RÉPUTATION BASÉ SUR LE LORE ---
-        const player = await PlayerProfile.findOne({ clerkId: userId });
-        if (player) {
-          console.log(`[DEBUG] Profil joueur trouvé: ${player.handle} - ${player.eddies} €$ - ${player.reputationPoints} PR`);
-          
-          // Calculer la réputation de base selon la difficulté
-          const difficulty = determineDifficulty(contract.requiredSkills);
-          const baseReputation = calculateReputationGain(difficulty);
-          
-          // Calculer la réputation basée sur le lore généré
-          const loreReputation = calculateReputationFromLore(debriefingText, true, baseReputation);
-          
-          console.log(`[LORE] Analyse du lore:`, {
-            factions: loreReputation.factions,
-            context: loreReputation.context,
-            baseReputation,
-            finalReputation: loreReputation.totalReputation,
-            factionImpacts: loreReputation.factionImpacts
-          });
-          
-          // Mettre à jour la réputation et les eddies en une seule opération
-          player.addReputation(loreReputation.totalReputation, `Mission réussie: ${contract.title}`);
-          player.missionsCompleted += 1;
-          
-          // Le joueur ne reçoit que 15% de la récompense totale (le reste va aux frais, taxes, etc.)
-          const playerReward = Math.floor(contract.reward.eddies * 0.15);
-          player.eddies += playerReward;
-          
-          const oldLevel = player.reputationLevel;
-          const newLevelInfo = getReputationLevelInfo(player.reputationPoints);
-          
-          await player.save();
-          
-          console.log(`[REPUTATION] ${player.handle} gagne ${loreReputation.totalReputation} PR (base: ${baseReputation}, modifié par le lore) et ${playerReward} €$ (15% de ${contract.reward.eddies} €$). Nouveau total: ${player.eddies} €$ - ${player.reputationPoints} PR. Niveau: ${player.reputationTitle}`);
-          
-          // --- SYSTÈME DE RELATIONS DE FACTION BASÉ SUR LE LORE ---
-          let factionRelations = await FactionRelations.findOne({ clerkId: userId });
-          if (!factionRelations) {
-            factionRelations = new FactionRelations({ clerkId: userId });
-          }
-          
-          // Calculer l'activité récente (derniers 7 jours)
-          const recentActivity = {};
-          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-          factionRelations.history
-            .filter(event => event.timestamp > sevenDaysAgo)
-            .forEach(event => {
-              if (!recentActivity[event.faction]) {
-                recentActivity[event.faction] = { count: 0, lastActivity: event.timestamp };
-              }
-              recentActivity[event.faction].count++;
-            });
-          
-          // Utiliser les impacts de faction calculés à partir du lore
-          Object.entries(loreReputation.factionImpacts).forEach(([faction, impact]) => {
-            factionRelations.modifyRelation(faction, impact, `Mission réussie: ${contract.title}`, contract._id);
-          });
-          
-          // Calculer les impacts de menace basés sur le contexte du lore
-          const threatImpacts = {};
-          if (loreReputation.context.isHighProfile) {
-            loreReputation.factions.forEach(faction => {
-              threatImpacts[faction] = 1; // Augmentation de menace pour les grosses corpos
-            });
-          }
-          if (loreReputation.context.isPublic) {
-            loreReputation.factions.forEach(faction => {
-              threatImpacts[faction] = (threatImpacts[faction] || 0) + 2; // Gros impact si public
-            });
-          }
-          
-          // Appliquer les impacts de menace
-          Object.entries(threatImpacts).forEach(([faction, impact]) => {
-            factionRelations.threatLevels[faction] = Math.max(0, Math.min(10, (factionRelations.threatLevels[faction] || 0) + impact));
-          });
-          
-          await factionRelations.save();
-          console.log(`[FACTION] Relations mises à jour pour ${player.handle} (basées sur le lore):`, loreReputation.factionImpacts);
-          console.log(`[FACTION] Menaces mises à jour pour ${player.handle} (basées sur le lore):`, threatImpacts);
-          
-          const reputationInfo = {
-            gained: loreReputation.totalReputation,
-            newTotal: player.reputationPoints,
-            newTitle: player.reputationTitle,
-            levelUp: oldLevel < newLevelInfo.level,
-            newLevel: newLevelInfo,
-            factionImpacts: loreReputation.factionImpacts,
-            loreAnalysis: {
-              factions: loreReputation.factions,
-              context: loreReputation.context
-            }
-          };
+        contract.assignedRunner.status = 'Disponible';
+        await contract.assignedRunner.save();
+        
+        console.log(`[RESOLVE] Mission réussie! +${contract.reward.eddies} €$ et +${contract.reward.reputation} PR`);
+      } else {
+        // Échec
+        const reputationLoss = calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3);
+        playerProfile.reputationPoints = Math.max(0, playerProfile.reputationPoints - reputationLoss);
+        playerProfile.missionsFailed += 1;
+        playerProfile.totalReputationLost += reputationLoss;
+        
+        // Conséquences sur le runner selon le taux de réussite
+        if (skillTest.successRate < 0.3) {
+          // Échec critique - runner mort
+          contract.assignedRunner.status = 'Mort';
+          console.log(`[RESOLVE] Échec critique! ${contract.assignedRunner.name} est mort.`);
         } else {
-          console.log(`[ERROR] Profil joueur non trouvé pour userId: ${userId}`);
+          // Échec normal - runner grillé
+          contract.assignedRunner.status = 'Grillé';
+          contract.assignedRunner.recoveryUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+          console.log(`[RESOLVE] Échec! ${contract.assignedRunner.name} est grillé pour 24h.`);
         }
-
-    } else {
-        // --- CONSÉQUENCES DE L'ÉCHEC ---
-        console.log("[RESOLVE] La mission est un ÉCHEC.");
-        contract.status = 'Échoué';
+        await contract.assignedRunner.save();
         
-        // Mettre à jour le statut du runner
-        contract.assignedRunner.status = skillTest.runnerStatus;
-        contract.assignedRunner.assignedContract = null;
-        
-        // Si le runner est mort, on le supprime
-        if (skillTest.runnerStatus === 'Mort') {
-          console.log(`[RUNNER] ${contract.assignedRunner.name} est mort dans la mission.`);
-        } else if (skillTest.runnerStatus === 'Grillé') {
-          console.log(`[RUNNER] ${contract.assignedRunner.name} est grillé et ne peut plus travailler.`);
-        }
-      
-        // --- SYSTÈME DE RÉPUTATION BASÉ SUR LE LORE (ÉCHEC) ---
-        const player = await PlayerProfile.findOne({ clerkId: userId });
-        if (player) {
-          const difficulty = determineDifficulty(contract.requiredSkills);
-          const baseReputation = calculateReputationLoss(difficulty, skillTest.successRate < 0.3);
-          
-          // Calculer la réputation basée sur le lore généré (échec)
-          const loreReputation = calculateReputationFromLore(debriefingText, false, Math.abs(baseReputation));
-          const reputationLost = loreReputation.totalReputation;
-          
-          console.log(`[LORE] Analyse du lore (échec):`, {
-            factions: loreReputation.factions,
-            context: loreReputation.context,
-            baseReputation: Math.abs(baseReputation),
-            finalReputation: reputationLost,
-            factionImpacts: loreReputation.factionImpacts
-          });
-          
-          // Mettre à jour la réputation en une seule opération
-          player.loseReputation(reputationLost, `Mission échouée: ${contract.title}`);
-          player.missionsFailed += 1;
-          
-          await player.save();
-          
-          console.log(`[REPUTATION] ${player.handle} perd ${reputationLost} PR (base: ${Math.abs(baseReputation)}, modifié par le lore). Nouveau total: ${player.reputationPoints} PR. Niveau: ${player.reputationTitle}`);
-          
-          // --- SYSTÈME DE RELATIONS DE FACTION BASÉ SUR LE LORE (ÉCHEC) ---
-          let factionRelations = await FactionRelations.findOne({ clerkId: userId });
-          if (!factionRelations) {
-            factionRelations = new FactionRelations({ clerkId: userId });
-          }
-          
-          // Calculer l'activité récente (derniers 7 jours)
-          const recentActivity = {};
-          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-          factionRelations.history
-            .filter(event => event.timestamp > sevenDaysAgo)
-            .forEach(event => {
-              if (!recentActivity[event.faction]) {
-                recentActivity[event.faction] = { count: 0, lastActivity: event.timestamp };
-              }
-              recentActivity[event.faction].count++;
-            });
-          
-          // Utiliser les impacts de faction calculés à partir du lore (échec = impacts négatifs)
-          Object.entries(loreReputation.factionImpacts).forEach(([faction, impact]) => {
-            factionRelations.modifyRelation(faction, -Math.abs(impact), `Mission échouée: ${contract.title}`, contract._id);
-          });
-          
-          // Calculer les impacts de menace basés sur le contexte du lore (échec)
-          const threatImpacts = {};
-          if (loreReputation.context.isHighProfile) {
-            loreReputation.factions.forEach(faction => {
-              threatImpacts[faction] = 2; // Plus de menace en cas d'échec contre les grosses corpos
-            });
-          }
-          if (loreReputation.context.isPublic) {
-            loreReputation.factions.forEach(faction => {
-              threatImpacts[faction] = (threatImpacts[faction] || 0) + 3; // Très gros impact si public et échec
-            });
-          }
-          
-          // Appliquer les impacts de menace
-          Object.entries(threatImpacts).forEach(([faction, impact]) => {
-            factionRelations.threatLevels[faction] = Math.max(0, Math.min(10, (factionRelations.threatLevels[faction] || 0) + impact));
-          });
-          
-          await factionRelations.save();
-          console.log(`[FACTION] Relations mises à jour pour ${player.handle} (échec, basées sur le lore):`, loreReputation.factionImpacts);
-          console.log(`[FACTION] Menaces mises à jour pour ${player.handle} (échec, basées sur le lore):`, threatImpacts);
-        }
-    }
-
-    // Sauvegarder le contrat
-    await contract.save();
-    
-    // Sauvegarder ou supprimer le runner selon son statut
-    if (skillTest.runnerStatus === 'Mort') {
-      await Netrunner.deleteOne({ _id: contract.assignedRunner._id });
-    } else {
-      await contract.assignedRunner.save();
-    }
-
-    // Préparer la réponse avec toutes les informations
-    const response = {
-      success: isSuccess,
-      updatedContract: contract,
-      skillTest: skillTest,
-      reputationInfo: {
-        gained: isSuccess ? calculateReputationGain(determineDifficulty(contract.requiredSkills)) : 0,
-        lost: !isSuccess ? calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3) : 0
+        console.log(`[RESOLVE] Mission échouée! -${reputationLoss} PR`);
       }
-    };
+      
+      await playerProfile.save();
+    }
 
-    return NextResponse.json(response);
+    // --- IMPACTS SUR LES RELATIONS DE FACTION ---
+    if (contract.targetFaction && contract.employerFaction) {
+      const factionRelations = await FactionRelations.findOne({ clerkId: userId });
+      if (factionRelations) {
+        const impacts = calculateFactionImpacts(contract.targetFaction, contract.employerFaction, isSuccess);
+        
+        // Appliquer les impacts
+        if (impacts.targetFaction) {
+          factionRelations.factions[contract.targetFaction] = Math.max(-100, Math.min(100, 
+            (factionRelations.factions[contract.targetFaction] || 0) + impacts.targetFaction
+          ));
+        }
+        if (impacts.employerFaction) {
+          factionRelations.factions[contract.employerFaction] = Math.max(-100, Math.min(100, 
+            (factionRelations.factions[contract.employerFaction] || 0) + impacts.employerFaction
+          ));
+        }
+        
+        await factionRelations.save();
+        console.log(`[RESOLVE] Impacts faction: ${contract.targetFaction} ${impacts.targetFaction > 0 ? '+' : ''}${impacts.targetFaction}, ${contract.employerFaction} ${impacts.employerFaction > 0 ? '+' : ''}${impacts.employerFaction}`);
+      }
+    }
+
+    // Marquer le contrat comme terminé
+    contract.status = 'Terminé';
+    await contract.save();
+
+    return NextResponse.json({
+      success: true,
+      outcome: isSuccess ? 'Succès' : 'Échec',
+      reward: isSuccess ? contract.reward : null,
+      debriefing: debriefingText,
+      skillTest: skillTest
+    });
 
   } catch (error) {
-    console.error("[API RESOLVE] Erreur:", error);
+    console.error("Erreur lors de la résolution du contrat:", error);
     return new NextResponse("Erreur interne du serveur", { status: 500 });
   }
 }

@@ -59,14 +59,14 @@ export default function ProfilePage() {
               </div>
               
               <div>
-                <p className="text-[--color-neon-cyan] text-2xl font-bold">
-                  {playerProfile.reputationPoints.toLocaleString()} PR
-                </p>
+                <div className="text-2xl text-[--color-neon-pink] font-bold">
+                  {playerProfile.reputationPoints.toLocaleString('en-US')} PR
+                </div>
                 {reputationReport.currentLevel.nextLevel && (
                   <div className="mt-2">
-                    <p className="text-sm text-[--color-text-secondary]">
-                      Prochain niveau: {reputationReport.currentLevel.nextLevel.toLocaleString()} PR
-                    </p>
+                    <div className="text-sm text-[--color-text-secondary]">
+                      Prochain niveau: {reputationReport.currentLevel.nextLevel.toLocaleString('en-US')} PR
+                    </div>
                     <div className="w-full bg-black/50 rounded-full h-2 mt-1 border border-gray-700">
                       <div 
                         className="bg-[--color-neon-cyan] h-2 rounded-full" 
@@ -100,11 +100,11 @@ export default function ProfilePage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[--color-text-secondary]">PR gagnés:</span>
-                <span className="text-green-400 font-bold">+{reputationReport.statistics.totalGained.toLocaleString()}</span>
+                <span className="text-green-400 font-bold">+{reputationReport.statistics.totalGained.toLocaleString('en-US')}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[--color-text-secondary]">PR perdus:</span>
-                <span className="text-red-400 font-bold">-{reputationReport.statistics.totalLost.toLocaleString()}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-[--color-text-secondary]">Perdus:</span>
+                <span className="text-red-400 font-bold">-{reputationReport.statistics.totalLost.toLocaleString('en-US')}</span>
               </div>
             </div>
           </div>

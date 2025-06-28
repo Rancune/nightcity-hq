@@ -10,7 +10,7 @@ const netrunnerSchema = new Schema({
 
   status: { 
     type: String, 
-    enum: ['Disponible', 'En mission', 'Grillé'], 
+    enum: ['Disponible', 'En mission', 'Grillé', 'Mort'], 
     default: 'Disponible' 
   },
 

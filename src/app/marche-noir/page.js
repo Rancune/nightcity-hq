@@ -1,39 +1,42 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import Typewriter from '@/components/Typewriter';
-import ButtonWithLoading from '@/components/ButtonWithLoading';
+import { ButtonWithLoading } from '@/components/ButtonWithLoading';
+import { Typewriter } from '@/components/Typewriter';
 
 export default function MarcheNoirPage() {
   const [programs, setPrograms] = useState([]);
   const [playerInventory, setPlayerInventory] = useState(null);
-  const [vendorMessage, setVendorMessage] = useState('');
   const [playerReputation, setPlayerReputation] = useState(0);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState({});
-  const [debugInfo, setDebugInfo] = useState(null);
-  const { isSignedIn, isLoaded } = useAuth();
   const [infoLoading, setInfoLoading] = useState({});
   const [infoResult, setInfoResult] = useState(null);
+  const [vendorMessage, setVendorMessage] = useState('Bienvenue dans le marché noir, runner. Que puis-je faire pour toi ?');
 
   const fetchMarketData = async () => {
     try {
-      const [marketResponse, inventoryResponse] = await Promise.all([
-        fetch('/api/market'),
-        fetch('/api/player/inventory')
+      const [programsResponse, inventoryResponse, profileResponse] = await Promise.all([
+        fetch('/api/market/programs'),
+        fetch('/api/player/inventory'),
+        fetch('/api/player/profile')
       ]);
-      
-      if (marketResponse.ok && inventoryResponse.ok) {
-        const marketData = await marketResponse.json();
+
+      if (programsResponse.ok) {
+        const programsData = await programsResponse.json();
+        setPrograms(programsData);
+      }
+
+      if (inventoryResponse.ok) {
         const inventoryData = await inventoryResponse.json();
-        
-        setPrograms(marketData.programs);
-        setPlayerInventory(inventoryData.detailedInventory);
-        setVendorMessage(marketData.vendorMessage);
-        setPlayerReputation(marketData.playerReputation);
+        setPlayerInventory(inventoryData);
+      }
+
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        setPlayerReputation(profileData.reputationPoints || 0);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement du marché:', error);
+      console.error('Erreur lors du chargement des données:', error);
     } finally {
       setLoading(false);
     }
@@ -41,72 +44,57 @@ export default function MarcheNoirPage() {
 
   const forceGenerateStock = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/market/debug');
+      const response = await fetch('/api/market/generate-stock', {
+        method: 'POST'
+      });
       if (response.ok) {
-        const data = await response.json();
-        setDebugInfo(data);
-        // Recharger les données du marché
         await fetchMarketData();
-        console.log(`[MARKET] Stock généré ! ${data.newPrograms?.length || 0} nouveaux programmes disponibles.`);
-      } else {
-        const errorMessage = await response.text();
-        console.error(`[MARKET] Erreur lors de la génération du stock : ${errorMessage}`);
+        setVendorMessage('Stock régénéré, runner. Nouveaux items disponibles.');
       }
     } catch (error) {
       console.error('Erreur lors de la génération du stock:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const initMarket = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/init-market');
+      const response = await fetch('/api/market/init', {
+        method: 'POST'
+      });
       if (response.ok) {
-        const data = await response.json();
-        // Recharger les données du marché
         await fetchMarketData();
-        console.log(`[MARKET] Marché initialisé ! ${data.programsCreated} programmes créés.`);
-      } else {
-        const errorMessage = await response.text();
-        console.error(`[MARKET] Erreur lors de l'initialisation : ${errorMessage}`);
+        setVendorMessage('Marché initialisé, runner. Bienvenue dans le réseau souterrain.');
       }
     } catch (error) {
-      console.error('Erreur lors de l\'initialisation:', error);
-    } finally {
-      setLoading(false);
+      console.error('Erreur lors de l\'initialisation du marché:', error);
     }
   };
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      fetchMarketData();
-    }
-  }, [isLoaded, isSignedIn]);
+    fetchMarketData();
+  }, []);
 
   const handlePurchase = async (programId) => {
     setPurchasing(prev => ({ ...prev, [programId]: true }));
     try {
-      const response = await fetch('/api/market', {
+      const response = await fetch('/api/market/purchase', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ programId }),
       });
-      
+
       if (response.ok) {
-        const data = await response.json();
-        setPlayerInventory(data.detailedInventory);
-        // Recharger les données du marché pour mettre à jour le stock
+        const result = await response.json();
+        setVendorMessage(`Transaction réussie, runner. ${result.program.name} ajouté à ton inventaire.`);
         await fetchMarketData();
-        console.log(`[MARKET] Achat réussi: ${data.program.name}`);
       } else {
         const error = await response.text();
-        console.error(`[MARKET] Erreur d'achat: ${error}`);
+        setVendorMessage(`Erreur: ${error}`);
       }
     } catch (error) {
-      console.error('Erreur lors de l\'achat:', error);
+      setVendorMessage('Erreur de connexion au réseau.');
     } finally {
       setPurchasing(prev => ({ ...prev, [programId]: false }));
     }
@@ -114,17 +102,18 @@ export default function MarcheNoirPage() {
 
   const handleUseInformation = async (info) => {
     setInfoLoading(prev => ({ ...prev, [info.program?._id]: true }));
-    setInfoResult(null);
     try {
-      const response = await fetch('/api/player/use-information', {
+      const response = await fetch('/api/market/use-information', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ programId: info.program?._id })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ informationId: info.program._id }),
       });
+
       if (response.ok) {
         const data = await response.json();
         setInfoResult({ success: true, contract: data.contract });
-        // Rafraîchir l'inventaire
         await fetchMarketData();
       } else {
         const error = await response.text();
@@ -291,7 +280,7 @@ export default function MarcheNoirPage() {
                     {/* Prix et stock */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-[--color-neon-pink] font-bold text-sm">
-                        {program.price.toLocaleString()} €$
+                        {program.price.toLocaleString('en-US')} €$
                       </div>
                       <div className="text-[--color-text-secondary] text-xs">
                         Stock: {program.stock}/{program.maxStock}
@@ -478,7 +467,7 @@ export default function MarcheNoirPage() {
                       <div className="flex justify-between">
                         <span className="text-[--color-text-secondary]">Total dépensé:</span>
                         <span className="text-[--color-neon-pink] font-bold">
-                          {playerInventory.totalSpent?.toLocaleString() || 0} €$
+                          {playerInventory.totalSpent?.toLocaleString('en-US') || 0} €$
                         </span>
                       </div>
                       {(playerInventory.signatureItemsPurchased || 0) > 0 && (
@@ -514,4 +503,4 @@ export default function MarcheNoirPage() {
       </div>
     </main>
   );
-} 
+}
