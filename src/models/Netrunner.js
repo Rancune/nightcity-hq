@@ -38,6 +38,14 @@ const netrunnerSchema = new Schema({
     installedAt: { type: Date, default: Date.now }
   }],
 
+  // Champs pour la mort du runner
+  deathCause: { type: String, default: null }, // Cause de la mort (ex: "Grillé par ICE", "Tué en combat")
+  deathDate: { type: Date, default: null }, // Date de la mort
+  epitaph: { type: String, default: null }, // Épitaphe personnalisée
+
+  // Commission du Fixer (en pourcentage, ex: 20.5)
+  fixerCommission: { type: Number, default: 20 },
+
 }, { timestamps: true });
 
 const Netrunner = mongoose.models.Netrunner || mongoose.model('Netrunner', netrunnerSchema);

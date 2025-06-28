@@ -1,7 +1,7 @@
 // src/components/ContractDetailsView.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Typewriter from './Typewriter';
@@ -21,6 +21,8 @@ export default function ContractDetailsView({ initialContract }) {
   const [skillBonuses, setSkillBonuses] = useState({});
   const [mouchardLoading, setMouchardLoading] = useState(false);
   const router = useRouter();
+  const revealedRefs = useRef({});
+  const [lastRevealed, setLastRevealed] = useState(null);
 
   // Récupérer l'inventaire du joueur
   useEffect(() => {
@@ -51,6 +53,14 @@ export default function ContractDetailsView({ initialContract }) {
     getRevealed();
   }, [contract]);
 
+  // Scroll automatique sur la dernière compétence révélée
+  useEffect(() => {
+    if (lastRevealed && revealedRefs.current[lastRevealed]) {
+      revealedRefs.current[lastRevealed].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => setLastRevealed(null), 1000); // Reset pour l'animation
+    }
+  }, [lastRevealed]);
+
   const handleUseProgram = async (program, category) => {
     setLoading(true);
     try {
@@ -72,7 +82,10 @@ export default function ContractDetailsView({ initialContract }) {
         // Appliquer les effets
         if (data.effects) {
           if (data.effects.reveal_skill && data.revealedSkill) {
-            setRevealedSkills(prev => [...prev, data.revealedSkill]);
+            setRevealedSkills(prev => {
+              setLastRevealed(data.revealedSkill); // Pour l'animation et le scroll
+              return [...prev, data.revealedSkill];
+            });
           }
           if (data.effects.add_bonus_roll) {
             setSkillBonuses(prev => ({
@@ -82,6 +95,12 @@ export default function ContractDetailsView({ initialContract }) {
           }
         }
 
+        // Recharger le contrat pour garder la persistance des compétences révélées
+        const contractRes = await fetch(`/api/contrats/${contract._id}`);
+        if (contractRes.ok) {
+          const updated = await contractRes.json();
+          setContract(updated);
+        }
         // Recharger l'inventaire
         const inventoryResponse = await fetch('/api/player/inventory');
         if (inventoryResponse.ok) {
@@ -176,6 +195,29 @@ export default function ContractDetailsView({ initialContract }) {
     }
   };
 
+  // Fonction pour filtrer les programmes selon le statut du contrat
+  const canUseProgram = (programName, contractStatus) => {
+    const canUseOnProposed = [
+      "Logiciel 'Mouchard'",
+      "Analyseur de Contrat",
+    ];
+
+    const canUseOnAssigned = [
+      "Brise-Glace",
+      "Sandevistan", 
+      "Décharge IEM",
+      "Zero Day",
+      "Blackwall",
+    ];
+
+    if (contractStatus === 'Proposé') {
+      return canUseOnProposed.includes(programName);
+    } else if (contractStatus === 'Assigné') {
+      return canUseOnAssigned.includes(programName) || canUseOnProposed.includes(programName);
+    }
+    return false;
+  };
+
   // Récompenses
   const rewardEddies = contract.reward?.eddies || 0;
   const rewardReputation = contract.reward?.reputation || 0;
@@ -259,7 +301,17 @@ export default function ContractDetailsView({ initialContract }) {
                   {testedSkills.map(({ skill, value }) => {
                     const isRevealed = revealedSkills.includes(skill) || allSkillsRevealed;
                     return (
-                      <div key={skill} className={`p-3 rounded border ${isRevealed ? 'bg-green-400/20 border-green-400/50' : 'bg-black/30 border-[--color-border-dark]'}`}>
+                      <div
+                        key={skill}
+                        ref={el => { if (isRevealed) revealedRefs.current[skill] = el; }}
+                        className={`p-3 rounded border transition-all duration-700 ease-out
+                          ${isRevealed ? 'bg-green-400/20 border-green-400/50 animate-fadein-slide' : 'bg-black/30 border-[--color-border-dark]'}
+                          ${lastRevealed === skill ? 'ring-4 ring-yellow-400/60' : ''}`}
+                        style={{
+                          opacity: isRevealed ? 1 : 0.7,
+                          transform: lastRevealed === skill ? 'scale(1.05)' : 'none',
+                        }}
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">
@@ -412,7 +464,9 @@ export default function ContractDetailsView({ initialContract }) {
                         Programmes One-Shot
                       </h3>
                       <div className="space-y-2">
-                        {playerInventory.oneShotPrograms.map((item, index) => (
+                        {playerInventory.oneShotPrograms
+                          .filter(item => canUseProgram(item.program?.name, contract.status))
+                          .map((item, index) => (
                           <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
                             <div className="mb-2">
                               <div className="flex justify-between items-center">
@@ -444,18 +498,27 @@ export default function ContractDetailsView({ initialContract }) {
                           </div>
                         ))}
                       </div>
+                      {playerInventory.oneShotPrograms.filter(item => !canUseProgram(item.program?.name, contract.status)).length > 0 && (
+                        <div className="mt-4 p-3 bg-gray-800/50 rounded border border-gray-600">
+                          <p className="text-xs text-gray-400">
+                            Certains programmes ne sont disponibles que sur des contrats assignés.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Informations */}
-                  {(playerInventory.information?.length || 0) > 0 && (
+                  {(playerInventory.purchasedInformation?.length || 0) > 0 && (
                     <div>
                       <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
                         <span>💾</span>
                         Informations
                       </h3>
                       <div className="space-y-2">
-                        {playerInventory.information.map((info, index) => (
+                        {playerInventory.purchasedInformation
+                          .filter(info => canUseProgram(info.program?.name, contract.status))
+                          .map((info, index) => (
                           <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
                             <div className="mb-2">
                               <span className="text-[--color-text-primary] text-sm font-medium">
@@ -492,7 +555,9 @@ export default function ContractDetailsView({ initialContract }) {
                         Implants
                       </h3>
                       <div className="space-y-2">
-                        {playerInventory.implants.map((implant, index) => (
+                        {playerInventory.implants
+                          .filter(implant => canUseProgram(implant.program?.name, contract.status))
+                          .map((implant, index) => (
                           <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
                             <div className="mb-2">
                               <span className="text-[--color-text-primary] text-sm font-medium">

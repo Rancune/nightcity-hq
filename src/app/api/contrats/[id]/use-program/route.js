@@ -17,15 +17,12 @@ export async function POST(request, { params }) {
 
     await connectDb();
 
+    const awaitedParams = await params;
+
     // Récupérer le contrat
-    const contract = await Contract.findById(params.id);
+    const contract = await Contract.findById(awaitedParams.id);
     if (!contract) {
       return new NextResponse("Contrat non trouvé", { status: 404 });
-    }
-
-    // Vérifier que le contrat est assigné
-    if (contract.status !== 'Assigné') {
-      return new NextResponse("Le contrat doit être assigné pour utiliser des programmes", { status: 400 });
     }
 
     // Récupérer le programme
@@ -54,6 +51,35 @@ export async function POST(request, { params }) {
 
     if (!hasProgram) {
       return new NextResponse("Vous ne possédez pas ce programme", { status: 400 });
+    }
+
+    // Déterminer si le programme peut être utilisé selon le statut du contrat
+    const canUseOnProposed = [
+      "Logiciel 'Mouchard'", // Peut révéler des compétences sur les contrats proposés
+      "Analyseur de Contrat", // Peut analyser les contrats proposés
+      // Ajouter d'autres programmes qui peuvent être utilisés sur les contrats proposés
+    ];
+
+    const canUseOnAssigned = [
+      "Brise-Glace",
+      "Sandevistan", 
+      "Décharge IEM",
+      "Zero Day",
+      "Blackwall",
+      // Ajouter d'autres programmes de combat/assistance
+    ];
+
+    // Vérifier les permissions selon le statut du contrat
+    if (contract.status === 'Proposé') {
+      if (!canUseOnProposed.includes(program.name)) {
+        return new NextResponse("Ce programme ne peut être utilisé que sur des contrats assignés", { status: 400 });
+      }
+    } else if (contract.status === 'Assigné') {
+      if (!canUseOnAssigned.includes(program.name) && !canUseOnProposed.includes(program.name)) {
+        return new NextResponse("Ce programme ne peut pas être utilisé sur ce type de contrat", { status: 400 });
+      }
+    } else {
+      return new NextResponse("Le contrat doit être proposé ou assigné pour utiliser des programmes", { status: 400 });
     }
 
     // Appliquer les effets du programme

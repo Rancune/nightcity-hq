@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ButtonWithLoading } from '@/components/ButtonWithLoading';
-import { Typewriter } from '@/components/Typewriter';
+import ButtonWithLoading from '@/components/ButtonWithLoading';
+import Typewriter from '@/components/Typewriter';
 
 export default function MarcheNoirPage() {
   const [programs, setPrograms] = useState([]);

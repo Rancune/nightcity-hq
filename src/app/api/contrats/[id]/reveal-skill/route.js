@@ -11,8 +11,10 @@ export async function POST(request, { params }) {
 
     await connectDb();
 
+    const awaitedParams = await params;
+
     // Récupérer le contrat
-    const contract = await Contract.findById(params.id);
+    const contract = await Contract.findById(awaitedParams.id);
     if (!contract) {
       return new NextResponse("Contrat non trouvé", { status: 404 });
     }

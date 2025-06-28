@@ -60,8 +60,8 @@ export async function PUT(request, { params }) {
           status: 'Assigné',
           ownerId: userId,
           assignedRunner: netrunnerId,
-          // Timer de 5 secondes pour les tests
-          initial_completion_duration_trp: 5, // 5 secondes pour les tests
+          // Timer de 15 secondes pour les tests
+          initial_completion_duration_trp: 15, // 15 secondes pour les tests
           completion_timer_started_at: new Date(), // On enregistre l'heure de début
         }
       },

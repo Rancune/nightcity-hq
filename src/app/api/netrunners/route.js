@@ -63,68 +63,56 @@ export async function GET() {
 }
 
 // POST : Pour recruter (générer) un nouveau runner
-export async function POST() {
+export async function POST(request) {
   try {
     const { userId } = await auth();
-    console.log("[API POST /netrunners] userId from auth:", userId);
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
     await connectDb();
 
-    const RECRUIT_COST = 500;
-    let player = await PlayerProfile.findOne({ clerkId: userId });
+    // Récupérer les données de la requête
+    const body = await request.json();
+    const { name, skills } = body;
 
-    if (!player) {
-      // Crée un nouveau profil joueur avec le solde de départ et un handle unique
-      const uniqueHandle = `runner_${userId.slice(-6)}`;
-      player = new PlayerProfile({
-        clerkId: userId,
-        eddies: 1000, // montant de départ
-        handle: uniqueHandle,
-        // Ajoute ici d'autres champs par défaut si besoin
-      });
-      await player.save();
-      console.log("[API POST /netrunners] Nouveau profil joueur créé pour:", userId, "avec handle:", uniqueHandle);
-    }
-
-    console.log(`[API POST /netrunners] userId: ${userId}, eddies: ${player ? player.eddies : 'player not found'}`);
-
-    if (!player || player.eddies < RECRUIT_COST) {
-      return new NextResponse("Fonds insuffisants pour recruter.", { status: 400 });
-    }
-
-    player.eddies -= RECRUIT_COST;
-
-    const firstNames = ["Jax", "Cyra", "Kael", "Nyx", "Rogue", "Spike", "Vex"];
-    const lastNames = ["Vector", "Byte", "Chrome", "Neon", "Silas", "Zero", "Glitch"];
-
-    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const runnerName = `${randomFirstName} ${randomLastName}`;
-
-    const newRunner = new Netrunner({
-      ownerId: userId,
-      name: runnerName,
-      // --- LA PARTIE IMPORTANTE ---
-      // On génère des compétences aléatoires entre 1 et 5
-      skills: {
+    // Génération des données du runner
+    let runnerName, runnerSkills;
+    if (name && skills) {
+      runnerName = name;
+      runnerSkills = skills;
+    } else {
+      const firstNames = ["Jax", "Cyra", "Kael", "Nyx", "Rogue", "Spike", "Vex"];
+      const lastNames = ["Vector", "Byte", "Chrome", "Neon", "Silas", "Zero", "Glitch"];
+      const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+      runnerName = `${randomFirstName} ${randomLastName}`;
+      runnerSkills = {
         hacking: Math.floor(Math.random() * 5) + 1,
         stealth: Math.floor(Math.random() * 5) + 1,
         combat: Math.floor(Math.random() * 5) + 1,
-      }
+      };
+    }
+
+    // Calcul de la commission initiale du Fixer
+    const totalPoints = runnerSkills.hacking + runnerSkills.stealth + runnerSkills.combat;
+    let fixerCommission = 25 - (totalPoints * 0.5);
+    fixerCommission = Math.max(10, Math.min(fixerCommission, 50)); // Clamp entre 10% et 50%
+    fixerCommission = Math.round(fixerCommission * 10) / 10; // arrondi à 0.1 près
+
+    // Création du runner
+    const newRunner = new Netrunner({
+      ownerId: userId,
+      name: runnerName,
+      skills: runnerSkills,
+      fixerCommission
     });
-
     await newRunner.save();
-    await player.save();
-
-    console.log(`[API POST /netrunners] Nouveau runner créé: ${runnerName} pour ${userId}`);
 
     return NextResponse.json({
       success: true,
       message: `Runner ${runnerName} recruté avec succès !`,
-      runner: newRunner
+      runner: newRunner,
+      fixerCommission
     });
-
   } catch (error) {
     console.error("[API POST /netrunners] Erreur:", error);
     return new NextResponse("Erreur interne du serveur", { status: 500 });

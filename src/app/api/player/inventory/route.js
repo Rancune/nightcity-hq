@@ -46,6 +46,11 @@ export async function GET() {
     const implants = oneShotPrograms.filter(item => item.program?.category === 'implant');
     const actualOneShotPrograms = oneShotPrograms.filter(item => item.program?.category === 'one_shot');
 
+    console.log('[INVENTORY] Debug - Total programmes:', oneShotPrograms.length);
+    console.log('[INVENTORY] Debug - Implants trouvés:', implants.length);
+    console.log('[INVENTORY] Debug - One-shot trouvés:', actualOneShotPrograms.length);
+    console.log('[INVENTORY] Debug - Catégories:', oneShotPrograms.map(item => item.program?.category));
+
     // Récupérer les détails des implants installés sur les runners
     const installedImplants = await Promise.all(
       playerInventory.installedImplants.map(async (item) => {

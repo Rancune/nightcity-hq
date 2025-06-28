@@ -16,6 +16,59 @@ import { testRunnerSkills } from '@/Lib/skillTest';
 import FactionRelations from '@/models/FactionRelations';
 import { calculateFactionImpacts } from '@/Lib/factionRelations';
 
+// Fonction pour générer une cause de mort basée sur le contexte
+function generateDeathCause(contract, skillTest) {
+  const causes = [
+    "Grillé par ICE",
+    "Tué en combat",
+    "Overdose de cyberpsychose",
+    "Défaillance d'implant critique",
+    "Trahison d'un contact",
+    "Accident de navigation",
+    "Empoisonnement",
+    "Décharge électrique fatale",
+    "Implosion de système",
+    "Suicide par déconnexion"
+  ];
+  
+  // Choisir une cause basée sur les compétences qui ont le plus échoué
+  const failedSkills = Object.entries(skillTest.skillResults)
+    .filter(([skill, result]) => !result.success)
+    .sort((a, b) => b[1].required - a[1].required);
+  
+  if (failedSkills.length > 0) {
+    const [worstSkill] = failedSkills[0];
+    if (worstSkill === 'hacking') {
+      return causes[0]; // "Grillé par ICE"
+    } else if (worstSkill === 'combat') {
+      return causes[1]; // "Tué en combat"
+    } else if (worstSkill === 'stealth') {
+      return causes[4]; // "Trahison d'un contact"
+    }
+  }
+  
+  // Cause aléatoire si aucune correspondance
+  return causes[Math.floor(Math.random() * causes.length)];
+}
+
+// Fonction pour générer une épitaphe
+function generateEpitaph(runnerName, deathCause, contract) {
+  const epitaphs = [
+    `"${runnerName} a choisi la voie du code éternel."`,
+    `"Dans la matrice, ${runnerName} vit encore."`,
+    `"Un runner de plus dans les archives de Night City."`,
+    `"${runnerName} a trouvé la paix dans le silence numérique."`,
+    `"Le code ne meurt jamais, ${runnerName} non plus."`,
+    `"Une légende de plus dans les rues de Night City."`,
+    `"${runnerName} a payé le prix ultime pour la liberté."`,
+    `"Dans l'ombre, ${runnerName} veille encore."`,
+    `"Un fantôme de plus dans le réseau."`,
+    `"${runnerName} a rejoint les archives des disparus."`
+  ];
+  
+  return epitaphs[Math.floor(Math.random() * epitaphs.length)];
+}
+
 export async function POST(request, props) {
   const params = await props.params;
   try {
@@ -81,20 +134,54 @@ export async function POST(request, props) {
     const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
     if (playerProfile) {
       if (isSuccess) {
-        // Succès
-        playerProfile.eddies += contract.reward.eddies;
+        // Succès - PARTAGE DES GAINS SELON LA COMMISSION DU RUNNER
+        const commission = contract.assignedRunner.fixerCommission || 20;
+        const eddiesPourFixer = Math.round(contract.reward.eddies * (commission / 100));
+        const eddiesPourRunner = contract.reward.eddies - eddiesPourFixer;
+        const oldEddies = playerProfile.eddies;
+        const oldReputation = playerProfile.reputationPoints;
+        
+        playerProfile.eddies += eddiesPourFixer;
         playerProfile.reputationPoints += contract.reward.reputation;
         playerProfile.missionsCompleted += 1;
         playerProfile.totalReputationGained += contract.reward.reputation;
         
-        // Mettre à jour le statut du runner
+        // Mettre à jour le statut du runner et lui donner de l'XP
         contract.assignedRunner.status = 'Disponible';
+        
+        // Calculer l'XP gagnée basée sur la difficulté et le niveau de menace
+        const baseXP = 50; // XP de base
+        const difficultyMultiplier = {
+          'facile': 1,
+          'moyen': 1.5,
+          'difficile': 2,
+          'expert': 3
+        };
+        const difficulty = contract.loreDifficulty || 'moyen';
+        const threatMultiplier = contract.threatLevel || 1;
+        const xpGained = Math.floor(baseXP * difficultyMultiplier[difficulty] * threatMultiplier);
+        
+        // Ajouter l'XP au runner
+        contract.assignedRunner.xp += xpGained;
+        
+        // Vérifier si le runner monte de niveau
+        while (contract.assignedRunner.xp >= contract.assignedRunner.xpToNextLevel) {
+          contract.assignedRunner.xp -= contract.assignedRunner.xpToNextLevel;
+          contract.assignedRunner.level += 1;
+          contract.assignedRunner.xpToNextLevel = Math.floor(contract.assignedRunner.xpToNextLevel * 1.5); // Augmentation progressive
+          // Augmenter la commission du Fixer de +1% (max 50%)
+          contract.assignedRunner.fixerCommission = Math.min(50, (contract.assignedRunner.fixerCommission || 20) + 1);
+        }
         await contract.assignedRunner.save();
         
-        console.log(`[RESOLVE] Mission réussie! +${contract.reward.eddies} €$ et +${contract.reward.reputation} PR`);
+        console.log(`[RESOLVE] Mission réussie! +${eddiesPourFixer} €$ (Fixer) / +${eddiesPourRunner} €$ (Runner) et +${contract.reward.reputation} PR`);
+        console.log(`[RESOLVE] Runner ${contract.assignedRunner.name} gagne ${xpGained} XP (Niveau ${contract.assignedRunner.level}, Commission Fixer: ${contract.assignedRunner.fixerCommission}%)`);
+        console.log(`[RESOLVE] Profil joueur: ${oldEddies} → ${playerProfile.eddies} €$, ${oldReputation} → ${playerProfile.reputationPoints} PR`);
       } else {
         // Échec
         const reputationLoss = calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3);
+        const oldReputation = playerProfile.reputationPoints;
+        
         playerProfile.reputationPoints = Math.max(0, playerProfile.reputationPoints - reputationLoss);
         playerProfile.missionsFailed += 1;
         playerProfile.totalReputationLost += reputationLoss;
@@ -103,7 +190,11 @@ export async function POST(request, props) {
         if (skillTest.successRate < 0.3) {
           // Échec critique - runner mort
           contract.assignedRunner.status = 'Mort';
-          console.log(`[RESOLVE] Échec critique! ${contract.assignedRunner.name} est mort.`);
+          contract.assignedRunner.deathCause = generateDeathCause(contract, skillTest);
+          contract.assignedRunner.deathDate = new Date();
+          contract.assignedRunner.epitaph = generateEpitaph(contract.assignedRunner.name, contract.assignedRunner.deathCause, contract);
+          
+          console.log(`[RESOLVE] Échec critique! ${contract.assignedRunner.name} est mort. Cause: ${contract.assignedRunner.deathCause}`);
         } else {
           // Échec normal - runner grillé
           contract.assignedRunner.status = 'Grillé';
@@ -112,7 +203,7 @@ export async function POST(request, props) {
         }
         await contract.assignedRunner.save();
         
-        console.log(`[RESOLVE] Mission échouée! -${reputationLoss} PR`);
+        console.log(`[RESOLVE] Mission échouée! -${reputationLoss} PR (${oldReputation} → ${playerProfile.reputationPoints})`);
       }
       
       await playerProfile.save();
@@ -145,12 +236,60 @@ export async function POST(request, props) {
     contract.status = 'Terminé';
     await contract.save();
 
+    // Préparer les informations de réputation pour la modal
+    const reputationInfo = {
+      gained: isSuccess ? contract.reward.reputation : 0,
+      lost: !isSuccess ? calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3) : 0
+    };
+
+    // Préparer les informations sur les programmes utilisés
+    const usedPrograms = [];
+    if (contract.activeProgramEffects) {
+      const playerEffects = contract.activeProgramEffects.find(e => e.clerkId === userId);
+      if (playerEffects && playerEffects.effects) {
+        // Récupérer les détails des programmes utilisés
+        const { default: Program } = await import('@/models/Program');
+        for (const [programId, effects] of Object.entries(playerEffects.effects)) {
+          try {
+            const program = await Program.findById(programId).lean();
+            if (program) {
+              usedPrograms.push({
+                name: program.name,
+                cost: program.price || 1000, // Coût par défaut si pas défini
+                effects: effects
+              });
+            }
+          } catch (error) {
+            console.log(`[RESOLVE] Erreur lors de la récupération du programme ${programId}:`, error);
+          }
+        }
+      }
+    }
+
+    // Calculer les gains nets
+    const commission = contract.assignedRunner?.fixerCommission || 20;
+    const totalReward = contract.reward?.eddies || 0;
+    const fixerShare = Math.round(totalReward * (commission / 100));
+    const totalProgramCost = usedPrograms.reduce((sum, prog) => sum + prog.cost, 0);
+    const netGains = isSuccess ? fixerShare - totalProgramCost : -totalProgramCost;
+
     return NextResponse.json({
       success: true,
       outcome: isSuccess ? 'Succès' : 'Échec',
       reward: isSuccess ? contract.reward : null,
       debriefing: debriefingText,
-      skillTest: skillTest
+      skillTest: skillTest,
+      updatedContract: contract,
+      reputationInfo: reputationInfo,
+      usedPrograms: usedPrograms,
+      financialSummary: {
+        totalReward,
+        fixerShare,
+        runnerShare: totalReward - fixerShare,
+        commission,
+        totalProgramCost,
+        netGains
+      }
     });
 
   } catch (error) {

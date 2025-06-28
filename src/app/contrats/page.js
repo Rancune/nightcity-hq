@@ -30,6 +30,8 @@ export default function ContratsPage() {
   const [showDebriefing, setShowDebriefing] = useState(false);
   const [debriefingContract, setDebriefingContract] = useState(null);
   const [debriefingReputationInfo, setDebriefingReputationInfo] = useState(null);
+  const [debriefingUsedPrograms, setDebriefingUsedPrograms] = useState([]);
+  const [debriefingFinancialSummary, setDebriefingFinancialSummary] = useState(null);
   const { isSignedIn, isLoaded } = useAuth();
 
   const fetchData = async () => {
@@ -137,12 +139,27 @@ export default function ContratsPage() {
       const response = await fetch(`/api/contrats/${contractId}/resolve`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
+        console.log('[CLAIM] Données de résolution reçues:', data);
+        
+        // Mettre à jour les états pour la modal
         setDebriefingContract(data.updatedContract);
         setDebriefingReputationInfo(data.reputationInfo);
+        setDebriefingUsedPrograms(data.usedPrograms || []);
+        setDebriefingFinancialSummary(data.financialSummary || null);
         setShowDebriefing(true);
+        
+        // Recharger les données après un court délai
+        setTimeout(() => {
+          fetchData();
+        }, 1000);
+      } else {
+        const errorMessage = await response.text();
+        console.error(`[CLAIM] Erreur lors de la réclamation: ${errorMessage}`);
+        alert(`Erreur lors de la réclamation: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de la réclamation de la récompense:', error);
+      alert('Erreur lors de la réclamation de la récompense');
     } finally {
       setLoadingReports(prev => ({ ...prev, [contractId]: false }));
     }
@@ -630,10 +647,14 @@ export default function ContratsPage() {
         isOpen={showDebriefing}
         contract={debriefingContract}
         reputationInfo={debriefingReputationInfo}
+        usedPrograms={debriefingUsedPrograms}
+        financialSummary={debriefingFinancialSummary}
         onClose={() => {
           setShowDebriefing(false);
           setDebriefingContract(null);
           setDebriefingReputationInfo(null);
+          setDebriefingUsedPrograms([]);
+          setDebriefingFinancialSummary(null);
           // Recharger les données après fermeture de la modale
           setTimeout(() => {
             fetchData();

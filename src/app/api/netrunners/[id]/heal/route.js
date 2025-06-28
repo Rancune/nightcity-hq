@@ -10,7 +10,8 @@ export async function POST(request, { params }) {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
-    const runnerId = await params.id;
+    const awaitedParams = await params;
+    const runnerId = awaitedParams.id;
     const HEAL_COST = 10000; // Coût de l'opération : 10000 eddies
 
     await connectDb();

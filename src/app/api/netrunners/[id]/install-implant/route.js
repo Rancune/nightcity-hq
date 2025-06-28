@@ -18,8 +18,10 @@ export async function POST(request, { params }) {
 
     await connectDb();
 
+    const awaitedParams = await params;
+
     // Récupérer le runner
-    const runner = await Netrunner.findById(params.id);
+    const runner = await Netrunner.findById(awaitedParams.id);
     if (!runner) {
       return new NextResponse("Runner non trouvé", { status: 404 });
     }
