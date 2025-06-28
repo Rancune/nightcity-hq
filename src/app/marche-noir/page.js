@@ -13,6 +13,8 @@ export default function MarcheNoirPage() {
   const [purchasing, setPurchasing] = useState({});
   const [debugInfo, setDebugInfo] = useState(null);
   const { isSignedIn, isLoaded } = useAuth();
+  const [infoLoading, setInfoLoading] = useState({});
+  const [infoResult, setInfoResult] = useState(null);
 
   const fetchMarketData = async () => {
     try {
@@ -26,7 +28,7 @@ export default function MarcheNoirPage() {
         const inventoryData = await inventoryResponse.json();
         
         setPrograms(marketData.programs);
-        setPlayerInventory(inventoryData);
+        setPlayerInventory(inventoryData.detailedInventory);
         setVendorMessage(marketData.vendorMessage);
         setPlayerReputation(marketData.playerReputation);
       }
@@ -46,14 +48,13 @@ export default function MarcheNoirPage() {
         setDebugInfo(data);
         // Recharger les données du marché
         await fetchMarketData();
-        alert(`Stock généré ! ${data.newPrograms?.length || 0} nouveaux programmes disponibles.`);
+        console.log(`[MARKET] Stock généré ! ${data.newPrograms?.length || 0} nouveaux programmes disponibles.`);
       } else {
         const errorMessage = await response.text();
-        alert(`Erreur lors de la génération du stock : ${errorMessage}`);
+        console.error(`[MARKET] Erreur lors de la génération du stock : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de la génération du stock:', error);
-      alert('Erreur lors de la génération du stock');
     } finally {
       setLoading(false);
     }
@@ -67,14 +68,13 @@ export default function MarcheNoirPage() {
         const data = await response.json();
         // Recharger les données du marché
         await fetchMarketData();
-        alert(`Marché initialisé ! ${data.programsCreated} programmes créés.`);
+        console.log(`[MARKET] Marché initialisé ! ${data.programsCreated} programmes créés.`);
       } else {
         const errorMessage = await response.text();
-        alert(`Erreur lors de l'initialisation : ${errorMessage}`);
+        console.error(`[MARKET] Erreur lors de l'initialisation : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de l\'initialisation:', error);
-      alert('Erreur lors de l\'initialisation');
     } finally {
       setLoading(false);
     }
@@ -97,19 +97,43 @@ export default function MarcheNoirPage() {
       
       if (response.ok) {
         const data = await response.json();
-        // Recharger les données
+        setPlayerInventory(data.detailedInventory);
+        // Recharger les données du marché pour mettre à jour le stock
         await fetchMarketData();
-        // Notification de succès
-        alert(`Achat réussi ! ${data.program.name} ajouté à ton inventaire.`);
+        console.log(`[MARKET] Achat réussi: ${data.program.name}`);
       } else {
         const error = await response.text();
-        alert(`Erreur: ${error}`);
+        console.error(`[MARKET] Erreur d'achat: ${error}`);
       }
     } catch (error) {
       console.error('Erreur lors de l\'achat:', error);
-      alert('Erreur lors de l\'achat');
     } finally {
       setPurchasing(prev => ({ ...prev, [programId]: false }));
+    }
+  };
+
+  const handleUseInformation = async (info) => {
+    setInfoLoading(prev => ({ ...prev, [info.program?._id]: true }));
+    setInfoResult(null);
+    try {
+      const response = await fetch('/api/player/use-information', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programId: info.program?._id })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInfoResult({ success: true, contract: data.contract });
+        // Rafraîchir l'inventaire
+        await fetchMarketData();
+      } else {
+        const error = await response.text();
+        setInfoResult({ success: false, message: error });
+      }
+    } catch (error) {
+      setInfoResult({ success: false, message: 'Erreur lors de l\'utilisation du datashard.' });
+    } finally {
+      setInfoLoading(prev => ({ ...prev, [info.program?._id]: false }));
     }
   };
 
@@ -387,34 +411,55 @@ export default function MarcheNoirPage() {
                   )}
 
                   {/* Informations */}
-                  {(playerInventory.information?.length || 0) > 0 && (
+                  {(playerInventory.purchasedInformation?.length || 0) > 0 && (
                     <div>
                       <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
                         <span>💾</span>
                         Informations
                       </h3>
                       <div className="space-y-2">
-                        {playerInventory.information.map((info, index) => (
+                        {playerInventory.purchasedInformation.map((info, index) => (
                           <div key={index} className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="text-[--color-text-primary] text-sm font-medium">Info #{index + 1}</span>
-                                <div className="text-xs text-[--color-text-secondary] mt-1">
-                                  {info.program?.name || 'Information inconnue'}
-                                </div>
-                              </div>
+                            <div className="mb-2 flex justify-between items-center">
+                              <span className="text-[--color-text-primary] text-sm font-medium">
+                                {info.program?.name || 'Information inconnue'}
+                              </span>
                               <span className="text-blue-400 text-sm">📄</span>
                             </div>
+                            <p className="text-xs text-[--color-text-secondary] mb-3 line-clamp-2">
+                              {info.program?.description}
+                            </p>
+                            <ButtonWithLoading
+                              onClick={() => handleUseInformation(info)}
+                              isLoading={infoLoading[info.program?._id] || false}
+                              loadingText="UTILISATION..."
+                              className="w-full text-xs font-bold py-2 px-3 rounded transition-all bg-blue-600 text-white hover:bg-blue-500"
+                            >
+                              Utiliser
+                            </ButtonWithLoading>
                           </div>
                         ))}
                       </div>
+                      {infoResult && (
+                        <div className={`mt-4 p-3 rounded ${infoResult.success ? 'bg-green-900/30 text-green-300' : 'bg-red-900/30 text-red-300'}`}>
+                          {infoResult.success ? (
+                            <>
+                              Contrat exclusif généré !
+                              <br />
+                              <a href={`/contrats/${infoResult.contract._id}`} className="underline text-[--color-neon-cyan]">Voir le contrat</a>
+                            </>
+                          ) : (
+                            <>{infoResult.message}</>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Inventaire vide */}
                   {((playerInventory.oneShotPrograms?.length || 0) === 0 && 
                     (playerInventory.installedImplants?.length || 0) === 0 && 
-                    (playerInventory.information?.length || 0) === 0) && (
+                    (playerInventory.purchasedInformation?.length || 0) === 0) && (
                     <div className="text-center py-8">
                       <div className="text-4xl mb-2">🎒</div>
                       <p className="text-[--color-text-secondary] text-sm">
@@ -449,7 +494,7 @@ export default function MarcheNoirPage() {
                         <span className="text-[--color-neon-cyan] font-bold">
                           {(playerInventory.oneShotPrograms?.length || 0) + 
                            (playerInventory.installedImplants?.length || 0) + 
-                           (playerInventory.information?.length || 0)}
+                           (playerInventory.purchasedInformation?.length || 0)}
                         </span>
                       </div>
                     </div>

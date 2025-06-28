@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import ButtonWithLoading from '@/components/ButtonWithLoading';
+import RunnerSelectionModal from '@/components/RunnerSelectionModal';
 
 export default function NetrunnersPage() {
   const [runners, setRunners] = useState([]);
   const [playerInventory, setPlayerInventory] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [installingImplants, setInstallingImplants] = useState({});
+  const [showRunnerModal, setShowRunnerModal] = useState(false);
+  const [selectedImplant, setSelectedImplant] = useState(null);
   const { isSignedIn, isLoaded } = useAuth();
 
   const fetchRunners = async () => {
@@ -26,7 +30,7 @@ export default function NetrunnersPage() {
       const response = await fetch('/api/player/inventory');
       if (response.ok) {
         const inventory = await response.json();
-        setPlayerInventory(inventory);
+        setPlayerInventory(inventory.detailedInventory);
       }
     } catch (error) {
       console.error('Erreur lors du chargement de l\'inventaire:', error);
@@ -72,6 +76,48 @@ export default function NetrunnersPage() {
     }
   };
 
+  // NOUVELLE FONCTION POUR INSTALLER UN IMPLANT VIA BOUTON
+  const handleInstallImplant = async (runnerId, implant) => {
+    setInstallingImplants(prev => ({ ...prev, [`${runnerId}-${implant.program._id}`]: true }));
+    try {
+      const response = await fetch(`/api/netrunners/${runnerId}/install-implant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programId: implant.program._id })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Implant ${data.implant.name} installé sur ${data.runnerName} !\nCoût de pose: ${data.installationCost} €$\nSolde restant: ${data.remainingEddies} €$`);
+        fetchRunners();
+        fetchInventory();
+      } else {
+        const error = await response.text();
+        alert(`Erreur: ${error}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'installation:', error);
+      alert('Erreur lors de l\'installation de l\'implant');
+    } finally {
+      setInstallingImplants(prev => ({ ...prev, [`${runnerId}-${implant.program._id}`]: false }));
+      setShowRunnerModal(false);
+      setSelectedImplant(null);
+    }
+  };
+
+  // NOUVELLE FONCTION POUR AFFICHER LE MODAL DE SÉLECTION
+  const handleShowRunnerSelection = (implant) => {
+    setSelectedImplant(implant);
+    setShowRunnerModal(true);
+  };
+
+  // NOUVELLE FONCTION POUR SÉLECTIONNER UN RUNNER DANS LE MODAL
+  const handleSelectRunner = (runnerId) => {
+    if (selectedImplant) {
+      handleInstallImplant(runnerId, selectedImplant);
+    }
+  };
+
   // Gestion du drag & drop
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
@@ -98,7 +144,7 @@ export default function NetrunnersPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          alert(`Implant ${item.program.name} installé sur ${data.runnerName} !`);
+          alert(`Implant ${data.implant.name} installé sur ${data.runnerName} !\nCoût de pose: ${data.installationCost} €$\nSolde restant: ${data.remainingEddies} €$`);
           fetchRunners();
           fetchInventory();
         } else {
@@ -204,7 +250,25 @@ export default function NetrunnersPage() {
                       <div className="space-y-1">
                         {runner.installedImplants.map((implant, index) => (
                           <div key={index} className="text-xs text-green-400 bg-green-900/20 px-2 py-1 rounded">
-                            ✓ {implant.program?.name || 'Implant inconnu'}
+                            <div className="flex items-center gap-1">
+                              <span>✓</span>
+                              <span className="font-medium">{implant.program?.name || 'Implant inconnu'}</span>
+                              {implant.program?.rarity && (
+                                <span className={`text-xs ${getRarityColor(implant.program.rarity)}`}>
+                                  [{implant.program.rarity.toUpperCase()}]
+                                </span>
+                              )}
+                            </div>
+                            {implant.program?.description && (
+                              <div className="text-gray-300 mt-1 text-xs opacity-75">
+                                {implant.program.description}
+                              </div>
+                            )}
+                            {implant.program?.effects?.permanent_skill_boost && (
+                              <div className="text-blue-300 mt-1 text-xs">
+                                +{implant.program.effects.permanent_skill_boost.value} {implant.program.effects.permanent_skill_boost.skill}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -231,7 +295,7 @@ export default function NetrunnersPage() {
                         loadingText="SOIN..."
                         className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors text-sm"
                       >
-                        Payer Charcudoc (1,000 €$)
+                        Payer Charcudoc (10,000 €$)
                       </ButtonWithLoading>
                     )}
                   </div>
@@ -251,20 +315,17 @@ export default function NetrunnersPage() {
               {playerInventory ? (
                 <div className="space-y-6">
                   {/* Implants */}
-                  {(playerInventory.installedImplants?.length || 0) > 0 && (
+                  {(playerInventory.implants?.length || 0) > 0 && (
                     <div>
                       <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
                         <span>🔧</span>
                         Implants Disponibles
                       </h3>
                       <div className="space-y-2">
-                        {playerInventory.installedImplants.map((implant, index) => (
+                        {playerInventory.implants.map((implant, index) => (
                           <div 
                             key={index} 
-                            className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all cursor-move"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, { ...implant, category: 'implant' })}
-                            onDragEnd={handleDragEnd}
+                            className="bg-white/5 p-3 rounded border border-[--color-border-dark] hover:bg-white/10 transition-all"
                           >
                             <div className="mb-2">
                               <span className="text-[--color-text-primary] text-sm font-medium">
@@ -277,8 +338,27 @@ export default function NetrunnersPage() {
                             <p className="text-xs text-[--color-text-secondary] mt-2 line-clamp-2">
                               {implant.program?.description}
                             </p>
-                            <div className="text-xs text-[--color-neon-cyan] mt-2">
-                              Glisse sur un runner pour installer
+                            <div className="text-xs text-[--color-neon-cyan] mt-2 mb-2">
+                              Coût de pose: 2,000 €$
+                            </div>
+                            <div className="flex gap-2">
+                              <div 
+                                className="flex-1 border-2 border-dashed border-[--color-border-dark] rounded p-2 text-center text-xs text-[--color-text-secondary] cursor-move hover:border-neon-cyan transition-colors"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, { ...implant, category: 'implant' })}
+                                onDragEnd={handleDragEnd}
+                              >
+                                Glisser
+                              </div>
+                              <ButtonWithLoading
+                                onClick={() => handleShowRunnerSelection(implant)}
+                                isLoading={Object.values(installingImplants).some(Boolean)}
+                                loadingText="POSE..."
+                                disabled={runners.filter(r => r.status === 'Disponible').length === 0}
+                                className="flex-1 bg-[--color-neon-cyan] text-background font-bold py-2 px-3 rounded hover:bg-white transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Installer
+                              </ButtonWithLoading>
                             </div>
                           </div>
                         ))}
@@ -316,7 +396,7 @@ export default function NetrunnersPage() {
                   )}
 
                   {/* Inventaire vide */}
-                  {((playerInventory.installedImplants?.length || 0) === 0 && 
+                  {((playerInventory.implants?.length || 0) === 0 && 
                     (playerInventory.oneShotPrograms?.length || 0) === 0) && (
                     <div className="text-center py-8">
                       <div className="text-4xl mb-2">🎒</div>
@@ -341,6 +421,18 @@ export default function NetrunnersPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de sélection des runners */}
+      <RunnerSelectionModal
+        isOpen={showRunnerModal}
+        onClose={() => {
+          setShowRunnerModal(false);
+          setSelectedImplant(null);
+        }}
+        runners={runners}
+        implant={selectedImplant}
+        onSelectRunner={handleSelectRunner}
+      />
     </main>
   );
 }

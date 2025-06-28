@@ -1,0 +1,4 @@
+git pull
+rm -rf .next
+npm run build
+pm2 restart fixer-app

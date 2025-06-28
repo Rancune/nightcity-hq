@@ -61,25 +61,38 @@ export async function POST(request, { params }) {
     let revealedSkill = null;
     let skill = null;
 
-    if (effects.reveal_skill && category === 'information') {
-      // Révéler une compétence aléatoire du contrat
-      const contractSkills = contract.requiredSkills || [];
-      if (contractSkills.length > 0) {
-        const randomSkill = contractSkills[Math.floor(Math.random() * contractSkills.length)];
-        revealedSkill = {
-          name: randomSkill.name,
-          value: randomSkill.value,
-          difficulty: randomSkill.difficulty
-        };
-      }
+    // Trouver ou créer l'entrée d'effets actifs pour ce joueur
+    let effectEntry = contract.activeProgramEffects?.find(e => e.clerkId === userId);
+    if (!effectEntry) {
+      effectEntry = { clerkId: userId, effects: {} };
+      if (!contract.activeProgramEffects) contract.activeProgramEffects = [];
+      contract.activeProgramEffects.push(effectEntry);
     }
 
-    if (effects.add_bonus_roll && category === 'one_shot') {
-      // Ajouter un bonus à une compétence
-      const contractSkills = contract.requiredSkills || [];
+    // Brise-Glace : succès garanti
+    if (effects.skip_skill_check) {
+      effectEntry.effects.autoSuccess = true;
+    }
+    // Sandevistan : +3 à un test (on applique sur la première compétence du contrat)
+    if (effects.add_bonus_roll) {
+      const contractSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0);
       if (contractSkills.length > 0) {
-        skill = contractSkills[Math.floor(Math.random() * contractSkills.length)].name;
+        effectEntry.effects.bonusRoll = (effectEntry.effects.bonusRoll || 0) + effects.add_bonus_roll;
+        effectEntry.effects.bonusSkill = contractSkills[0][0];
+        skill = contractSkills[0][0];
       }
+    }
+    // Décharge IEM : -1 difficulté à tous les tests
+    if (effects.reduce_difficulty) {
+      effectEntry.effects.reduceDifficulty = (effectEntry.effects.reduceDifficulty || 0) + effects.reduce_difficulty;
+    }
+    // Programmes signature : stocker le nom
+    if (program.isSignature) {
+      effectEntry.effects.signature = program.name;
+      // Appliquer tous les effets du programme signature
+      if (effects.skip_skill_check) effectEntry.effects.autoSuccess = true;
+      if (effects.add_bonus_roll) effectEntry.effects.bonusRoll = (effectEntry.effects.bonusRoll || 0) + effects.add_bonus_roll;
+      if (effects.reduce_difficulty) effectEntry.effects.reduceDifficulty = (effectEntry.effects.reduceDifficulty || 0) + effects.reduce_difficulty;
     }
 
     // Consommer le programme
@@ -95,15 +108,19 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Sauvegarder l'inventaire
-    await playerInventory.save();
+    // Sauvegarder l'inventaire et le contrat
+    await Promise.all([
+      playerInventory.save(),
+      contract.save()
+    ]);
 
     return NextResponse.json({
       success: true,
       message: `Programme ${program.name} utilisé avec succès`,
       effects: effects,
       revealedSkill: revealedSkill,
-      skill: skill
+      skill: skill,
+      activeEffects: effectEntry.effects
     });
 
   } catch (error) {

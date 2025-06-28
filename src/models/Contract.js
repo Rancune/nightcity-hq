@@ -51,12 +51,41 @@ const contractSchema = new Schema({
     combat: { type: Number, default: 0 },
   },
 
+  // --- SYSTÈME DE RELATIONS DE FACTION ---
+  targetFaction: { type: String, default: null }, // Faction ciblée par le contrat
+  employerFaction: { type: String, default: null }, // Faction qui emploie le fixer
+  targetCorpo: { type: String, default: null }, // Pour compatibilité avec l'ancien système
+  involvedFactions: [{ type: String }], // Toutes les factions impliquées dans le contrat
+  missionType: { type: String, enum: ['infiltration', 'sabotage', 'assassinat', 'récupération', 'destruction'], default: 'infiltration' }, // Type de mission
+  loreDifficulty: { type: String, enum: ['facile', 'moyen', 'difficile', 'expert'], default: 'moyen' }, // Difficulté selon le lore
 
   // Le niveau de conséquence en cas d'échec
   consequence_tier: { type: Number, min: 1, max: 4, default: 1 },
 
   // Le log de débriefing
   debriefing_log: { type: String, default: null },
+
+  // Résultats du test de compétences
+  skill_test_results: { type: Schema.Types.Mixed, default: null },
+  success_rate: { type: Number, default: null },
+  
+  // Compétences révélées par joueur (Mouchard, Analyseur, etc.)
+  revealedSkillsByPlayer: [{
+    clerkId: { type: String, required: true },
+    skills: [{ type: String, enum: ['hacking', 'stealth', 'combat'] }]
+  }],
+  // Effets actifs de programmes one-shot par joueur
+  activeProgramEffects: [{
+    clerkId: { type: String, required: true },
+    effects: {
+      autoSuccess: { type: Boolean, default: false },
+      bonusRoll: { type: Number, default: 0 },
+      bonusSkill: { type: String, enum: ['hacking', 'stealth', 'combat'], default: null },
+      reduceDifficulty: { type: Number, default: 0 },
+      signature: { type: String, default: null }, // nom du programme signature utilisé
+      // ... autres effets à ajouter si besoin
+    }
+  }],
 
 }, { timestamps: true });
 

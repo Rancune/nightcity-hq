@@ -114,44 +114,70 @@ export async function POST(request) {
       return new NextResponse("Fonds insuffisants", { status: 400 });
     }
 
-    // Récupérer ou créer l'inventaire du joueur
-    let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
-    if (!playerInventory) {
-      playerInventory = new PlayerInventory({ clerkId: userId });
-    }
-
     // Effectuer l'achat
     if (program.purchase()) {
-      // Déduire les eddies
+      // Déduire les eddies du profil
       playerProfile.eddies -= program.price;
       
-      // Ajouter à l'inventaire selon le type
-      if (program.category === 'one_shot') {
+      // Récupérer ou créer l'inventaire du joueur
+      let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
+      if (!playerInventory) {
+        playerInventory = new PlayerInventory({ clerkId: userId });
+      }
+      
+      // Ajouter le programme à l'inventaire selon sa catégorie
+      if (program.category === 'one-shot') {
+        playerInventory.addOneShotProgram(programId);
+      } else if (program.category === 'implant') {
+        // Les implants sont stockés mais pas installés automatiquement
         playerInventory.addOneShotProgram(programId);
       } else if (program.category === 'information') {
-        playerInventory.purchasedInformation.push({ programId });
+        playerInventory.purchasedInformation.push({
+          programId: programId,
+          purchasedAt: new Date()
+        });
+      } else {
+        // Pour les autres catégories, traiter comme one-shot
+        playerInventory.addOneShotProgram(programId);
       }
       
-      // Ajouter à l'historique
+      // Ajouter à l'historique des achats
       playerInventory.addPurchase(programId, program.price);
       
-      // Statistiques spéciales
-      if (program.isSignature) {
-        playerInventory.signatureItemsPurchased += 1;
+      // Mettre à jour l'inventaire simple dans PlayerProfile pour compatibilité
+      if (!playerProfile.inventory) {
+        playerProfile.inventory = [];
       }
-
-      // Sauvegarder
+      
+      const existingItem = playerProfile.inventory.find(item => item.name === program.name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        playerProfile.inventory.push({
+          name: program.name,
+          description: program.description,
+          rarity: program.rarity,
+          category: program.category,
+          effects: program.effects,
+          quantity: 1
+        });
+      }
+      
+      // Sauvegarder toutes les modifications
       await Promise.all([
         program.save(),
         playerProfile.save(),
         playerInventory.save()
       ]);
 
+      console.log(`[MARKET] Achat effectué: ${program.name} par ${playerProfile.handle}`);
+
       return NextResponse.json({
         success: true,
         message: "Achat effectué avec succès",
         remainingEddies: playerProfile.eddies,
-        program: program
+        program: program,
+        inventory: playerProfile.inventory
       });
     } else {
       return new NextResponse("Stock épuisé", { status: 400 });

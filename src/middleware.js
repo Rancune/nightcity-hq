@@ -19,8 +19,8 @@ const myMiddleware = clerkMiddleware({
 
   // Spécifiez l'URL de connexion pour que la redirection automatique
   // fonctionne correctement avec votre sous-domaine Clerk
-  signInUrl: "https://accounts.fixer.rancune.games/sign-in",
-  frontendApi: process.env.NEXT_PUBLIC_CLERK_FRONTEND_API,
+  // signInUrl: "https://accounts.fixer.rancune.games/sign-in",
+  // frontendApi: process.env.NEXT_PUBLIC_CLERK_FRONTEND_API,
 });
 
 export default function (req, ev) {

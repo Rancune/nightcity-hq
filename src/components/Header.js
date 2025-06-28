@@ -84,6 +84,11 @@ export default function Header() {
                 Marché Noir
               </button>
             </Link>
+            <Link href="/faction-relations">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
+                Relations
+              </button>
+            </Link>
             <Link href="/profile">
               <button className="bg-[--color-neon-pink] text-white font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover">
                 Profil
@@ -103,7 +108,12 @@ export default function Header() {
             <UserButton afterSignOutUrl="/" />
             <SignedOut>
               <a
-                href="https://accounts.fixer.rancune.games/sign-in"
+                href={process.env.NEXT_PUBLIC_SIGN_IN_URL || 
+                  (process.env.NODE_ENV === 'development' 
+                    ? "http://localhost:3000/sign-in" 
+                    : "https://accounts.fixer.rancune.games/sign-in"
+                  )
+                }
                 className="bg-[--color-neon-cyan] text-black font-bold py-3 px-5 rounded transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-cyan)] glitch-on-hover"
               >
                 Se connecter

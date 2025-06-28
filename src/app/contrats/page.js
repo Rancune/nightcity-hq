@@ -8,11 +8,15 @@ import AcceptanceTimer from '@/components/AcceptanceTimer';
 import MissionTimer from '@/components/MissionTimer';
 import AssignRunnerModal from '@/components/AssignRunnerModal';
 import DebriefingModal from '@/components/DebriefingModal';
+import FactionBadge from '@/components/FactionBadge';
 import { determineDifficulty, calculateReputationGain } from '@/Lib/reputation';
+import { FACTIONS } from '@/Lib/factionRelations';
+import ContractAnalyzer from '@/components/ContractAnalyzer';
 
 export default function ContratsPage() {
   const [contrats, setContrats] = useState([]);
   const [netrunners, setNetrunners] = useState([]);
+  const [playerInventory, setPlayerInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, active, completed, pending
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
@@ -48,6 +52,13 @@ export default function ContratsPage() {
       if (runnersResponse.ok) {
         const runnersData = await runnersResponse.json();
         setNetrunners(runnersData);
+      }
+
+      // Récupérer l'inventaire du joueur
+      const inventoryResponse = await fetch('/api/player/inventory');
+      if (inventoryResponse.ok) {
+        const inventoryData = await inventoryResponse.json();
+        setPlayerInventory(inventoryData.inventory || []);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
@@ -100,11 +111,10 @@ export default function ContratsPage() {
         fetchData();
       } else {
         const errorMessage = await response.text();
-        alert(`Erreur lors de l'assignation : ${errorMessage}`);
+        console.error(`[ASSIGN] Erreur lors de l'assignation : ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de l\'assignation:', error);
-      alert('Erreur lors de l\'assignation du runner');
     }
   };
 
@@ -150,6 +160,37 @@ export default function ContratsPage() {
       }
     } catch (error) {
       console.error('Erreur lors du test des récompenses:', error);
+    }
+  };
+
+  const handleAnalyzeContract = async (contractId) => {
+    try {
+      const response = await fetch(`/api/contrats/${contractId}/analyze`, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[ANALYZE] Contrat analysé:', data);
+        
+        // Mettre à jour la liste des contrats
+        setContrats(prevContrats => 
+          prevContrats.map(contract => 
+            contract._id === contractId 
+              ? { ...contract, skillsRevealed: true }
+              : contract
+          )
+        );
+        
+        // Recharger l'inventaire pour refléter la consommation de l'Analyseur
+        const inventoryResponse = await fetch('/api/player/inventory');
+        if (inventoryResponse.ok) {
+          const inventoryData = await inventoryResponse.json();
+          setPlayerInventory(inventoryData.inventory || []);
+        }
+      } else {
+        const errorMessage = await response.text();
+        console.error(`[ANALYZE] Erreur lors de l'analyse: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'analyse du contrat:', error);
     }
   };
 
@@ -210,6 +251,33 @@ export default function ContratsPage() {
       eddies: contract.reward?.eddies || 0,
       reputation: actualReputation
     };
+  };
+
+  const getReportButtonColor = (contract) => {
+    if (contract.resolution_outcome === 'Succès') {
+      return 'bg-green-600 hover:bg-green-500 text-white';
+    } else if (contract.resolution_outcome === 'Échec') {
+      return 'bg-red-600 hover:bg-red-500 text-white';
+    } else {
+      return 'bg-[--color-neon-cyan] hover:bg-white hover:text-background text-background';
+    }
+  };
+
+  const getFactionName = (factionKey) => {
+    return FACTIONS[factionKey]?.name || factionKey;
+  };
+
+  const formatSkills = (skills) => {
+    const skillNames = {
+      hacking: 'Hacking',
+      stealth: 'Infiltration', 
+      combat: 'Combat'
+    };
+    
+    return Object.entries(skills)
+      .filter(([_, value]) => value > 0)
+      .map(([skill, value]) => `${skillNames[skill]}: ${value}`)
+      .join(', ');
   };
 
   if (loading) {
@@ -328,23 +396,82 @@ export default function ContratsPage() {
                 </div>
               </div>
 
+              {/* Informations du contrat */}
+              <div className="mb-4 space-y-2 text-sm">
+                {/* Donneur d'ordre */}
+                <div className="flex justify-between">
+                  <span className="text-[--color-text-secondary]">Donneur d'ordre:</span>
+                  <span className="text-[--color-text-primary] font-bold">
+                    {contrat.employerFaction ? getFactionName(contrat.employerFaction) : 'Contact anonyme'}
+                  </span>
+                </div>
+                
+                {/* Cible */}
+                <div className="flex justify-between">
+                  <span className="text-[--color-text-secondary]">Cible:</span>
+                  <span className="text-[--color-text-primary] font-bold">
+                    {contrat.targetFaction ? getFactionName(contrat.targetFaction) : 'Cible non spécifiée'}
+                  </span>
+                </div>
+                
+                {/* Récompense */}
+                <div className="flex justify-between">
+                  <span className="text-[--color-text-secondary]">Récompense:</span>
+                  <div className="text-right">
+                    <div className="text-[--color-neon-pink] font-bold">
+                      {calculateActualRewards(contrat).eddies.toLocaleString()} €$
+                    </div>
+                    <div className="text-[--color-neon-cyan] font-bold text-xs">
+                      +{calculateActualRewards(contrat).reputation} PR
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Factions impliquées */}
+              {contrat.involvedFactions && contrat.involvedFactions.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs text-[--color-text-secondary] mb-2">Factions impliquées:</p>
+                  <div className="flex flex-wrap">
+                    {contrat.involvedFactions.map((faction) => (
+                      <FactionBadge key={faction} factionKey={faction} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Compétences requises - Remplacé par ContractAnalyzer */}
+              {contrat.status === 'Proposé' && (
+                <ContractAnalyzer 
+                  contract={contrat}
+                  playerInventory={playerInventory}
+                  onAnalyze={handleAnalyzeContract}
+                />
+              )}
+
+              {/* Compétences révélées pour les contrats acceptés */}
+              {contrat.status !== 'Proposé' && contrat.skillsRevealed && (
+                <div className="mb-4 p-3 bg-black/30 rounded border border-green-500/50">
+                  <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées</p>
+                  <div className="flex gap-2 text-xs">
+                    {contrat.requiredSkills?.hacking > 0 && (
+                      <span className="text-blue-400">Hacking: {contrat.requiredSkills.hacking}</span>
+                    )}
+                    {contrat.requiredSkills?.stealth > 0 && (
+                      <span className="text-green-400">Infiltration: {contrat.requiredSkills.stealth}</span>
+                    )}
+                    {contrat.requiredSkills?.combat > 0 && (
+                      <span className="text-red-400">Combat: {contrat.requiredSkills.combat}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Description */}
               <div className="mb-4">
                 <p className="text-[--color-text-secondary] text-sm line-clamp-3">
                   <Typewriter text={contrat.description} speed={60} />
                 </p>
-              </div>
-
-              {/* Récompenses */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[--color-neon-pink] font-bold">
-                    {calculateActualRewards(contrat).eddies.toLocaleString()} €$
-                  </span>
-                  <span className="text-[--color-neon-cyan] font-bold">
-                    +{calculateActualRewards(contrat).reputation} PR
-                  </span>
-                </div>
               </div>
 
               {/* Timers et statuts spéciaux */}
@@ -414,13 +541,10 @@ export default function ContratsPage() {
                     onClick={() => handleClaimReward(contrat._id)}
                     isLoading={loadingReports[contrat._id] || false}
                     loadingText="GÉNÉRATION RAPPORT..."
-                    className={`flex-1 font-bold py-2 px-4 rounded text-sm transition-all ${
-                      contrat.resolution_outcome === 'Succès' 
-                        ? 'bg-green-500 hover:bg-green-400 text-white' 
-                        : 'bg-red-600 hover:bg-red-500 text-white'
-                    }`}
+                    className={`flex-1 font-bold py-2 px-4 rounded text-sm transition-all ${getReportButtonColor(contrat)}`}
                   >
-                    Voir Rapport
+                    {contrat.resolution_outcome === 'Succès' ? 'Succès' : 
+                     contrat.resolution_outcome === 'Échec' ? 'Échec' : 'Voir Rapport'}
                   </ButtonWithLoading>
                 )}
               </div>

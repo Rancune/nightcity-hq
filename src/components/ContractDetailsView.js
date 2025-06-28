@@ -15,6 +15,7 @@ export default function ContractDetailsView({ initialContract }) {
   const [usedPrograms, setUsedPrograms] = useState([]);
   const [revealedSkills, setRevealedSkills] = useState([]);
   const [skillBonuses, setSkillBonuses] = useState({});
+  const [mouchardLoading, setMouchardLoading] = useState(false);
   const router = useRouter();
 
   // Récupérer l'inventaire du joueur
@@ -24,15 +25,27 @@ export default function ContractDetailsView({ initialContract }) {
         const response = await fetch('/api/player/inventory');
         if (response.ok) {
           const inventory = await response.json();
-          setPlayerInventory(inventory);
+          setPlayerInventory(inventory.detailedInventory || inventory); // compatibilité
         }
       } catch (error) {
         console.error('Erreur lors du chargement de l\'inventaire:', error);
       }
     };
-
     fetchInventory();
   }, []);
+
+  // Récupérer les compétences révélées pour ce joueur
+  useEffect(() => {
+    if (!contract || !window.Clerk) return;
+    const getRevealed = async () => {
+      // On suppose que le backend renvoie revealedSkillsByPlayer
+      const userId = window.Clerk.user?.id || window.Clerk.user?.primaryEmailAddress?.id;
+      if (!userId) return;
+      const entry = contract.revealedSkillsByPlayer?.find(e => e.clerkId === userId);
+      setRevealedSkills(entry?.skills || []);
+    };
+    getRevealed();
+  }, [contract]);
 
   const handleUseProgram = async (program, category) => {
     setLoading(true);
@@ -69,7 +82,7 @@ export default function ContractDetailsView({ initialContract }) {
         const inventoryResponse = await fetch('/api/player/inventory');
         if (inventoryResponse.ok) {
           const inventory = await inventoryResponse.json();
-          setPlayerInventory(inventory);
+          setPlayerInventory(inventory.detailedInventory || inventory);
         }
 
         alert(`Programme ${program.program.name} utilisé avec succès !`);
@@ -99,6 +112,46 @@ export default function ContractDetailsView({ initialContract }) {
     }
   };
 
+  // Liste des compétences testées
+  const testedSkills = Object.entries(contract.requiredSkills || {})
+    .filter(([_, v]) => v > 0)
+    .map(([k, v]) => ({ skill: k, value: v }));
+
+  // Possède-t-on un Mouchard ?
+  const mouchard = playerInventory?.oneShotPrograms?.find(item => item.program?.name === "Logiciel 'Mouchard'" && item.quantity > 0);
+  const canUseMouchard = contract.status === 'Proposé' && mouchard && revealedSkills.length < testedSkills.length;
+
+  // Utiliser un Mouchard
+  const handleUseMouchard = async () => {
+    setMouchardLoading(true);
+    try {
+      const response = await fetch(`/api/contrats/${contract._id}/reveal-skill`, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setRevealedSkills(data.revealedSkills);
+        // Recharger le contrat pour garder la persistance
+        const contractRes = await fetch(`/api/contrats/${contract._id}`);
+        if (contractRes.ok) {
+          const updated = await contractRes.json();
+          setContract(updated);
+        }
+        // Recharger l'inventaire
+        const invRes = await fetch('/api/player/inventory');
+        if (invRes.ok) {
+          const inventory = await invRes.json();
+          setPlayerInventory(inventory.detailedInventory || inventory);
+        }
+      } else {
+        const error = await response.text();
+        alert(error);
+      }
+    } catch (error) {
+      alert('Erreur lors de l\'utilisation du Mouchard');
+    } finally {
+      setMouchardLoading(false);
+    }
+  };
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'one_shot': return '💊';
@@ -119,6 +172,20 @@ export default function ContractDetailsView({ initialContract }) {
     }
   };
 
+  // Récompenses
+  const rewardEddies = contract.reward?.eddies || 0;
+  const rewardReputation = contract.reward?.reputation || 0;
+
+  // L'analyseur de contrat révèle tout ?
+  const allSkillsRevealed = revealedSkills.length === testedSkills.length;
+
+  // Effets actifs du joueur sur ce contrat
+  let activeEffects = null;
+  if (contract.activeProgramEffects && typeof window !== 'undefined' && window.Clerk) {
+    const userId = window.Clerk.user?.id || window.Clerk.user?.primaryEmailAddress?.id;
+    activeEffects = contract.activeProgramEffects.find(e => e.clerkId === userId)?.effects || null;
+  }
+
   if (!contract) return <div>Contrat introuvable.</div>;
 
   return (
@@ -127,6 +194,15 @@ export default function ContractDetailsView({ initialContract }) {
         <header className="mb-8">
           <h1 className="text-4xl text-[--color-neon-cyan] font-bold">{contract.title}</h1>
           <p className="text-[--color-text-secondary]">Statut : {contract.status}</p>
+          <div className="flex flex-wrap gap-4 mt-2">
+            <span className="bg-black/60 px-3 py-1 rounded text-xs text-[--color-neon-cyan] border border-[--color-neon-cyan]">Type de mission : <b>{contract.missionType}</b></span>
+            <span className="bg-black/60 px-3 py-1 rounded text-xs text-[--color-neon-pink] border border-[--color-neon-pink]">Difficulté : <b>{contract.loreDifficulty}</b></span>
+            {contract.employerFaction && <span className="bg-black/60 px-3 py-1 rounded text-xs text-yellow-400 border border-yellow-400">Employeur : {contract.employerFaction}</span>}
+            {contract.targetFaction && <span className="bg-black/60 px-3 py-1 rounded text-xs text-red-400 border border-red-400">Cible : {contract.targetFaction}</span>}
+            {contract.involvedFactions?.length > 0 && (
+              <span className="bg-black/60 px-3 py-1 rounded text-xs text-blue-400 border border-blue-400">Factions impliquées : {contract.involvedFactions.join(', ')}</span>
+            )}
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -138,8 +214,43 @@ export default function ContractDetailsView({ initialContract }) {
             </div>
 
             <div className="bg-white/5 p-6 rounded-lg mb-6">
-              <h2 className="text-2xl text-[--color-text-primary] mb-4">Récompense</h2>
-              <p className="text-2xl text-[--color-neon-pink]">{contract.reward.eddies.toLocaleString()} €$</p>
+              <h2 className="text-2xl text-[--color-text-primary] mb-4">Récompenses</h2>
+              <div className="flex gap-8 items-center">
+                <span className="text-2xl text-[--color-neon-pink] font-bold">{rewardEddies.toLocaleString()} €$</span>
+                <span className="text-xl text-[--color-neon-cyan] font-bold">+{rewardReputation} Réputation</span>
+              </div>
+            </div>
+
+            {/* Compétences testées et révélées */}
+            <div className="bg-black/40 p-6 rounded-lg border border-[--color-neon-cyan] mb-6">
+              <h3 className="text-lg text-[--color-neon-cyan] font-bold mb-3">Compétences Testées</h3>
+              <div className="flex flex-col gap-2">
+                {testedSkills.map(({ skill, value }) => {
+                  const isRevealed = revealedSkills.includes(skill) || allSkillsRevealed;
+                  return (
+                    <div key={skill} className="flex items-center gap-2">
+                      <span className="font-mono text-[--color-text-primary]">{skill.toUpperCase()}</span>
+                      <span className="text-xs text-[--color-text-secondary]">
+                        Difficulté : {isRevealed ? value : <span className="tracking-widest text-gray-500">???</span>}
+                      </span>
+                      {isRevealed && <span className="ml-2 text-green-400 text-xs font-bold">(Révélé)</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {canUseMouchard && (
+                <div className="mt-4">
+                  <ButtonWithLoading
+                    onClick={handleUseMouchard}
+                    isLoading={mouchardLoading}
+                    loadingText="Analyse..."
+                    className="bg-yellow-500 text-black font-bold py-2 px-4 rounded hover:bg-yellow-400 transition-all"
+                  >
+                    Utiliser un Mouchard pour révéler une compétence
+                  </ButtonWithLoading>
+                  <p className="text-xs text-yellow-300 mt-2">Révèle la compétence testée la plus facile. {mouchard?.quantity || 0} restant(s).</p>
+                </div>
+              )}
             </div>
 
             {/* Compétences révélées */}
@@ -167,6 +278,27 @@ export default function ContractDetailsView({ initialContract }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Effets actifs */}
+            {activeEffects && (
+              <div className="bg-yellow-900/20 p-6 rounded-lg border border-yellow-400 mb-6">
+                <h3 className="text-lg text-yellow-400 font-bold mb-3">Effets Actifs</h3>
+                <ul className="space-y-1 text-yellow-200 text-sm">
+                  {activeEffects.autoSuccess && (
+                    <li>• <b>Succès garanti</b> sur le prochain test de compétence (Brise-Glace, Zero Day, Blackwall...)</li>
+                  )}
+                  {activeEffects.bonusRoll > 0 && (
+                    <li>• <b>+{activeEffects.bonusRoll}</b> sur le prochain test de <b>{activeEffects.bonusSkill?.toUpperCase()}</b> (Sandevistan, Blackwall...)</li>
+                  )}
+                  {activeEffects.reduceDifficulty > 0 && (
+                    <li>• <b>-{activeEffects.reduceDifficulty}</b> à la difficulté de tous les tests (Décharge IEM, Blackwall...)</li>
+                  )}
+                  {activeEffects.signature && (
+                    <li>• <b>Programme signature utilisé :</b> {activeEffects.signature}</li>
+                  )}
+                </ul>
               </div>
             )}
 

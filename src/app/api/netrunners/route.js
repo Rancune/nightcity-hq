@@ -21,11 +21,38 @@ export async function GET() {
     // On ajoute .lean() par bonne pratique pour la performance
     const runners = await Netrunner.find({ ownerId: userId }).lean(); 
     
-    // Initialiser le champ installedImplants pour les runners qui ne l'ont pas
-    const runnersWithImplants = runners.map(runner => ({
-      ...runner,
-      installedImplants: runner.installedImplants || []
-    }));
+    // Récupérer les détails des implants installés
+    const runnersWithImplants = await Promise.all(
+      runners.map(async (runner) => {
+        const installedImplants = runner.installedImplants || [];
+        
+        // Récupérer les détails des programmes pour chaque implant
+        const implantsWithDetails = await Promise.all(
+          installedImplants.map(async (implant) => {
+            // Import dynamique pour éviter les problèmes de circular dependency
+            const { default: Program } = await import('@/models/Program');
+            const program = await Program.findById(implant.programId).lean();
+            
+            return {
+              ...implant,
+              program: program ? {
+                _id: program._id,
+                name: program.name,
+                description: program.description,
+                rarity: program.rarity,
+                category: program.category,
+                effects: program.effects
+              } : null
+            };
+          })
+        );
+        
+        return {
+          ...runner,
+          installedImplants: implantsWithDetails
+        };
+      })
+    );
     
     return NextResponse.json(runnersWithImplants);
 
@@ -87,9 +114,16 @@ export async function POST() {
       }
     });
 
-    await Promise.all([player.save(), newRunner.save()]);
+    await newRunner.save();
+    await player.save();
 
-    return NextResponse.json({ newRunner, updatedProfile: player }, { status: 201 });
+    console.log(`[API POST /netrunners] Nouveau runner créé: ${runnerName} pour ${userId}`);
+
+    return NextResponse.json({
+      success: true,
+      message: `Runner ${runnerName} recruté avec succès !`,
+      runner: newRunner
+    });
 
   } catch (error) {
     console.error("[API POST /netrunners] Erreur:", error);

@@ -32,6 +32,15 @@ const PROGRAM_CATALOG = {
       vendorMessage: "Espionnage de base. Informations précieuses."
     },
     {
+      name: "Analyseur de Contrat",
+      description: "Révèle toutes les compétences testées d'un contrat avant acceptation.",
+      rarity: "uncommon",
+      reputationRequired: 25,
+      price: 1200,
+      effects: { reveal_all_skills: true },
+      vendorMessage: "Analyse complète du contrat. Voir avant d'accepter."
+    },
+    {
       name: "Décharge IEM",
       description: "Réduit la difficulté de tous les tests d'un contrat de -1.",
       rarity: "uncommon",

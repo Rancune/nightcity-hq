@@ -11,7 +11,7 @@ export async function GET() {
 
     await connectDb();
     let playerProfile = await PlayerProfile.findOne({ clerkId: userId });
-
+    
     // Créer un profil si aucun n'existe
     if (!playerProfile) {
       playerProfile = new PlayerProfile({
