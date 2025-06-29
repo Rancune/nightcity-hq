@@ -9,7 +9,7 @@ export default function MarcheNoirPage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState({});
   const [activeVendor, setActiveVendor] = useState('charcudoc');
-  const [vendorMessage, setVendorMessage] = useState('Bienvenue dans le Marché de l\'Ombre, Fixer. Choisis ton vendeur.');
+  const [vendorMessage, setVendorMessage] = useState('Bienvenue dans le Marché de l&apos;Ombre, Fixer. Choisis ton vendeur.');
   const [rotatingStock, setRotatingStock] = useState(false);
   const [timeUntilRestock, setTimeUntilRestock] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
@@ -174,7 +174,7 @@ export default function MarcheNoirPage() {
       <main className="min-h-screen p-8">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-[--color-text-secondary] mt-4">Connexion au Marché de l'Ombre...</p>
+          <p className="text-[--color-text-secondary] mt-4">Connexion au Marché de l&apos;Ombre...</p>
         </div>
       </main>
     );
@@ -204,8 +204,8 @@ export default function MarcheNoirPage() {
                 🏪
               </div>
               <div>
-                <h1 className="page-title">Le Marché de l'Ombre</h1>
-                <p className="page-subtitle">L'arsenal du Fixer</p>
+                <h1 className="page-title">Le Marché de l&apos;Ombre</h1>
+                <p className="page-subtitle">L&apos;arsenal du Fixer</p>
               </div>
             </div>
             

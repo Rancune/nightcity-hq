@@ -12,7 +12,7 @@ export default function RequiredSkillsDisplay({ requiredSkills, showDetails = fa
       bgColor: 'bg-blue-400/20',
       borderColor: 'border-blue-400/50',
       icon: '💻',
-      description: 'Piratage de systèmes, contournement d\'ICE, extraction de données'
+      description: 'Piratage de systèmes, contournement d&apos;ICE, extraction de données'
     });
   }
   if (requiredSkills?.stealth > 0) {
@@ -34,7 +34,7 @@ export default function RequiredSkillsDisplay({ requiredSkills, showDetails = fa
       bgColor: 'bg-red-400/20',
       borderColor: 'border-red-400/50',
       icon: '⚔️',
-      description: 'Tir de précision, neutralisation d\'ennemis, survie'
+      description: 'Tir de précision, neutralisation d&apos;ennemis, survie'
     });
   }
 
@@ -43,7 +43,7 @@ export default function RequiredSkillsDisplay({ requiredSkills, showDetails = fa
       {/* En-tête avec nombre de runners */}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-[--color-text-primary]">
-          Équipe d'Infiltration
+          Équipe d&apos;Infiltration
         </h4>
         <div className="flex items-center gap-1">
           <span className="text-xs text-[--color-text-secondary]">Runners requis:</span>
@@ -82,7 +82,7 @@ export default function RequiredSkillsDisplay({ requiredSkills, showDetails = fa
         ))}
       </div>
 
-      {/* Informations sur l'équipe */}
+      {/* Informations sur l&apos;équipe */}
       {showDetails && (
         <div className="mt-4 p-3 bg-black/20 rounded border border-[--color-border-dark]">
           <p className="text-xs text-[--color-text-secondary] mb-2">
