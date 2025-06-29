@@ -121,6 +121,65 @@ export async function POST(request, { params }) {
       if (effects.reduce_difficulty) effectEntry.effects.reduceDifficulty = (effectEntry.effects.reduceDifficulty || 0) + effects.reduce_difficulty;
     }
 
+    // Effets de révélation de compétences
+    if (effects.reveal_all_skills) {
+      // Révéler toutes les compétences testées pour ce joueur
+      const skillValues = contract.requiredSkills || {};
+      const allSkills = Object.entries(skillValues)
+        .filter(([skill, value]) => value > 0)
+        .map(([skill]) => skill);
+      let revealedEntry = contract.revealedSkillsByPlayer.find(e => e.clerkId === userId);
+      if (!revealedEntry) {
+        revealedEntry = { clerkId: userId, skills: [] };
+        contract.revealedSkillsByPlayer.push(revealedEntry);
+      }
+      // Ajouter toutes les compétences non encore révélées
+      allSkills.forEach(skill => {
+        if (!revealedEntry.skills.includes(skill)) {
+          revealedEntry.skills.push(skill);
+        }
+      });
+      await Promise.all([
+        playerInventory.save(),
+        contract.save()
+      ]);
+      return NextResponse.json({
+        success: true,
+        message: `Toutes les compétences testées ont été révélées !`,
+        revealedSkills: revealedEntry.skills,
+        effects: effects
+      });
+    }
+    if (effects.reveal_skill) {
+      // Révéler la compétence la plus facile non révélée
+      const skillValues = contract.requiredSkills || {};
+      const skills = Object.entries(skillValues)
+        .filter(([skill, value]) => value > 0)
+        .map(([skill, value]) => ({ skill, value }));
+      let revealedEntry = contract.revealedSkillsByPlayer.find(e => e.clerkId === userId);
+      if (!revealedEntry) {
+        revealedEntry = { clerkId: userId, skills: [] };
+        contract.revealedSkillsByPlayer.push(revealedEntry);
+      }
+      const unrevealed = skills.filter(s => !revealedEntry.skills.includes(s.skill));
+      if (unrevealed.length > 0) {
+        const minSkill = unrevealed.reduce((min, curr) => curr.value < min.value ? curr : min, unrevealed[0]);
+        revealedEntry.skills.push(minSkill.skill);
+        revealedSkill = minSkill.skill;
+      }
+      await Promise.all([
+        playerInventory.save(),
+        contract.save()
+      ]);
+      return NextResponse.json({
+        success: true,
+        message: `Compétence révélée !`,
+        revealedSkills: revealedEntry.skills,
+        revealedSkill: revealedSkill,
+        effects: effects
+      });
+    }
+
     // Consommer le programme
     if (category === 'one_shot') {
       const success = playerInventory.useOneShotProgram(programId);

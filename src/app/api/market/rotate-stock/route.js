@@ -63,14 +63,29 @@ export async function POST() {
       marketState = new MarketState({ marketId: 'global' });
     }
 
+    // Compter les éléments avant rotation
+    const stockBefore = marketState.currentStock.size;
+    const limitsBefore = marketState.dailyLimits.size;
+
     // Effectuer une rotation manuelle
     await marketState.performRotation();
     
+    // Compter les éléments après rotation
+    const stockAfter = marketState.currentStock.size;
+    const limitsAfter = marketState.dailyLimits.size;
+    
     console.log('[MARKET] Rotation manuelle du stock effectuée par:', userId);
+    console.log(`[MARKET] Stocks Signature réinitialisés: ${stockBefore} → ${stockAfter}`);
+    console.log(`[MARKET] Limites quotidiennes réinitialisées: ${limitsBefore} → ${limitsAfter}`);
 
     return NextResponse.json({
       success: true,
       message: "Rotation du stock effectuée avec succès",
+      details: {
+        signatureStocksReset: stockBefore,
+        dailyLimitsReset: limitsBefore,
+        nextRotation: marketState.nextStockRotation
+      },
       marketState: {
         lastRotation: marketState.lastStockRotation,
         nextRotation: marketState.nextStockRotation,

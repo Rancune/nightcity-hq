@@ -22,7 +22,9 @@ export default function RootLayout({ children }) {
       <body className={`${robotoMono.className} relative crt-effect`}>
         <Header />
         <RequireAuthMessage />
-        {children}
+        <div className=" overflow-y-auto min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+          {children}
+        </div>
       </body>
     </html>
     </ClerkProvider>

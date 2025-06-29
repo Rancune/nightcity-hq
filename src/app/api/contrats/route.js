@@ -21,14 +21,9 @@ export async function GET() {
     // Si l'utilisateur est connecté, on lance d'abord le "tick" de l'horloge
     await updatePlayerTimers(userId);
 
-    // --- LA REQUÊTE FINALE ET CORRIGÉE ---
+    // Retourner tous les contrats dans les statuts demandés
     const contracts = await Contract.find({
-        $or: [
-          // 1. Contrats publics qui sont encore valides
-          { status: 'Proposé', ownerId: null },
-          // 2. OU contrats qui appartiennent au joueur ET qui sont actifs/en cours
-          { ownerId: userId, status: { $in: ['Proposé', 'Assigné', 'Actif', 'En attente de rapport'] } }
-        ]
+      status: { $in: ['Proposé', 'Assigné', 'Actif', 'En attente de rapport'] }
     })
     .populate('assignedRunner')
     .sort({ createdAt: -1 })

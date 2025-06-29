@@ -43,8 +43,8 @@ const netrunnerSchema = new Schema({
   deathDate: { type: Date, default: null }, // Date de la mort
   epitaph: { type: String, default: null }, // Épitaphe personnalisée
 
-  // Commission du Fixer (en pourcentage, ex: 20.5)
-  fixerCommission: { type: Number, default: 20 },
+  // Commission du Fixer (en pourcentage, ex: 22.5). Voir GDD : évolue avec le niveau et les compétences initiales
+  fixerCommission: { type: Number, default: 25 },
 
 }, { timestamps: true });
 

@@ -134,8 +134,8 @@ export async function POST(request, props) {
     const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
     if (playerProfile) {
       if (isSuccess) {
-        // Succès - PARTAGE DES GAINS SELON LA COMMISSION DU RUNNER
-        const commission = contract.assignedRunner.fixerCommission || 20;
+        // Succès - PARTAGE DES GAINS SELON LA COMMISSION DU RUNNER (GDD)
+        const commission = contract.assignedRunner.fixerCommission || 25;
         const eddiesPourFixer = Math.round(contract.reward.eddies * (commission / 100));
         const eddiesPourRunner = contract.reward.eddies - eddiesPourFixer;
         const oldEddies = playerProfile.eddies;
@@ -164,13 +164,12 @@ export async function POST(request, props) {
         // Ajouter l'XP au runner
         contract.assignedRunner.xp += xpGained;
         
-        // Vérifier si le runner monte de niveau
+        // Level up : la commission du Fixer augmente de +1% (max 50%)
         while (contract.assignedRunner.xp >= contract.assignedRunner.xpToNextLevel) {
           contract.assignedRunner.xp -= contract.assignedRunner.xpToNextLevel;
           contract.assignedRunner.level += 1;
-          contract.assignedRunner.xpToNextLevel = Math.floor(contract.assignedRunner.xpToNextLevel * 1.5); // Augmentation progressive
-          // Augmenter la commission du Fixer de +1% (max 50%)
-          contract.assignedRunner.fixerCommission = Math.min(50, (contract.assignedRunner.fixerCommission || 20) + 1);
+          contract.assignedRunner.xpToNextLevel = Math.floor(contract.assignedRunner.xpToNextLevel * 1.5);
+          contract.assignedRunner.fixerCommission = Math.min(50, (contract.assignedRunner.fixerCommission || 25) + 1);
         }
         await contract.assignedRunner.save();
         

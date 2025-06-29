@@ -131,10 +131,37 @@ export default function ContratsPage() {
 
   const handleTimerEnd = async (contractId) => {
     try {
-      await fetch(`/api/contrats/${contractId}/timesup`, { method: 'POST' });
-      fetchData();
+      console.log(`[TIMER] Tentative de fin de timer pour le contrat ${contractId}`);
+      
+      // Récupérer les informations du contrat avant l'appel
+      const contract = contrats.find(c => c._id === contractId);
+      if (!contract) {
+        console.error(`[TIMER] Contrat ${contractId} non trouvé dans la liste locale`);
+        return;
+      }
+      
+      console.log(`[TIMER] Statut du contrat: ${contract.status}`);
+      console.log(`[TIMER] Runner assigné:`, contract.assignedRunner);
+      
+      const response = await fetch(`/api/contrats/${contractId}/timesup`, { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log(`[TIMER] Réponse du serveur: ${response.status} ${response.statusText}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[TIMER] Données reçues:`, data);
+        await fetchData();
+      } else {
+        const errorText = await response.text();
+        console.error(`[TIMER] Erreur ${response.status}: ${errorText}`);
+      }
     } catch (error) {
-      console.error('Erreur lors de la fin du timer:', error);
+      console.error('[TIMER] Erreur lors de la fin du timer:', error);
     }
   };
 
@@ -160,11 +187,9 @@ export default function ContratsPage() {
       } else {
         const errorMessage = await response.text();
         console.error(`[CLAIM] Erreur lors de la réclamation: ${errorMessage}`);
-        alert(`Erreur lors de la réclamation: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Erreur lors de la réclamation de la récompense:', error);
-      alert('Erreur lors de la réclamation de la récompense');
     } finally {
       setLoadingReports(prev => ({ ...prev, [contractId]: false }));
     }
@@ -341,31 +366,31 @@ export default function ContratsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen p-8">
+      <div className="loading-container">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-[--color-text-secondary] mt-4">Chargement des contrats...</p>
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Chargement des contrats...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="page-container">
+      <div className="content-wrapper">
         {/* En-tête avec bouton de génération */}
-        <div className="mb-8">
+        <div className="page-header">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl text-[--color-neon-cyan] font-bold mb-2">Contrats</h1>
-              <p className="text-[--color-text-secondary]">
+              <h1 className="page-title">Contrats</h1>
+              <p className="page-subtitle">
                 <Typewriter text="Gère tes contrats et surveille leur progression dans les rues de Night City." speed={50} />
               </p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={testRewards}
-                className="bg-[--color-neon-cyan] text-background font-bold py-3 px-4 rounded hover:bg-white hover:text-background transition-all text-sm"
+                className="btn-secondary text-sm"
               >
                 Test Rewards
               </button>
@@ -373,7 +398,7 @@ export default function ContratsPage() {
                 onClick={handleGenerateContract}
                 isLoading={isGeneratingContract}
                 loadingText="GÉNÉRATION..."
-                className="bg-[--color-neon-pink] text-white font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all"
+                className="btn-primary"
               >
                 Générer Contrat
               </ButtonWithLoading>
@@ -382,54 +407,44 @@ export default function ContratsPage() {
         </div>
 
         {/* Filtres */}
-        <div className="bg-white/5 p-4 rounded-lg border border-[--color-border-dark] mb-6">
-          <div className="flex flex-wrap gap-2">
+        <div className="filter-container">
+          <div className="filter-list">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded font-bold transition-all ${
-                filter === 'all' 
-                  ? 'bg-[--color-neon-cyan] text-background' 
-                  : 'bg-black/50 text-[--color-text-secondary] hover:bg-black/70'
+              className={`filter-button ${
+                filter === 'all' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
               Tous ({contrats.length})
             </button>
             <button
               onClick={() => setFilter('proposed')}
-              className={`px-4 py-2 rounded font-bold transition-all ${
-                filter === 'proposed' 
-                  ? 'bg-[--color-neon-cyan] text-background' 
-                  : 'bg-black/50 text-[--color-text-secondary] hover:bg-black/70'
+              className={`filter-button ${
+                filter === 'proposed' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
               Proposés ({contrats.filter(c => c.status === 'Proposé').length})
             </button>
             <button
               onClick={() => setFilter('active')}
-              className={`px-4 py-2 rounded font-bold transition-all ${
-                filter === 'active' 
-                  ? 'bg-[--color-neon-cyan] text-background' 
-                  : 'bg-black/50 text-[--color-text-secondary] hover:bg-black/70'
+              className={`filter-button ${
+                filter === 'active' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
               En Cours ({contrats.filter(c => c.status === 'En cours' || c.status === 'Assigné').length})
             </button>
             <button
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded font-bold transition-all ${
-                filter === 'pending' 
-                  ? 'bg-[--color-neon-cyan] text-background' 
-                  : 'bg-black/50 text-[--color-text-secondary] hover:bg-black/70'
+              className={`filter-button ${
+                filter === 'pending' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
               En Attente ({contrats.filter(c => c.status === 'En attente de rapport').length})
             </button>
             <button
               onClick={() => setFilter('completed')}
-              className={`px-4 py-2 rounded font-bold transition-all ${
-                filter === 'completed' 
-                  ? 'bg-[--color-neon-cyan] text-background' 
-                  : 'bg-black/50 text-[--color-text-secondary] hover:bg-black/70'
+              className={`filter-button ${
+                filter === 'completed' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
               Terminés ({contrats.filter(c => c.status === 'Terminé').length})
@@ -438,18 +453,18 @@ export default function ContratsPage() {
         </div>
 
         {/* Liste des contrats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="items-grid">
           {filteredContrats.map((contrat) => (
-            <div key={contrat._id} className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark] hover:border-[--color-neon-cyan] transition-all">
+            <div key={contrat._id} className="card">
               {/* En-tête du contrat */}
               <div className="mb-4">
                 <h3 className="text-xl text-[--color-text-primary] font-bold mb-2">{contrat.title}</h3>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-sm font-bold ${getStatusColor(contrat.status)}`}>
+                  <span className={`badge ${getStatusColor(contrat.status)}`}>
                     {contrat.status}
                   </span>
                   <span className="text-[--color-text-secondary]">•</span>
-                  <span className={`text-sm font-bold ${getDifficultyColor(contrat.difficulty)}`}>
+                  <span className={`badge ${getDifficultyColor(contrat.difficulty)}`}>
                     {contrat.difficulty}
                   </span>
                 </div>
@@ -485,6 +500,46 @@ export default function ContratsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Timers */}
+              <div className="mb-4">
+                {/* Timer d'acceptation pour les contrats proposés */}
+                {contrat.status === 'Proposé' && contrat.acceptance_deadline_trp > 0 && (
+                  <div className="p-3 bg-black/30 rounded border border-[--color-border-dark] mb-3">
+                    <div className="text-center">
+                      <p className="text-xs text-[--color-text-secondary] mb-1">⏰ Accepter avant</p>
+                      <AcceptanceTimer duration={contrat.acceptance_deadline_trp} />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Timer de mission pour les contrats assignés/en cours */}
+                {(contrat.status === 'Assigné' || contrat.status === 'En cours') && contrat.initial_completion_duration_trp > 0 && (
+                  <div className="p-3 bg-black/30 rounded border border-[--color-border-dark] mb-3">
+                    <div className="text-center">
+                      <p className="text-xs text-[--color-text-secondary] mb-1">⏰ Mission en cours</p>
+                      <MissionTimer 
+                        totalDuration={contrat.initial_completion_duration_trp}
+                        startTime={contrat.completion_timer_started_at}
+                        onTimerEnd={() => handleTimerEnd(contrat._id)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Runner assigné */}
+                {contrat.assignedRunner && (
+                  <div className="p-3 bg-black/30 rounded border border-[--color-border-dark]">
+                    <p className="text-sm text-[--color-text-secondary] mb-1">Runner assigné:</p>
+                    <p className="text-[--color-text-primary] font-bold">{contrat.assignedRunner.name}</p>
+                    <div className="flex gap-2 mt-1 text-xs">
+                      <span className="text-blue-400">H: {contrat.assignedRunner.skills?.hacking || 0}</span>
+                      <span className="text-green-400">S: {contrat.assignedRunner.skills?.stealth || 0}</span>
+                      <span className="text-red-400">C: {contrat.assignedRunner.skills?.combat || 0}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Factions impliquées */}
@@ -528,66 +583,14 @@ export default function ContratsPage() {
                 
                 {/* Note sur les compétences cachées */}
                 <p className="text-xs text-[--color-text-secondary] mt-2">
-                  Utilisez des programmes pour révéler les compétences requises
+                  Les compétences requises sont cachées jusqu'à l'analyse du contrat.
                 </p>
               </div>
 
-              {/* Description */}
-              <div className="mb-4">
-                <p className="text-[--color-text-secondary] text-sm line-clamp-3">
-                  <Typewriter text={contrat.description} speed={60} />
-                </p>
-              </div>
-
-              {/* Timers et statuts spéciaux */}
-              <div className="mb-4">
-                {contrat.status === 'Proposé' && contrat.acceptance_deadline_trp > 0 && (
-                  <div className="p-3 bg-black/30 rounded text-center">
-                    <p className="text-xs text-[--color-text-secondary] mb-1">Accepter avant</p>
-                    <AcceptanceTimer duration={contrat.acceptance_deadline_trp} />
-                  </div>
-                )}
-                
-                {contrat.status === 'Assigné' && contrat.initial_completion_duration_trp > 0 && (
-                  <div className="p-3 bg-black/30 rounded text-center">
-                    <p className="text-xs text-[--color-text-secondary] mb-1">Mission en cours</p>
-                    <MissionTimer 
-                      totalDuration={contrat.initial_completion_duration_trp}
-                      startTime={contrat.completion_timer_started_at}
-                      onTimerEnd={() => handleTimerEnd(contrat._id)}
-                    />
-                  </div>
-                )}
-
-                {contrat.status === 'En cours' && contrat.initial_completion_duration_trp > 0 && (
-                  <div className="p-3 bg-black/30 rounded text-center">
-                    <p className="text-xs text-[--color-text-secondary] mb-1">Mission en cours</p>
-                    <MissionTimer 
-                      totalDuration={contrat.initial_completion_duration_trp}
-                      startTime={contrat.completion_timer_started_at}
-                      onTimerEnd={() => handleTimerEnd(contrat._id)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Runner assigné */}
-              {contrat.assignedRunner && (
-                <div className="mb-4 p-3 bg-black/30 rounded">
-                  <p className="text-sm text-[--color-text-secondary] mb-1">Runner assigné:</p>
-                  <p className="text-[--color-text-primary] font-bold">{contrat.assignedRunner.name}</p>
-                  <div className="flex gap-2 mt-1 text-xs">
-                    <span className="text-blue-400">H: {contrat.assignedRunner.skills?.hacking || 0}</span>
-                    <span className="text-green-400">S: {contrat.assignedRunner.skills?.stealth || 0}</span>
-                    <span className="text-red-400">C: {contrat.assignedRunner.skills?.combat || 0}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
+              {/* Actions du contrat */}
               <div className="flex gap-2">
                 <Link href={`/contrats/${contrat._id}`}>
-                  <button className="flex-1 bg-[--color-neon-cyan] text-background font-bold py-2 px-4 rounded text-sm hover:bg-white hover:text-background transition-all">
+                  <button className="btn-secondary flex-1 text-sm">
                     Détails
                   </button>
                 </Link>
@@ -595,46 +598,53 @@ export default function ContratsPage() {
                 {contrat.status === 'Proposé' && (
                   <button
                     onClick={() => openAssignModal(contrat._id)}
-                    className="flex-1 bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm hover:bg-white hover:text-background transition-all"
+                    className="btn-primary flex-1 text-sm"
                   >
-                    Accepter
+                    Assigner
                   </button>
                 )}
                 
                 {contrat.status === 'En attente de rapport' && (
                   <ButtonWithLoading
                     onClick={() => handleClaimReward(contrat._id)}
-                    isLoading={loadingReports[contrat._id] || false}
-                    loadingText="GÉNÉRATION RAPPORT..."
-                    className={`flex-1 font-bold py-2 px-4 rounded text-sm transition-all ${getReportButtonColor(contrat)}`}
+                    isLoading={loadingReports[contrat._id]}
+                    loadingText="RAPPORT..."
+                    className={`flex-1 text-sm ${getReportButtonColor(contrat)}`}
                   >
-                    {contrat.resolution_outcome === 'Succès' ? 'Succès' : 
-                     contrat.resolution_outcome === 'Échec' ? 'Échec' : 'Voir Rapport'}
+                    {contrat.resolution_outcome === 'Succès' ? '✅ Succès' : 
+                     contrat.resolution_outcome === 'Échec' ? '❌ Échec' : 
+                     '📋 Rapport'}
                   </ButtonWithLoading>
+                )}
+                
+                {contrat.status === 'Terminé' && !contrat.rewardClaimed && (
+                  <button
+                    onClick={() => handleClaimReward(contrat._id)}
+                    className="btn-primary flex-1 text-sm"
+                  >
+                    Réclamer
+                  </button>
                 )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Message si aucun contrat */}
+        {/* État vide */}
         {filteredContrats.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-[--color-text-secondary] text-lg mb-4">
-              {filter === 'all' 
-                ? "Aucun contrat disponible. Génère ton premier contrat !"
-                : `Aucun contrat ${filter === 'active' ? 'en cours' : filter === 'pending' ? 'en attente' : filter === 'proposed' ? 'proposé' : 'terminé'}.`
-              }
+          <div className="empty-state">
+            <div className="empty-state-icon">📋</div>
+            <p className="empty-state-text">
+              {filter === 'all' ? 'Aucun contrat disponible' : 
+               filter === 'proposed' ? 'Aucun contrat proposé' :
+               filter === 'active' ? 'Aucun contrat en cours' :
+               filter === 'pending' ? 'Aucun contrat en attente' :
+               'Aucun contrat terminé'}
             </p>
             {filter === 'all' && (
-              <ButtonWithLoading
-                onClick={handleGenerateContract}
-                isLoading={isGeneratingContract}
-                loadingText="GÉNÉRATION..."
-                className="bg-[--color-neon-pink] text-white font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all"
-              >
-                Générer un Contrat
-              </ButtonWithLoading>
+              <p className="empty-state-subtext">
+                Génère un nouveau contrat pour commencer
+              </p>
             )}
           </div>
         )}

@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [netrunners, setNetrunners] = useState([]);
   const [contrats, setContrats] = useState([]);
   const { isSignedIn, isLoaded } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -36,6 +37,8 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,14 +65,14 @@ export default function DashboardPage() {
     return { available, busy, total };
   };
 
-  if (!playerProfile) {
+  if (loading) {
     return (
-      <main className="min-h-screen p-8">
+      <div className="loading-container">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-[--color-text-secondary] mt-4">Chargement du tableau de bord...</p>
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Chargement du tableau de bord...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -77,20 +80,20 @@ export default function DashboardPage() {
   const runnerStats = getRunnerStats();
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="page-container">
+      <div className="content-wrapper">
         {/* En-tête du tableau de bord */}
-        <div className="mb-8">
-          <h1 className="text-4xl text-[--color-neon-cyan] font-bold mb-4">Tableau de Bord</h1>
-          <p className="text-[--color-text-secondary]">
+        <div className="page-header">
+          <h1 className="page-title">Tableau de Bord</h1>
+          <p className="page-subtitle">
             <Typewriter text={`Bienvenue, ${playerProfile.handle}. Voici l'état de tes opérations dans Night City.`} speed={50} />
           </p>
         </div>
 
         {/* Cartes de statistiques principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="stats-grid">
           {/* Eddies */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
+          <div className="card">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg text-[--color-text-primary] font-bold">Eddies</h3>
               <span className="text-2xl">€$</span>
@@ -102,7 +105,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Réputation */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
+          <div className="card">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg text-[--color-text-primary] font-bold">Réputation</h3>
               <span className="text-2xl">PR</span>
@@ -117,7 +120,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Netrunners */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
+          <div className="card">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg text-[--color-text-primary] font-bold">Netrunners</h3>
               <span className="text-2xl">👥</span>
@@ -131,7 +134,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Contrats */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
+          <div className="card">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg text-[--color-text-primary] font-bold">Contrats</h3>
               <span className="text-2xl">📋</span>
@@ -146,11 +149,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Sections principales */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="content-grid">
           {/* Section Netrunners */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl text-[--color-neon-pink] font-bold">Mon Écurie</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Mon Écurie</h2>
               <Link href="/netrunners">
                 <button className="text-[--color-neon-cyan] hover:underline text-sm">
                   Voir tout →
@@ -158,40 +161,43 @@ export default function DashboardPage() {
               </Link>
             </div>
             
-            {netrunners.length > 0 ? (
-              <div className="space-y-3">
-                {netrunners.slice(0, 3).map((runner) => (
-                  <div key={runner._id} className="flex items-center justify-between p-3 bg-black/30 rounded">
-                    <div>
-                      <p className="text-[--color-text-primary] font-bold">{runner.name}</p>
-                      <p className="text-sm text-[--color-text-secondary]">
-                        Niv. {runner.level} • {runner.status}
-                      </p>
+            <div className="card-content">
+              {netrunners.length > 0 ? (
+                <>
+                  {netrunners.slice(0, 3).map((runner) => (
+                    <div key={runner._id} className="flex items-center justify-between p-3 bg-black/30 rounded">
+                      <div>
+                        <p className="text-[--color-text-primary] font-bold">{runner.name}</p>
+                        <p className="text-sm text-[--color-text-secondary]">
+                          Niv. {runner.level} • {runner.status}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <span className="text-blue-400">H:{runner.skills?.hacking || 0}</span>
+                        <span className="text-green-400">S:{runner.skills?.stealth || 0}</span>
+                        <span className="text-red-400">C:{runner.skills?.combat || 0}</span>
+                      </div>
                     </div>
-                    <div className="flex gap-2 text-xs">
-                      <span className="text-blue-400">H:{runner.skills?.hacking || 0}</span>
-                      <span className="text-green-400">S:{runner.skills?.stealth || 0}</span>
-                      <span className="text-red-400">C:{runner.skills?.combat || 0}</span>
-                    </div>
-                  </div>
-                ))}
-                {netrunners.length > 3 && (
-                  <p className="text-sm text-[--color-text-secondary] text-center">
-                    +{netrunners.length - 3} autres runners
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[--color-text-secondary] text-center py-4">
-                Aucun netrunner recruté
-              </p>
-            )}
+                  ))}
+                  {netrunners.length > 3 && (
+                    <p className="text-sm text-[--color-text-secondary] text-center">
+                      +{netrunners.length - 3} autres runners
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">👥</div>
+                  <p className="empty-state-text">Aucun netrunner recruté</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Section Contrats */}
-          <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl text-[--color-neon-pink] font-bold">Contrats Actifs</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Contrats Actifs</h2>
               <Link href="/contrats">
                 <button className="text-[--color-neon-cyan] hover:underline text-sm">
                   Voir tout →
@@ -199,61 +205,65 @@ export default function DashboardPage() {
               </Link>
             </div>
             
-            {contrats.length > 0 ? (
-              <div className="space-y-3">
-                {contrats
-                  .filter(c => c.status === 'En cours' || c.status === 'En attente de rapport')
-                  .slice(0, 3)
-                  .map((contrat) => (
-                    <div key={contrat._id} className="p-3 bg-black/30 rounded">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-[--color-text-primary] font-bold text-sm truncate">
-                          {contrat.title}
-                        </p>
-                        <span className={`text-xs font-bold ${
-                          contrat.status === 'En cours' ? 'text-yellow-400' : 'text-[--color-neon-cyan]'
-                        }`}>
-                          {contrat.status}
-                        </span>
+            <div className="card-content">
+              {contrats.length > 0 ? (
+                <>
+                  {contrats
+                    .filter(c => c.status === 'En cours' || c.status === 'En attente de rapport')
+                    .slice(0, 3)
+                    .map((contrat) => (
+                      <div key={contrat._id} className="p-3 bg-black/30 rounded">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[--color-text-primary] font-bold text-sm truncate">
+                            {contrat.title}
+                          </p>
+                          <span className={`text-xs font-bold ${
+                            contrat.status === 'En cours' ? 'text-yellow-400' : 'text-[--color-neon-cyan]'
+                          }`}>
+                            {contrat.status}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs text-[--color-text-secondary]">
+                          <span>{contrat.reward?.eddies?.toLocaleString('en-US')} €$</span>
+                          <span>+{contrat.reward?.reputation || 0} PR</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-xs text-[--color-text-secondary]">
-                        <span>{contrat.reward?.eddies?.toLocaleString('en-US')} €$</span>
-                        <span>+{contrat.reward?.reputation || 0} PR</span>
-                      </div>
+                    ))}
+                  {contrats.filter(c => c.status === 'En cours' || c.status === 'En attente de rapport').length === 0 && (
+                    <div className="empty-state">
+                      <div className="empty-state-icon">📋</div>
+                      <p className="empty-state-text">Aucun contrat actif</p>
                     </div>
-                  ))}
-                {contrats.filter(c => c.status === 'En cours' || c.status === 'En attente de rapport').length === 0 && (
-                  <p className="text-[--color-text-secondary] text-center py-4">
-                    Aucun contrat actif
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[--color-text-secondary] text-center py-4">
-                Aucun contrat disponible
-              </p>
-            )}
+                  )}
+                </>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">📋</div>
+                  <p className="empty-state-text">Aucun contrat disponible</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Actions rapides */}
-        <div className="bg-white/5 p-6 rounded-lg border border-[--color-border-dark] mb-8">
-          <h2 className="text-2xl text-[--color-neon-pink] font-bold mb-4">Actions Rapides</h2>
+        <div className="card section-spacing">
+          <h2 className="card-title mb-4">Actions Rapides</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/contrats">
-              <button className="w-full bg-[--color-neon-pink] text-white font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all">
+              <button className="btn-primary w-full">
                 Gérer Contrats
               </button>
             </Link>
             
             <Link href="/netrunners">
-              <button className="w-full bg-[--color-neon-cyan] text-background font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all">
+              <button className="btn-secondary w-full">
                 Mon Écurie
               </button>
             </Link>
             
             <Link href="/marche-noir">
-              <button className="w-full bg-[--color-neon-pink] text-white font-bold py-3 px-6 rounded hover:bg-white hover:text-background transition-all">
+              <button className="btn-primary w-full">
                 Marché Noir
               </button>
             </Link>

@@ -14,12 +14,23 @@ export async function GET(request) {
     const pathParts = url.pathname.split('/');
     const id = pathParts[pathParts.length - 1];
     
-    // LA CORRECTION EST ICI. On ajoute .lean()
+    // Récupérer l'utilisateur connecté pour filtrer les compétences révélées
+    const { userId } = await auth();
+    
     const contract = await Contract.findById(id).lean();
-
 
     if (!contract) {
       return NextResponse.json({ message: "Contrat non trouvé avec cet ID." }, { status: 404 });
+    }
+    
+    // Si l'utilisateur est connecté, filtrer les compétences révélées pour lui
+    if (userId && contract.revealedSkillsByPlayer) {
+      const userRevealed = contract.revealedSkillsByPlayer.find(e => e.clerkId === userId);
+      if (userRevealed) {
+        contract.userRevealedSkills = userRevealed.skills;
+      } else {
+        contract.userRevealedSkills = [];
+      }
     }
     
     return NextResponse.json(contract);

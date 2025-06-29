@@ -92,10 +92,11 @@ export async function POST(request) {
       };
     }
 
-    // Calcul de la commission initiale du Fixer
+    // Calcul de la commission initiale du Fixer selon le GDD
+    // Commission de base : 25% - (0.5% * total points de compétence)
     const totalPoints = runnerSkills.hacking + runnerSkills.stealth + runnerSkills.combat;
     let fixerCommission = 25 - (totalPoints * 0.5);
-    fixerCommission = Math.max(10, Math.min(fixerCommission, 50)); // Clamp entre 10% et 50%
+    fixerCommission = Math.max(0, Math.min(fixerCommission, 50)); // Clamp entre 0% et 50%
     fixerCommission = Math.round(fixerCommission * 10) / 10; // arrondi à 0.1 près
 
     // Création du runner

@@ -23,6 +23,211 @@ body {
   font-family: 'Courier New', monospace;
 }
 
+/* Classes utilitaires pour un design uniforme */
+@layer components {
+  /* Conteneur principal uniforme */
+  .page-container {
+    @apply min-h-screen p-6 lg:p-8;
+  }
+  
+  .content-wrapper {
+    @apply max-w-7xl mx-auto;
+  }
+  
+  /* En-têtes de page uniformes */
+  .page-header {
+    @apply mb-8;
+  }
+  
+  .page-title {
+    @apply text-3xl lg:text-4xl font-bold mb-2;
+    color: var(--color-neon-cyan);
+  }
+  
+  .page-subtitle {
+    @apply text-sm lg:text-base;
+    color: var(--color-text-secondary);
+  }
+  
+  /* Cartes uniformes */
+  .card {
+    @apply bg-white/5 p-4 lg:p-6 rounded-lg border transition-all duration-300;
+    border-color: var(--color-border-dark);
+  }
+  
+  .card:hover {
+    border-color: rgba(0, 246, 255, 0.3);
+  }
+  
+  .card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+  
+  .card-title {
+    @apply text-xl lg:text-2xl font-bold;
+    color: var(--color-neon-pink);
+  }
+  
+  .card-content {
+    @apply space-y-3;
+  }
+  
+  /* Grilles uniformes */
+  .stats-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8;
+  }
+  
+  .content-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8;
+  }
+  
+  .items-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6;
+  }
+  
+  /* Boutons uniformes */
+  .btn-primary {
+    @apply font-bold py-2 px-4 lg:py-3 lg:px-6 rounded transition-all duration-200;
+    background-color: var(--color-neon-pink);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background-color: white;
+    color: var(--color-background);
+  }
+  
+  .btn-secondary {
+    @apply font-bold py-2 px-4 lg:py-3 lg:px-6 rounded transition-all duration-200;
+    background-color: var(--color-neon-cyan);
+    color: var(--color-background);
+  }
+  
+  .btn-secondary:hover {
+    background-color: white;
+    color: var(--color-background);
+  }
+  
+  .btn-ghost {
+    @apply font-bold py-2 px-4 rounded transition-all duration-200;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+  }
+  
+  .btn-ghost:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Onglets uniformes */
+  .tab-container {
+    @apply mb-8;
+  }
+  
+  .tab-list {
+    @apply flex flex-wrap gap-2 mb-6;
+  }
+  
+  .tab-button {
+    @apply px-4 py-2 rounded-lg font-bold transition-all duration-200;
+  }
+  
+  .tab-button-active {
+    background-color: var(--color-neon-cyan);
+    color: var(--color-background);
+  }
+  
+  .tab-button-inactive {
+    @apply bg-white/10 text-[--color-text-primary] hover:bg-white/20;
+  }
+  
+  /* Filtres uniformes */
+  .filter-container {
+    @apply bg-white/5 p-4 rounded-lg border mb-6;
+    border-color: var(--color-border-dark);
+  }
+  
+  .filter-list {
+    @apply flex flex-wrap gap-2;
+  }
+  
+  .filter-button {
+    @apply px-3 py-2 rounded font-bold transition-all duration-200;
+  }
+  
+  .filter-button-active {
+    background-color: var(--color-neon-cyan);
+    color: var(--color-background);
+  }
+  
+  .filter-button-inactive {
+    @apply bg-black/50 text-[--color-text-secondary] hover:bg-black/70;
+  }
+  
+  /* États de chargement uniformes */
+  .loading-container {
+    @apply min-h-screen p-8 flex items-center justify-center;
+  }
+  
+  .loading-spinner {
+    @apply animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto;
+    border-color: var(--color-neon-cyan);
+  }
+  
+  .loading-text {
+    @apply mt-4 text-center;
+    color: var(--color-text-secondary);
+  }
+  
+  /* Messages d'état uniformes */
+  .empty-state {
+    @apply text-center py-8 lg:py-12;
+  }
+  
+  .empty-state-icon {
+    @apply text-4xl lg:text-6xl mb-4;
+  }
+  
+  .empty-state-text {
+    @apply text-sm lg:text-base;
+    color: var(--color-text-secondary);
+  }
+  
+  .empty-state-subtext {
+    @apply text-xs lg:text-sm mt-1;
+    color: var(--color-text-secondary);
+  }
+  
+  /* Badges et étiquettes uniformes */
+  .badge {
+    @apply text-xs font-semibold px-2 py-1 rounded;
+  }
+  
+  .badge-success {
+    @apply bg-green-900/30 text-green-400 border border-green-600/30;
+  }
+  
+  .badge-warning {
+    @apply bg-yellow-900/30 text-yellow-400 border border-yellow-600/30;
+  }
+  
+  .badge-error {
+    @apply bg-red-900/30 text-red-400 border border-red-600/30;
+  }
+  
+  .badge-info {
+    @apply bg-blue-900/30 text-blue-400 border border-blue-600/30;
+  }
+  
+  /* Espacement uniforme */
+  .section-spacing {
+    @apply mb-6 lg:mb-8;
+  }
+  
+  .item-spacing {
+    @apply space-y-3 lg:space-y-4;
+  }
+}
+
 .crt-effect::before,
 .crt-effect::after {
   content: " ";
@@ -200,39 +405,27 @@ body {
   }
 }
 
-/* Animation pour les scanlines de transition */
+/* Animations pour les scanlines */
 @keyframes scanlines {
   0% {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(0%);
+    transform: translateY(0);
   }
   100% {
-    opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(100vh);
   }
 }
 
-/* Animation pour la barre de progression du loading */
+/* Animation pour les barres de progression */
 @keyframes progressBar {
   0% {
     width: 0%;
-    opacity: 1;
-  }
-  50% {
-    width: 100%;
-    opacity: 0.8;
   }
   100% {
-    width: 0%;
-    opacity: 1;
+    width: 100%;
   }
 }
 
-/* Effet de glitch sur les boutons */
+/* Bouton avec effet glitch */
 .glitch-button {
   position: relative;
   overflow: hidden;
@@ -245,7 +438,12 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -271,7 +469,7 @@ body {
   50% { border-color: var(--color-neon-cyan); }
 }
 
-/* Classe pour tronquer le texte */
+/* Limitation de lignes */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -279,10 +477,18 @@ body {
   overflow: hidden;
 }
 
+/* Animation d'apparition avec slide */
 @keyframes fadein-slide {
-  from { opacity: 0; transform: translateY(30px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-fadein-slide {
-  animation: fadein-slide 0.7s cubic-bezier(.4,0,.2,1);
+  animation: fadein-slide 0.5s ease-out;
 }

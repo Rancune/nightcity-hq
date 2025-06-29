@@ -12,16 +12,42 @@ export async function POST(request, props) {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Non autorisé", { status: 401 });
 
+    console.log(`[TIMESUP] Début de traitement pour le contrat ${params.id}`);
+
     await connectDb();
 
     const contract = await Contract.findById(params.id).populate('assignedRunner');
 
-    if (!contract || contract.ownerId !== userId || contract.status !== 'Assigné') {
+    console.log(`[TIMESUP] Contrat trouvé:`, {
+      id: contract?._id,
+      status: contract?.status,
+      ownerId: contract?.ownerId,
+      userId: userId,
+      hasRunner: !!contract?.assignedRunner
+    });
+
+    if (!contract) {
+      console.log(`[TIMESUP] Contrat non trouvé`);
+      return new NextResponse("Contrat non trouvé.", { status: 404 });
+    }
+
+    if (contract.ownerId !== userId) {
+      console.log(`[TIMESUP] Propriétaire incorrect: ${contract.ownerId} vs ${userId}`);
+      return new NextResponse("Contrat non valide pour cette action.", { status: 404 });
+    }
+
+    if (contract.status !== 'Assigné' && contract.status !== 'Actif' && contract.status !== 'En cours') {
+      console.log(`[TIMESUP] Statut incorrect: ${contract.status} (attendu: Assigné, Actif ou En cours)`);
       return new NextResponse("Contrat non valide pour cette action.", { status: 404 });
     }
 
     const runner = contract.assignedRunner;
-    if (!runner) return new NextResponse("Runner assigné introuvable.", { status: 404 });
+    if (!runner) {
+      console.log(`[TIMESUP] Runner assigné introuvable`);
+      return new NextResponse("Runner assigné introuvable.", { status: 404 });
+    }
+
+    console.log(`[TIMESUP] Validation passée, début du test de compétences`);
 
     // --- UTILISER LE SYSTÈME DE TEST ROBUSTE ---
     const skillTest = testRunnerSkills(runner, contract.requiredSkills);
@@ -53,6 +79,8 @@ export async function POST(request, props) {
 
     await contract.save();
     await runner.save();
+
+    console.log(`[TIMESUP] Mise à jour terminée avec succès`);
 
     return NextResponse.json({ 
       message: "Statut de mission mis à jour.",

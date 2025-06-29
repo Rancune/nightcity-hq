@@ -15,8 +15,15 @@ export default function AcceptanceTimer({ duration }) {
   const minutes = Math.floor((remainingTime % 3600) / 60);
   const seconds = Math.floor(remainingTime % 60);
 
+  // Couleur basée sur le temps restant
+  const getTimeColor = () => {
+    if (remainingTime <= 300) return 'text-red-400 animate-pulse'; // 5 minutes ou moins
+    if (remainingTime <= 900) return 'text-yellow-400'; // 15 minutes ou moins
+    return 'text-[--color-neon-cyan]';
+  };
+
   return (
-    <span className="font-mono text-lg text-cyber-yellow">
+    <span className={`font-mono text-lg font-bold ${getTimeColor()}`}>
       {String(hours).padStart(2, '0')}:
       {String(minutes).padStart(2, '0')}:
       {String(seconds).padStart(2, '0')}

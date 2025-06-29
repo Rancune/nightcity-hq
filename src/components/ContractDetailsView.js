@@ -42,15 +42,18 @@ export default function ContractDetailsView({ initialContract }) {
 
   // Récupérer les compétences révélées pour ce joueur
   useEffect(() => {
-    if (!contract || !window.Clerk) return;
-    const getRevealed = async () => {
-      // On suppose que le backend renvoie revealedSkillsByPlayer
+    if (!contract) return;
+    
+    // Utiliser userRevealedSkills si disponible (depuis l'API), sinon utiliser revealedSkillsByPlayer
+    if (contract.userRevealedSkills) {
+      setRevealedSkills(contract.userRevealedSkills);
+    } else if (contract.revealedSkillsByPlayer && typeof window !== 'undefined' && window.Clerk) {
       const userId = window.Clerk.user?.id || window.Clerk.user?.primaryEmailAddress?.id;
-      if (!userId) return;
-      const entry = contract.revealedSkillsByPlayer?.find(e => e.clerkId === userId);
-      setRevealedSkills(entry?.skills || []);
-    };
-    getRevealed();
+      if (userId) {
+        const entry = contract.revealedSkillsByPlayer.find(e => e.clerkId === userId);
+        setRevealedSkills(entry?.skills || []);
+      }
+    }
   }, [contract]);
 
   // Scroll automatique sur la dernière compétence révélée
@@ -107,15 +110,12 @@ export default function ContractDetailsView({ initialContract }) {
           const inventory = await inventoryResponse.json();
           setPlayerInventory(inventory.detailedInventory || inventory);
         }
-
-        alert(`Programme ${program.program.name} utilisé avec succès !`);
       } else {
         const error = await response.text();
-        alert(`Erreur: ${error}`);
+        console.error('Erreur: ', error);
       }
     } catch (error) {
       console.error('Erreur lors de l\'utilisation du programme:', error);
-      alert('Erreur lors de l\'utilisation du programme');
     } finally {
       setLoading(false);
     }
@@ -126,12 +126,11 @@ export default function ContractDetailsView({ initialContract }) {
     const response = await fetch(`/api/contrats/${contract._id}/resolve`, { method: 'POST' });
     if (response.ok) {
       const data = await response.json();
-      alert(`Mission terminée ! Résultat : ${data.outcome}`);
       router.push('/'); // Redirige vers la page d'accueil
       router.refresh(); // Force le rafraîchissement des données
     } else {
       const errorMessage = await response.text();
-      alert(`Erreur lors de la résolution du contrat : ${errorMessage}`);
+      console.error('Erreur lors de la résolution du contrat :', errorMessage);
     }
   };
 
@@ -151,13 +150,22 @@ export default function ContractDetailsView({ initialContract }) {
       const response = await fetch(`/api/contrats/${contract._id}/reveal-skill`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
+        
+        // Mettre à jour l'état local avec la nouvelle compétence révélée
         setRevealedSkills(data.revealedSkills);
+        
+        // Déclencher l'animation pour la nouvelle compétence révélée
+        if (data.revealedSkill) {
+          setLastRevealed(data.revealedSkill);
+        }
+        
         // Recharger le contrat pour garder la persistance
         const contractRes = await fetch(`/api/contrats/${contract._id}`);
         if (contractRes.ok) {
           const updated = await contractRes.json();
           setContract(updated);
         }
+        
         // Recharger l'inventaire
         const invRes = await fetch('/api/player/inventory');
         if (invRes.ok) {
@@ -166,10 +174,10 @@ export default function ContractDetailsView({ initialContract }) {
         }
       } else {
         const error = await response.text();
-        alert(error);
+        console.error('Erreur: ', error);
       }
     } catch (error) {
-      alert('Erreur lors de l\'utilisation du Mouchard');
+      console.error('Erreur lors de l\'utilisation du Mouchard:', error);
     } finally {
       setMouchardLoading(false);
     }

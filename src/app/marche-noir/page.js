@@ -104,7 +104,7 @@ export default function MarcheNoirPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setVendorMessage('Stock régénéré avec succès ! Tous les objets Signature sont de nouveau disponibles.');
+        setVendorMessage(`Stock régénéré ! ${result.details.signatureStocksReset} stocks Signature et ${result.details.dailyLimitsReset} limites quotidiennes réinitialisées.`);
         await fetchMarketData(); // Recharger les données
       } else {
         const error = await response.text();
@@ -194,18 +194,18 @@ export default function MarcheNoirPage() {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
-    <main className="min-h-screen p-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto">
+    <main className="page-container">
+      <div className="content-wrapper">
         {/* En-tête */}
-        <div className="mb-8">
-          <div className="bg-black/50 p-6 rounded-lg border-2 border-[--color-neon-cyan]">
+        <div className="page-header">
+          <div className="card">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-[--color-neon-cyan] rounded-full flex items-center justify-center text-2xl">
                 🏪
               </div>
               <div>
-                <h1 className="text-3xl text-[--color-neon-cyan] font-bold">Le Marché de l'Ombre</h1>
-                <p className="text-[--color-text-secondary]">L'arsenal du Fixer</p>
+                <h1 className="page-title">Le Marché de l'Ombre</h1>
+                <p className="page-subtitle">L'arsenal du Fixer</p>
               </div>
             </div>
             
@@ -252,12 +252,12 @@ export default function MarcheNoirPage() {
                   onClick={handleRotateStock}
                   isLoading={rotatingStock}
                   loadingText="RÉGÉNÉRATION..."
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded transition-all"
+                  className="btn-primary"
                 >
-                  🔄 Régénérer le Stock (DEV)
+                  🔄 Régénérer Stocks & Limites (DEV)
                 </ButtonWithLoading>
                 <p className="text-xs text-orange-400 mt-1">
-                  Bouton visible uniquement en développement
+                  Réinitialise les stocks Signature et limites quotidiennes
                 </p>
               </div>
             )}
@@ -265,8 +265,8 @@ export default function MarcheNoirPage() {
         </div>
 
         {/* Sélection des vendeurs */}
-        <div className="mb-8">
-          <h2 className="text-2xl text-[--color-text-primary] font-bold mb-4">Vendeurs</h2>
+        <div className="section-spacing">
+          <h2 className="card-title mb-4">Vendeurs</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Object.entries(marketData.vendors).map(([vendorKey, vendor]) => (
               <button
@@ -296,20 +296,21 @@ export default function MarcheNoirPage() {
         {activeVendorData && (
           <div>
             <div className="mb-6">
-              <h2 className="text-2xl text-[--color-text-primary] font-bold mb-2">
+              <h2 className="card-title mb-2">
                 {activeVendorData.icon} {activeVendorData.name}
               </h2>
-              <p className="text-[--color-text-secondary]">{activeVendorData.description}</p>
+              <p className="page-subtitle">{activeVendorData.description}</p>
             </div>
 
             {activeVendorData.items.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-[--color-text-secondary]">
+              <div className="empty-state">
+                <div className="empty-state-icon">🏪</div>
+                <p className="empty-state-text">
                   Aucun objet disponible pour ton niveau de Street Cred.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="items-grid">
                 {activeVendorData.items.map((item) => {
                   const canAfford = playerProfile.eddies >= item.cost;
                   const hasStreetCred = playerProfile.reputationPoints >= item.streetCredRequired;
@@ -318,13 +319,13 @@ export default function MarcheNoirPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`bg-black/30 p-4 rounded-lg border-2 transition-all ${
+                      className={`card ${
                         getRarityBorder(item.rarity)
                       } ${!canAfford || !hasStreetCred || !isAvailable ? 'opacity-50' : 'hover:border-opacity-100'}`}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="text-lg text-[--color-text-primary] font-bold">{item.name}</h3>
-                        <span className={`text-sm font-bold ${getRarityColor(item.rarity)}`}>
+                        <span className={`badge ${getRarityColor(item.rarity)}`}>
                           {item.rarity.toUpperCase()}
                         </span>
                       </div>
@@ -371,7 +372,7 @@ export default function MarcheNoirPage() {
                         disabled={!canAfford || !hasStreetCred || !isAvailable || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
                         className={`w-full font-bold py-2 px-4 rounded transition-all ${
                           canAfford && hasStreetCred && isAvailable && (!item.dailyLimit || item.dailyLimit.remaining > 0)
-                            ? 'bg-[--color-neon-pink] text-white hover:bg-white hover:text-background'
+                            ? 'btn-primary'
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                         }`}
                       >
