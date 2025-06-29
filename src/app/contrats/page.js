@@ -34,6 +34,9 @@ export default function ContratsPage() {
   const [debriefingFinancialSummary, setDebriefingFinancialSummary] = useState(null);
   const { isSignedIn, isLoaded } = useAuth();
 
+  // Vérifier si on est en environnement de développement
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   const fetchData = async () => {
     try {
       // Récupérer les contrats
@@ -388,12 +391,14 @@ export default function ContratsPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={testRewards}
-                className="btn-secondary text-sm"
-              >
-                Test Rewards
-              </button>
+              {isDevelopment && (
+                <button
+                  onClick={testRewards}
+                  className="btn-secondary text-sm"
+                >
+                  Test Rewards
+                </button>
+              )}
               <ButtonWithLoading
                 onClick={handleGenerateContract}
                 isLoading={isGeneratingContract}
