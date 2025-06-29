@@ -479,7 +479,7 @@ export default function ContratsPage() {
               <div className="mb-4 space-y-2 text-sm">
                 {/* Donneur d'ordre */}
                 <div className="flex justify-between">
-                  <span className="text-[--color-text-secondary]">Donneur d'ordre:</span>
+                  <span className="text-[--color-text-secondary]">Donneur d&apos;ordre:</span>
                   <span className="text-[--color-text-primary] font-bold">
                     {contrat.employerFaction ? getFactionName(contrat.employerFaction) : 'Contact anonyme'}
                   </span>
@@ -588,7 +588,7 @@ export default function ContratsPage() {
                 
                 {/* Note sur les compétences cachées */}
                 <p className="text-xs text-[--color-text-secondary] mt-2">
-                  Les compétences requises sont cachées jusqu'à l'analyse du contrat.
+                  Les compétences requises sont cachées jusqu&apos;à l&apos;analyse du contrat.
                 </p>
               </div>
 

@@ -595,7 +595,7 @@ export default function ContractDetailsView({ initialContract }) {
                   )}
                 </div>
               ) : (
-                <p className="text-[--color-text-secondary]">Chargement de l'inventaire...</p>
+                <p className="text-[--color-text-secondary]">Chargement de l&apos;inventaire...</p>
               )}
             </div>
           </div>

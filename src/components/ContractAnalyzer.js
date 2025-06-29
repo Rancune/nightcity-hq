@@ -32,7 +32,7 @@ export default function ContractAnalyzer({ contract, playerInventory, onAnalyze 
       <div className="mb-4 p-3 bg-black/30 rounded border border-orange-500/50">
         <p className="text-xs text-orange-400 mb-2">🔒 Compétences cachées</p>
         <p className="text-xs text-[--color-text-secondary]">
-          Achetez un "Analyseur de Contrat" au marché noir pour révéler les compétences testées.
+          Achetez un &quot;Analyseur de Contrat&quot; au marché noir pour révéler les compétences testées.
         </p>
       </div>
     );
@@ -41,7 +41,7 @@ export default function ContractAnalyzer({ contract, playerInventory, onAnalyze 
   if (skillsRevealed) {
     return (
       <div className="mb-4 p-3 bg-green-400/20 rounded border border-green-500/50">
-        <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées par l'Analyseur</p>
+        <p className="text-xs text-green-400 mb-2">🔍 Compétences révélées par l&apos;Analyseur</p>
         <div className="space-y-2">
           {contract.requiredSkills?.hacking > 0 && (
             <div className="flex items-center justify-between">
@@ -72,7 +72,7 @@ export default function ContractAnalyzer({ contract, playerInventory, onAnalyze 
           )}
         </div>
         <p className="text-xs text-green-300 mt-2">
-          Les compétences ont été révélées par l'Analyseur de Contrat.
+          Les compétences ont été révélées par l&apos;Analyseur de Contrat.
         </p>
       </div>
     );

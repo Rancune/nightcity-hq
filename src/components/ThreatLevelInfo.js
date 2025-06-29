@@ -52,7 +52,7 @@ export default function ThreatLevelInfo({ threatLevel, showFullDetails = false }
         <div className="mt-4 pt-3 border-t border-[--color-border-dark]">
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <p className="text-[--color-text-secondary] mb-1">Risque d'échec</p>
+              <p className="text-[--color-text-secondary] mb-1">Risque d&apos;échec</p>
               <p className={`font-semibold ${threatLevel >= 4 ? 'text-red-400' : threatLevel >= 3 ? 'text-orange-400' : 'text-yellow-400'}`}>
                 {threatLevel >= 4 ? 'Très élevé' : threatLevel >= 3 ? 'Élevé' : 'Modéré'}
               </p>

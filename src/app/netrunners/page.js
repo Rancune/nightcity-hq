@@ -304,7 +304,7 @@ export default function NetrunnersPage() {
             <div className="empty-state-icon">👥</div>
             <p className="empty-state-text">Aucun netrunner dans ton équipe</p>
             <p className="empty-state-subtext">
-              Va dans l'onglet Recrutement pour engager des runners
+              Va dans l&apos;onglet Recrutement pour engager des runners
             </p>
           </div>
         )}
@@ -376,7 +376,7 @@ export default function NetrunnersPage() {
             <div className="empty-state-icon">🎯</div>
             <p className="empty-state-text">Aucun candidat disponible</p>
             <p className="empty-state-subtext">
-              Clique sur "Régénérer" pour voir de nouveaux candidats
+              Clique sur &quot;Régénérer&quot; pour voir de nouveaux candidats
             </p>
           </div>
         )}
@@ -558,7 +558,7 @@ export default function NetrunnersPage() {
                                 fetchInventory();
                               }
                             } catch (error) {
-                              console.error('Erreur lors de l\'ajout d\'items de test:', error);
+                                console.error('Erreur lors de l&apos;ajout d&apos;items de test:', error);
                             }
                           }}
                           className="mt-4 btn-ghost text-xs"
@@ -666,7 +666,7 @@ export default function NetrunnersPage() {
             {selectedImplants.length > 0 && (
               <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark] mb-6">
                 <h4 className="text-lg text-[--color-text-primary] font-bold mb-3">
-                  Résumé de l'installation
+                  Résumé de l&apos;installation 
                 </h4>
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">

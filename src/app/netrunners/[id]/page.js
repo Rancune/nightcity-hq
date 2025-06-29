@@ -111,7 +111,7 @@ export default async function RunnerDetailsPage({ params }) {
             <div className="empty-state-icon">❌</div>
             <p className="empty-state-text">Runner non trouvé</p>
             <Link href="/netrunners" className="btn-primary mt-4">
-              Retour à l'écurie
+              Retour à l&apos;écurie
             </Link>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default async function RunnerDetailsPage({ params }) {
           <div className="flex items-center justify-between mb-6">
             <div>
               <Link href="/netrunners" className="text-[--color-neon-cyan] hover:underline mb-2 inline-block">
-                &larr; Retour à l'écurie
+                &larr; Retour à l&apos;écurie
               </Link>
               <h1 className="page-title">{runner.name}</h1>
               <p className="page-subtitle">Détails du Netrunner</p>
@@ -174,7 +174,7 @@ export default async function RunnerDetailsPage({ params }) {
               <div className="space-y-4">
                 <div className="bg-black/30 p-4 rounded border border-[--color-border-dark]">
                   <p className="text-[--color-text-secondary] text-sm mb-2">Phrase fétiche</p>
-                  <p className="text-[--color-neon-cyan] italic">"{runner.catchphrase}"</p>
+                  <p className="text-[--color-neon-cyan] italic">&quot;{runner.catchphrase}&quot;</p>
                 </div>
                 
                 <div className="bg-black/30 p-4 rounded border border-[--color-border-dark]">
@@ -333,7 +333,7 @@ export default async function RunnerDetailsPage({ params }) {
                     <div className="empty-state-icon">📋</div>
                     <p className="empty-state-text">Aucune mission archivée</p>
                     <p className="empty-state-subtext">
-                      Ce runner n'a pas encore accompli de missions
+                      Ce runner n&apos;a pas encore accompli de missions
                     </p>
                   </div>
                 )}
@@ -374,7 +374,7 @@ export default async function RunnerDetailsPage({ params }) {
                     <div className="empty-state-icon">🔧</div>
                     <p className="empty-state-text">Aucun implant installé</p>
                     <p className="empty-state-subtext">
-                      Ce runner n'a pas encore d'implants
+                      Ce runner n&apos;a pas encore d&apos;implants
                     </p>
                   </div>
                 )}
@@ -404,7 +404,7 @@ export default async function RunnerDetailsPage({ params }) {
                     <p className="text-sm text-red-400 font-bold mb-1">Cause de la mort</p>
                     <p className="text-xs text-[--color-text-secondary]">{runner.deathCause}</p>
                     {runner.epitaph && (
-                      <p className="text-xs text-[--color-text-secondary] mt-2 italic">"{runner.epitaph}"</p>
+                      <p className="text-xs text-[--color-text-secondary] mt-2 italic">&quot;{runner.epitaph}&quot;</p>
                     )}
                   </div>
                 )}
