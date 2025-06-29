@@ -54,7 +54,7 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
               {/* Rapport détaillé */}
               <div className="mt-4 bg-black/30 p-4 rounded">
                 <p className="text-md text-text-primary italic">
-                  &quot;<Typewriter text={contract.debriefing_log || 'Aucun rapport détaillé disponible.'} speed={30} />&quot;
+                  &quot;<Typewriter text={contract.debriefing_log || 'Aucun rapport détaillé disponible.'} speed={10} />&quot;
                 </p>
               </div>
 

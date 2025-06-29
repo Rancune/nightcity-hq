@@ -387,7 +387,7 @@ export default function ContratsPage() {
             <div>
               <h1 className="page-title">Contrats</h1>
               <p className="page-subtitle">
-                <Typewriter text="Gère tes contrats et surveille leur progression dans les rues de Night City." speed={50} />
+                <Typewriter text="Gère tes contrats et surveille leur progression dans les rues de Night City." speed={10} />
               </p>
             </div>
             <div className="flex gap-2">

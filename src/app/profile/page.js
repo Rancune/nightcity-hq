@@ -54,7 +54,7 @@ export default function ProfilePage() {
               <div>
                 <h3 className="text-xl text-[--color-text-primary] font-bold">{reputationReport.currentLevel.title}</h3>
                 <p className="text-[--color-text-secondary] text-sm mt-1">
-                  <Typewriter text={reputationReport.currentLevel.description} speed={40} />
+                  <Typewriter text={reputationReport.currentLevel.description} speed={10} />
                 </p>
               </div>
               
@@ -117,13 +117,13 @@ export default function ProfilePage() {
             <div>
               <h3 className="text-lg text-[--color-text-primary] font-bold mb-2">Types de Missions</h3>
               <p className="text-[--color-text-secondary]">
-                <Typewriter text={reputationReport.currentLevel.missions} speed={50} />
+                <Typewriter text={reputationReport.currentLevel.missions} speed={10} />
               </p>
             </div>
             <div>
               <h3 className="text-lg text-[--color-text-primary] font-bold mb-2">Équipement Disponible</h3>
               <p className="text-[--color-text-secondary]">
-                <Typewriter text={reputationReport.currentLevel.equipment} speed={50} />
+                <Typewriter text={reputationReport.currentLevel.equipment} speed={10} />
               </p>
             </div>
           </div>

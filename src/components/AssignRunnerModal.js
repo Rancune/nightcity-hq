@@ -69,7 +69,7 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
               Mission: {contract.title}
             </h4>
             <p className="text-sm text-[--color-text-secondary] mb-2">
-              <Typewriter text={contract.description} speed={60} />
+              <Typewriter text={contract.description} speed={10} />
             </p>
             <div className="flex gap-4 text-sm">
               <div className="text-[--color-neon-pink] font-bold">

@@ -117,7 +117,7 @@ export default function Header() {
               </div>
               <div className="text-sm text-[--color-neon-cyan] font-bold">
                 <div className="flex items-center gap-2">
-                  <span className="text-[--color-text-secondary] text-sm">PR:</span>
+                  
                   <span className="text-[--color-neon-cyan] font-bold">
                     {playerProfile?.reputationPoints?.toLocaleString('en-US') || '---'} PR
                   </span>

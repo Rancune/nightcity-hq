@@ -128,7 +128,7 @@ export default function FactionRelationsPage() {
               <p className="text-[--color-text-secondary] text-lg max-w-3xl">
                 <Typewriter 
                   text="Night City est une toile de relations que vous tissez et déchirez par vos actions. Chaque contrat a des conséquences sur vos alliances et rivalités." 
-                  speed={30} 
+                  speed={10} 
                 />
               </p>
             </div>

@@ -198,53 +198,51 @@ export default function MarcheNoirPage() {
       <div className="content-wrapper">
         {/* En-tête */}
         <div className="page-header">
-          <div className="card">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-[--color-neon-cyan] rounded-full flex items-center justify-center text-2xl">
-                🏪
-              </div>
-              <div>
-                <h1 className="page-title">Le Marché de l&apos;Ombre</h1>
-                <p className="page-subtitle">L&apos;arsenal du Fixer</p>
-              </div>
-            </div>
-            
-            <div className="bg-black/30 p-4 rounded border border-[--color-neon-cyan]/30">
-              <p className="text-[--color-text-primary] italic">
-                <Typewriter text={vendorMessage} speed={40} />
-              </p>
-            </div>
-            
-            {/* Timer countdown pour le restock */}
-            {marketData.marketState && (
-              <div className="mt-4 p-3 bg-gradient-to-r from-[--color-neon-cyan]/10 to-[--color-neon-pink]/10 rounded-lg border border-[--color-neon-cyan]/30">
-                <div className="text-center">
-                  <div className="text-xs text-[--color-text-secondary] mb-1">
-                    ⏰ Prochain Restock
-                  </div>
-                  <div className="flex justify-center items-center gap-2 text-lg font-mono">
-                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
-                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.hours).padStart(2, '0')}</span>
-                      <span className="text-[--color-text-secondary] text-xs ml-1">h</span>
-                    </div>
-                    <span className="text-[--color-text-secondary]">:</span>
-                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
-                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.minutes).padStart(2, '0')}</span>
-                      <span className="text-[--color-text-secondary] text-xs ml-1">m</span>
-                    </div>
-                    <span className="text-[--color-text-secondary]">:</span>
-                    <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
-                      <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.seconds).padStart(2, '0')}</span>
-                      <span className="text-[--color-text-secondary] text-xs ml-1">s</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-[--color-text-secondary] mt-1">
-                    Restock automatique à {marketData.marketState.config?.rotationHour || 3}h00
-                  </div>
+          <div >
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-4">
+                
+                <div>
+                  <h1 className="page-title">Le Marché de l&apos;Ombre</h1>
+                  
+                    <p className="page-subtitle">
+                      <Typewriter text={vendorMessage} speed={10} />
+                    </p>
+                  
                 </div>
               </div>
-            )}
-
+              {marketData.marketState && (
+                <div className="p-3 bg-gradient-to-r from-[--color-neon-cyan]/10 to-[--color-neon-pink]/10 rounded-lg border border-[--color-neon-cyan]/30 min-w-[260px]">
+                  <div className="text-center">
+                    <div className="text-xs text-[--color-text-secondary] mb-1">
+                      ⏰ Prochain Restock
+                    </div>
+                    <div className="flex justify-center items-center gap-2 text-lg font-mono">
+                      <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                        <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.hours).padStart(2, '0')}</span>
+                        <span className="text-[--color-text-secondary] text-xs ml-1">h</span>
+                      </div>
+                      <span className="text-[--color-text-secondary]">:</span>
+                      <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                        <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.minutes).padStart(2, '0')}</span>
+                        <span className="text-[--color-text-secondary] text-xs ml-1">m</span>
+                      </div>
+                      <span className="text-[--color-text-secondary]">:</span>
+                      <div className="bg-black/50 px-2 py-1 rounded border border-[--color-neon-cyan]/50">
+                        <span className="text-[--color-neon-cyan]">{String(timeUntilRestock.seconds).padStart(2, '0')}</span>
+                        <span className="text-[--color-text-secondary] text-xs ml-1">s</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-[--color-text-secondary] mt-1">
+                      Restock automatique à {marketData.marketState.config?.rotationHour || 3}h00
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            
+            
             {/* Bouton de régénération en développement */}
             {isDevelopment && (
               <div className="mt-4">

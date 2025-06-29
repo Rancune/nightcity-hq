@@ -31,11 +31,10 @@ function ContractMarker({ contract, onClick, hovered, setHovered }) {
 }
 
 function MapPlane() {
-  const texture = useLoader(TextureLoader, '/nightcity-generic-map.jpg');
   return (
-    <mesh rotation={[-Math.PI / 2.2, 0, 0]} position={[0, 3, 0]}>
+    <mesh position={[0, 0, 0]}>
       <planeGeometry args={[9, 6]} />
-      <meshBasicMaterial map={texture} />
+      <meshBasicMaterial color="blue" />
     </mesh>
   );
 }

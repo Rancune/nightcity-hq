@@ -86,7 +86,7 @@ export default function DashboardPage() {
         <div className="page-header">
           <h1 className="page-title">Tableau de Bord</h1>
           <p className="page-subtitle">
-            <Typewriter text={`Bienvenue, ${playerProfile.handle}. Voici l'état de tes opérations dans Night City.`} speed={50} />
+            <Typewriter text={`Bienvenue, ${playerProfile.handle}. Voici l'état de tes opérations dans Night City.`} speed={10} />
           </p>
         </div>
 
