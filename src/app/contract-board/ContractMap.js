@@ -1,6 +1,7 @@
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Html, Float, useTexture } from '@react-three/drei';
-import { useState, useEffect, useRef } from 'react';
+import { Canvas, useLoader } from '@react-three/fiber';
+import { Html, Float } from '@react-three/drei';
+import { TextureLoader } from 'three';
+import { useState } from 'react';
 import styles from './ContractBoard.module.css';
 
 const contracts = [
@@ -8,56 +9,6 @@ const contracts = [
   { id: 2, x: 1.5, y: 0.1, z: -1.5, title: 'Vol de données', description: 'Pirater un serveur Militech.' },
   { id: 3, x: 0.5, y: 0.1, z: 2, title: 'Sabotage', description: 'Saboter une installation corpo.' },
 ];
-
-function CameraLookAt({ target }) {
-  const { camera } = useThree();
-  useEffect(() => {
-    camera.lookAt(...target);
-  }, [camera, target]);
-  return null;
-}
-
-function MapPlane() {
-  const texture = useTexture('/nightcity-generic-map.jpg');
-  const textureLoaded = texture && texture.image;
-
-  // Pour éviter la déformation, on force le mapping à cover
-  if (textureLoaded) {
-    texture.wrapS = texture.wrapT = 1000; // RepeatWrapping
-    texture.repeat.set(1, 1);
-    texture.offset.set(0, 0);
-  }
-
-  // Décale le plan vers le haut (y = 3)
-  return (
-    <mesh rotation={[-Math.PI / 2.2, 0, 0]} position={[0, 3, 0]} receiveShadow>
-      <planeGeometry args={[9, 6]} />
-      <meshStandardMaterial
-        map={textureLoaded ? texture : null}
-        color={textureLoaded ? "#00fff7" : "red"}
-        opacity={0.7}
-        transparent
-        emissive="#00fff7"
-        emissiveIntensity={0.2}
-      />
-      {!textureLoaded && (
-        <Html center>
-          <div style={{
-            color: 'red',
-            background: 'rgba(0,0,0,0.7)',
-            padding: '1rem',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '1.2rem',
-            textShadow: '0 0 8px #fff',
-          }}>
-            Erreur : la texture de la carte n'est pas chargée !
-          </div>
-        </Html>
-      )}
-    </mesh>
-  );
-}
 
 function ContractMarker({ contract, onClick, hovered, setHovered }) {
   return (
@@ -70,7 +21,7 @@ function ContractMarker({ contract, onClick, hovered, setHovered }) {
         className={hovered ? styles['glow-hover'] : ''}
       >
         <sphereGeometry args={[0.12, 32, 32]} />
-        <meshStandardMaterial color="#00fff7" emissive="#00fff7" emissiveIntensity={hovered ? 1.5 : 0.8} />
+        <meshBasicMaterial color="#00fff7" />
       </mesh>
       <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
         <div style={{ color: '#00fff7', textShadow: '0 0 8px #00fff7', fontWeight: 'bold', fontSize: '1rem' }}>
@@ -81,44 +32,23 @@ function ContractMarker({ contract, onClick, hovered, setHovered }) {
   );
 }
 
+function MapPlane() {
+  const texture = useLoader(TextureLoader, '/nightcity-generic-map.jpg');
+  return (
+    <mesh rotation={[-Math.PI / 2.2, 0, 0]} position={[0, 3, 0]}>
+      <planeGeometry args={[9, 6]} />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  );
+}
+
 export default function ContractMap() {
   const [selected, setSelected] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
-  const canvasRef = useRef();
-  const [contextLost, setContextLost] = useState(false);
 
-  useEffect(() => {
-    const canvas = canvasRef.current?.children[0];
-    if (!canvas) return;
-    const handleContextLost = (e) => {
-      e.preventDefault();
-      setContextLost(true);
-    };
-    canvas.addEventListener('webglcontextlost', handleContextLost, false);
-    return () => {
-      canvas.removeEventListener('webglcontextlost', handleContextLost, false);
-    };
-  }, []);
-
-  // Caméra centrée et adaptée au plan 9x6, recentrée sur le plan décalé
   return (
-    <div style={{ width: '100%', height: '600px', position: 'relative' }} ref={canvasRef}>
-      {contextLost && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.9)', color: '#00fff7', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold',
-          flexDirection: 'column',
-        }}>
-          Erreur : le contexte WebGL a été perdu.<br />
-          Essayez de recharger la page ou d'utiliser une image plus légère.
-        </div>
-      )}
+    <div style={{ width: '100%', height: '600px', position: 'relative' }}>
       <Canvas camera={{ position: [0, 7, 0], fov: 40, near: 0.1, far: 100, up: [0, 0, -1] }} shadows>
-        <CameraLookAt target={[0, 3, 0]} />
-        {/* Lumière holographique */}
-        <ambientLight intensity={0.5} />
-        <pointLight position={[0, 5, 5]} intensity={1.2} color="#00fff7" />
         {/* Carte */}
         <MapPlane />
         {/* Marqueurs de contrats */}
@@ -141,9 +71,9 @@ export default function ContractMap() {
             </div>
           </Html>
         )}
-        {/* Contrôles (optionnel, désactivés pour carte fixe) */}
-        {/* <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI/2.2} minPolarAngle={Math.PI/2.2} /> */}
       </Canvas>
+      <div className={styles.scanlines} />
+      <div className={styles.noise} />
     </div>
   );
 } 

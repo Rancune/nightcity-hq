@@ -9,7 +9,6 @@ export default function ContractBoardPage() {
     <div className={styles.holoBg}>
       <h1 className={styles.holoTitle}>Contract Board - Night City</h1>
       <div className={styles.mapContainer}>
-        <ContractMap />
         <div className={styles.scanlines} />
         <div className={styles.noise} />
       </div>
