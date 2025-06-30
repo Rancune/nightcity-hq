@@ -614,7 +614,13 @@ export default function ContratsPage() {
                     onClick={() => handleClaimReward(contrat._id)}
                     isLoading={loadingReports[contrat._id]}
                     loadingText="RAPPORT..."
-                    className={`flex-1 text-sm ${getReportButtonColor(contrat)}`}
+                    className={`flex-1 text-sm ${
+                      contrat.resolution_outcome === 'Succès'
+                        ? 'btn-success'
+                        : contrat.resolution_outcome === 'Échec'
+                        ? 'bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 lg:py-3 lg:px-6 rounded transition-all duration-200'
+                        : 'btn-primary'
+                    }`}
                   >
                     {contrat.resolution_outcome === 'Succès' ? '✅ Succès' : 
                      contrat.resolution_outcome === 'Échec' ? '❌ Échec' : 

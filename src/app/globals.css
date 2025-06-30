@@ -226,6 +226,18 @@ body {
   .item-spacing {
     @apply space-y-3 lg:space-y-4;
   }
+
+  .btn-success {
+    @apply font-bold py-2 px-4 lg:py-3 lg:px-6 rounded transition-all duration-200;
+    background-color: #22ff88;
+    color: var(--color-background);
+    box-shadow: 0 0 8px #22ff88, 0 0 2px #fff;
+  }
+  .btn-success:hover {
+    background-color: #4fffad;
+    color: #0a0a0a;
+    box-shadow: 0 0 16px #22ff88, 0 0 8px #fff;
+  }
 }
 
 .crt-effect::before,
