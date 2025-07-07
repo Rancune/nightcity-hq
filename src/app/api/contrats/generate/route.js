@@ -85,7 +85,7 @@ export async function POST() {
       title,
       description,
       status: 'Proposé',
-      ownerId: userId,
+      ownerId: null,
       archetype: 'PIRATAGE_RAPIDE_v1',
       targetCorpo: targetFaction, // Pour compatibilité
       targetFaction: targetFaction, // Faction principale

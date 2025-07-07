@@ -17,6 +17,39 @@ function getRandomPositionOnMap() {
 export default function CityMap({ contracts = [], onContractAccept }) {
   const [selectedContract, setSelectedContract] = useState(null);
   const [hoveredContract, setHoveredContract] = useState(null);
+  const [disappearingIds, setDisappearingIds] = useState([]);
+  const [markerPositions, setMarkerPositions] = useState({});
+
+  // Debug: afficher les contrats reçus
+  useEffect(() => {
+    console.log('[CITYMAP] Contrats reçus:', contracts);
+    console.log('[CITYMAP] Nombre de contrats:', contracts.length);
+  }, [contracts]);
+
+  // Générer et mémoriser la position aléatoire de chaque contrat uniquement à l'arrivée d'un nouveau contrat
+  useEffect(() => {
+    console.log('[CITYMAP] Génération des positions pour', contracts.length, 'contrats');
+    setMarkerPositions((prev) => {
+      const newPositions = { ...prev };
+      contracts.forEach(contract => {
+        const key = contract._id || contract.id;
+        console.log('[CITYMAP] Traitement du contrat:', key, contract.title);
+        if (!newPositions[key]) {
+          newPositions[key] = contract.position || getRandomPositionOnMap();
+          console.log('[CITYMAP] Nouvelle position générée pour', key, ':', newPositions[key]);
+        }
+      });
+      // Nettoyer les positions des contrats disparus
+      Object.keys(newPositions).forEach(key => {
+        if (!contracts.find(c => (c._id || c.id) === key)) {
+          console.log('[CITYMAP] Suppression de la position pour', key);
+          delete newPositions[key];
+        }
+      });
+      console.log('[CITYMAP] Positions finales:', newPositions);
+      return newPositions;
+    });
+  }, [contracts]);
 
   // Fonction pour gérer le clic sur un marqueur
   const handleContractClick = (contract) => {
@@ -25,27 +58,34 @@ export default function CityMap({ contracts = [], onContractAccept }) {
 
   // Fonction pour gérer l'acceptation d'un contrat
   const handleContractAccept = async (contract) => {
-    try {
-      const response = await fetch(`/api/contrats/${contract.id}/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        // Le contrat a été accepté avec succès
-        if (onContractAccept) {
-          onContractAccept(contract);
+    const contractId = contract._id || contract.id;
+    setDisappearingIds((ids) => [...ids, contractId]);
+    setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/contrats/${contractId}/accept`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) {
+          if (onContractAccept) {
+            onContractAccept(contract);
+          }
+          setSelectedContract(null);
+        } else {
+          throw new Error('Erreur lors de l\'acceptation du contrat');
         }
-        setSelectedContract(null);
-      } else {
-        throw new Error('Erreur lors de l\'acceptation du contrat');
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'acceptation du contrat');
       }
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de l\'acceptation du contrat');
-    }
+    }, 500); // attendre la fin de l'animation de disparition
+  };
+
+  // Fonction appelée à la fin de l'animation de disparition
+  const handleDisappearEnd = (id) => {
+    setDisappearingIds((ids) => ids.filter((d) => d !== id));
   };
 
   // Fonction pour fermer le briefing
@@ -53,8 +93,21 @@ export default function CityMap({ contracts = [], onContractAccept }) {
     setSelectedContract(null);
   };
 
+  // Calcul du style de zoom si un contrat est sélectionné
+  let zoomStyle = {};
+  let zoomed = false;
+  if (selectedContract && markerPositions[selectedContract.id]) {
+    zoomed = true;
+    const pos = markerPositions[selectedContract.id];
+    zoomStyle = {
+      transform: `scale(1.7) translate(calc(50% - ${pos.x}), calc(50% - ${pos.y}))`,
+      transition: 'transform 0.5s cubic-bezier(0.4,2,0.6,0.8)',
+      zIndex: 100,
+    };
+  }
+
   return (
-    <div className={styles.cityMapContainer}>
+    <div className={styles.cityMapContainer + (zoomed ? ' ' + styles.zoomed : '')} style={zoomed ? zoomStyle : {}}>
       {/* Image de fond de Night City */}
       <div className={styles.mapBackground}>
         <img 
@@ -90,18 +143,24 @@ export default function CityMap({ contracts = [], onContractAccept }) {
 
       {/* Marqueurs de contrats */}
       <div className={styles.markersContainer}>
-        {contracts.map((contract) => (
-          <ContractMarker
-            key={contract.id}
-            contract={{
-              ...contract,
-              position: contract.position || getRandomPositionOnMap()
-            }}
-            onClick={handleContractClick}
-            onHover={setHoveredContract}
-            onHoverEnd={() => setHoveredContract(null)}
-          />
-        ))}
+        {contracts.map((contract) => {
+          const key = contract._id || contract.id;
+          return (
+            <ContractMarker
+              key={key}
+              contract={{
+                ...contract,
+                position: markerPositions[key]
+              }}
+              size={56}
+              onClick={handleContractClick}
+              onHover={setHoveredContract}
+              onHoverEnd={() => setHoveredContract(null)}
+              isDisappearing={disappearingIds.includes(key)}
+              onDisappearEnd={handleDisappearEnd}
+            />
+          );
+        })}
       </div>
 
       {/* Fenêtre de briefing */}

@@ -39,11 +39,11 @@ export default function ContratsPage() {
 
   const fetchData = async () => {
     try {
-      // Récupérer les contrats
-      const contratsResponse = await fetch('/api/contrats');
+      // Récupérer les contrats du joueur (assignés et en cours)
+      const contratsResponse = await fetch('/api/contrats?playerContracts=true');
       if (contratsResponse.ok) {
         const contratsData = await contratsResponse.json();
-        console.log('[DEBUG] Contrats récupérés:', contratsData);
+        console.log('[DEBUG] Contrats du joueur récupérés:', contratsData);
         // Log spécifique pour les contrats avec runner assigné
         contratsData.forEach(contrat => {
           if (contrat.assignedRunner) {
@@ -250,8 +250,8 @@ export default function ContratsPage() {
         return contrat.status === 'Terminé';
       case 'pending':
         return contrat.status === 'En attente de rapport';
-      case 'proposed':
-        return contrat.status === 'Proposé';
+      case 'assigned':
+        return contrat.status === 'Assigné';
       default:
         return true;
     }
@@ -423,12 +423,12 @@ export default function ContratsPage() {
               Tous ({contrats.length})
             </button>
             <button
-              onClick={() => setFilter('proposed')}
+              onClick={() => setFilter('assigned')}
               className={`filter-button ${
-                filter === 'proposed' ? 'filter-button-active' : 'filter-button-inactive'
+                filter === 'assigned' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
-              Proposés ({contrats.filter(c => c.status === 'Proposé').length})
+              Pris en charge ({contrats.filter(c => c.status === 'Assigné').length})
             </button>
             <button
               onClick={() => setFilter('active')}
@@ -509,11 +509,11 @@ export default function ContratsPage() {
 
               {/* Timers */}
               <div className="mb-4">
-                {/* Timer d'acceptation pour les contrats proposés */}
-                {contrat.status === 'Proposé' && contrat.acceptance_deadline_trp > 0 && (
+                {/* Timer d'acceptation pour les contrats assignés (si pas encore de runner) */}
+                {contrat.status === 'Assigné' && !contrat.assignedRunner && contrat.acceptance_deadline_trp > 0 && (
                   <div className="p-3 bg-black/30 rounded border border-[--color-border-dark] mb-3">
                     <div className="text-center">
-                      <p className="text-xs text-[--color-text-secondary] mb-1">⏰ Accepter avant</p>
+                      <p className="text-xs text-[--color-text-secondary] mb-1">⏰ Assigner un runner avant</p>
                       <AcceptanceTimer duration={contrat.acceptance_deadline_trp} />
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export default function ContratsPage() {
               )}
 
               {/* Compétences requises - Remplacé par ContractAnalyzer */}
-              {contrat.status === 'Proposé' && (
+              {contrat.status === 'Assigné' && !contrat.assignedRunner && (
                 <ContractAnalyzer 
                   contract={contrat}
                   playerInventory={playerInventory}
@@ -600,12 +600,12 @@ export default function ContratsPage() {
                   </button>
                 </Link>
                 
-                {contrat.status === 'Proposé' && (
+                {contrat.status === 'Assigné' && !contrat.assignedRunner && (
                   <button
                     onClick={() => openAssignModal(contrat._id)}
                     className="btn-primary flex-1 text-sm"
                   >
-                    Assigner
+                    Assigner Runner
                   </button>
                 )}
                 
@@ -628,14 +628,7 @@ export default function ContratsPage() {
                   </ButtonWithLoading>
                 )}
                 
-                {contrat.status === 'Terminé' && !contrat.rewardClaimed && (
-                  <button
-                    onClick={() => handleClaimReward(contrat._id)}
-                    className="btn-primary flex-1 text-sm"
-                  >
-                    Réclamer
-                  </button>
-                )}
+
               </div>
             </div>
           ))}
@@ -646,11 +639,11 @@ export default function ContratsPage() {
           <div className="empty-state">
             <div className="empty-state-icon">📋</div>
             <p className="empty-state-text">
-              {filter === 'all' ? 'Aucun contrat disponible' : 
-               filter === 'proposed' ? 'Aucun contrat proposé' :
-               filter === 'active' ? 'Aucun contrat en cours' :
-               filter === 'pending' ? 'Aucun contrat en attente' :
-               'Aucun contrat terminé'}
+                          {filter === 'all' ? 'Aucun contrat disponible' : 
+             filter === 'assigned' ? 'Aucun contrat pris en charge' :
+             filter === 'active' ? 'Aucun contrat en cours' :
+             filter === 'pending' ? 'Aucun contrat en attente' :
+             'Aucun contrat terminé'}
             </p>
             {filter === 'all' && (
               <p className="empty-state-subtext">

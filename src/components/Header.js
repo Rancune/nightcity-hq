@@ -69,6 +69,11 @@ export default function Header() {
                 Dashboard
               </button>
             </Link>
+            <Link href="/map">
+              <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
+                Map
+              </button>
+            </Link>
             <Link href="/contrats">
               <button className="bg-[--color-neon-pink] text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:bg-white hover:text-background hover:shadow-[0_0_15px_var(--color-neon-pink)] glitch-on-hover min-w-[100px] whitespace-nowrap">
                 Contrats

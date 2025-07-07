@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { auth } from '@clerk/nextjs/server';
+import connectDb from '@/Lib/database';
+import Contract from '@/models/Contract';
 
 export async function POST(request, { params }) {
   try {
-    // Vérifier l'authentification
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    await connectDb();
+
+    // Vérifier l'authentification Clerk
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -15,16 +17,9 @@ export async function POST(request, { params }) {
     }
 
     const contractId = params.id;
-    const userId = session.user.id;
 
     // Vérifier que le contrat existe et est disponible
-    const contract = await prisma.contrat.findUnique({
-      where: { id: contractId },
-      include: {
-        owner: true,
-        runner: true,
-      }
-    });
+    const contract = await Contract.findOne({ _id: contractId });
 
     if (!contract) {
       return NextResponse.json(
@@ -57,77 +52,31 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Mettre à jour le contrat : changer l'ownerId mais garder le statut 'Proposé'
-    const updatedContract = await prisma.contrat.update({
-      where: { id: contractId },
-      data: {
+    // Mettre à jour le contrat : assigner au joueur ET changer le statut vers 'Assigné'
+    await Contract.updateOne(
+      { _id: contractId }, 
+      { 
         ownerId: userId,
-        // Le statut reste 'Proposé' - il sera changé en 'En cours' quand un runner sera assigné
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            email: true
-          }
-        },
-        employer: {
-          select: {
-            id: true,
-            username: true,
-            email: true
-          }
-        },
-        runner: {
-          select: {
-            id: true,
-            username: true,
-            email: true
-          }
-        }
+        status: 'Assigné'
       }
-    });
+    );
+    const updatedContract = await Contract.findOne({ _id: contractId });
 
     // Créer une notification pour l'employeur
-    await prisma.notification.create({
-      data: {
-        userId: contract.employerId,
-        type: 'CONTRACT_ACCEPTED',
-        title: 'Contrat accepté',
-        message: `Votre contrat "${contract.title}" a été pris en charge par ${session.user.username}`,
-        data: {
-          contractId: contract.id,
-          fixerId: userId,
-          fixerUsername: session.user.username
-        }
-      }
-    });
+    // await prisma.notification.create({ ... });
 
     // Log de l'action
-    await prisma.auditLog.create({
-      data: {
-        userId: userId,
-        action: 'CONTRACT_ACCEPT',
-        targetType: 'CONTRACT',
-        targetId: contractId,
-        details: {
-          contractTitle: contract.title,
-          previousOwner: null,
-          newOwner: userId
-        }
-      }
-    });
+    // await prisma.auditLog.create({ ... });
 
     return NextResponse.json({
       success: true,
       message: 'Contrat accepté avec succès',
       contract: {
-        id: updatedContract.id,
+        id: updatedContract._id,
         title: updatedContract.title,
         status: updatedContract.status,
         ownerId: updatedContract.ownerId,
-        owner: updatedContract.owner
+        // Ajoute d'autres champs si besoin
       }
     });
 

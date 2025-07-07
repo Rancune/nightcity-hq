@@ -24,9 +24,9 @@ export async function POST(request, props) {
       return new NextResponse("Contrat non autorisé", { status: 403 });
     }
     
-    // Vérifier que le contrat est encore proposé
-    if (contract.status !== 'Proposé') {
-      return new NextResponse("Contrat déjà accepté", { status: 400 });
+    // Vérifier que le contrat est assigné au joueur
+    if (contract.status !== 'Assigné') {
+      return new NextResponse("Contrat non disponible pour analyse", { status: 400 });
     }
     
     // Récupérer le profil du joueur

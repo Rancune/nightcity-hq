@@ -12,6 +12,13 @@
     inset 0 0 20px rgba(0, 255, 255, 0.1);
 }
 
+.cityMapContainer.zoomed {
+  box-shadow: 0 0 60px 10px #00ffff, 0 0 120px 40px #ff00ff33;
+  border-color: #ff00ff;
+  z-index: 100;
+  /* Le transform est géré inline par le style React pour centrer/zoomer */
+}
+
 /* Image de fond */
 .mapBackground {
   position: absolute;
@@ -263,111 +270,144 @@
 
 /* Tooltip des marqueurs */
 .markerTooltip {
+  position: absolute !important;
+  top: -120px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: linear-gradient(135deg, #0a0a0a 80%, #003c3c 100%) !important;
+  border: 2.5px double #00ffcc !important;
+  box-shadow: 0 0 24px 4px #00ffcc, 0 0 48px 12px #00ffcc55, 0 0 0 4px #0a0a0a !important;
+  padding: 18px 22px 18px 22px !important;
+  border-radius: 14px 4px 14px 4px / 4px 14px 4px 14px !important;
+  color: #eafffa !important;
+  font-size: 15px !important;
+  font-family: 'Source Code Pro', 'Courier New', monospace !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  min-width: 220px !important;
+  min-height: 120px !important;
+  max-width: 420px !important;
+  width: auto !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  word-break: break-word !important;
+}
+.markerTooltip::before {
+  content: "";
   position: absolute;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.95);
-  border: 1px solid #00ffff;
-  padding: 12px;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 12px;
-  font-family: 'Courier New', monospace;
+  inset: 0;
+  border-radius: 14px 4px 14px 4px / 4px 14px 4px 14px;
   pointer-events: none;
-  z-index: 1000;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
-  max-width: 220px;
-  backdrop-filter: blur(5px);
-  white-space: nowrap;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,255,255,0.07) 2px,
+    rgba(0,255,255,0.07) 4px
+  );
+  z-index: 1;
 }
-
 .markerTooltip h4 {
-  margin: 0 0 8px 0;
-  color: #00ffff;
-  font-size: 14px;
-  font-weight: bold;
+  margin: 0 0 10px 0 !important;
+  color: #00ffcc !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 12px #00fff7, 0 0 2px #000 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  overflow-x: auto !important;
 }
-
 .markerTooltip p {
-  margin: 4px 0;
-  color: #cccccc;
-  line-height: 1.3;
+  margin: 4px 0 !important;
+  color: #eafffa !important;
+  line-height: 1.5 !important;
+  font-size: 14px !important;
+  text-shadow: 0 0 4px #00ffcc99, 0 0 1px #000 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  overflow-x: auto !important;
 }
 
 /* Styles pour le briefing de mission */
 .missionBriefing {
-  position: fixed;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  width: 400px;
-  max-height: 80vh;
-  background: linear-gradient(135deg, #0a0a0a 0%, #000000 50%, #0a0a0a 100%);
-  border: 2px solid #00ffff;
-  border-radius: 12px;
-  box-shadow: 
-    0 0 30px rgba(0, 255, 255, 0.4),
-    inset 0 0 20px rgba(0, 255, 255, 0.1);
-  z-index: 1000;
-  overflow: hidden;
-  font-family: 'Courier New', monospace;
-  color: #ffffff;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 10000 !important;
+  max-width: 480px !important;
+  width: 92vw !important;
+  background: linear-gradient(135deg, #0a0a0a 80%, #003c3c 100%) !important;
+  border: 3px double #00ffcc !important;
+  box-shadow: 0 0 40px 8px #00ffcc99, 0 0 80px 24px #00ffcc33 !important;
+  border-radius: 18px !important;
+  color: #eafffa !important;
+  font-family: 'Source Code Pro', 'Courier New', monospace !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }
 
 .briefingHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #00ffff;
-  background: rgba(0, 255, 255, 0.05);
+  background: rgba(0,255,204,0.08) !important;
+  border-bottom: 2px solid #00ffcc !important;
+  padding: 24px 32px 16px 32px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 }
 
 .briefingTitle {
-  margin: 0;
-  color: #00ffff;
-  font-size: 18px;
-  font-weight: bold;
+  color: #00ffcc !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  letter-spacing: 1.5px !important;
+  text-shadow: 0 0 16px #00fff7, 0 0 2px #000 !important;
+  margin: 0 !important;
 }
 
 .closeButton {
-  background: none;
-  border: none;
-  color: #00ffff;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  background: none !important;
+  border: none !important;
+  color: #00ffcc !important;
+  font-size: 32px !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: background 0.2s !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .closeButton:hover {
-  background: rgba(0, 255, 255, 0.1);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  background: rgba(0,255,204,0.12) !important;
+  box-shadow: 0 0 10px #00ffcc55 !important;
 }
 
 .briefingContent {
-  padding: 20px;
-  max-height: 60vh;
-  overflow-y: auto;
+  padding: 28px 32px !important;
+  max-height: 60vh !important;
+  overflow-y: auto !important;
 }
 
 .briefingSection {
-  margin-bottom: 20px;
+  margin-bottom: 22px !important;
 }
 
 .briefingSection h3 {
-  color: #00ffff;
-  font-size: 14px;
-  margin: 0 0 10px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: #00ffcc !important;
+  font-size: 16px !important;
+  margin: 0 0 10px 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
 }
 
 .contractType {
@@ -507,11 +547,11 @@
 }
 
 .briefingActions {
-  display: flex;
-  gap: 10px;
-  padding: 20px;
-  border-top: 1px solid #00ffff;
-  background: rgba(0, 255, 255, 0.05);
+  display: flex !important;
+  gap: 12px !important;
+  padding: 24px 32px !important;
+  border-top: 2px solid #00ffcc !important;
+  background: rgba(0,255,204,0.08) !important;
 }
 
 .secondaryButton {
@@ -555,4 +595,91 @@
 .primaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Apparition flash + glitch */
+.marker-appear {
+  animation: marker-appear-flash 0.3s cubic-bezier(0.4,2,0.6,0.8), marker-appear-glitch 0.6s linear;
+}
+@keyframes marker-appear-flash {
+  0% { filter: brightness(3) blur(2px); opacity: 0.2; }
+  40% { filter: brightness(2) blur(1px); opacity: 1; }
+  100% { filter: none; opacity: 1; }
+}
+@keyframes marker-appear-glitch {
+  0% { transform: translate(-50%, -50%) scale(1) skewX(0deg); }
+  10% { transform: translate(-48%, -52%) scale(1.1) skewX(8deg); }
+  20% { transform: translate(-52%, -48%) scale(0.95) skewX(-8deg); }
+  30% { transform: translate(-50%, -50%) scale(1.05) skewX(4deg); }
+  40% { transform: translate(-51%, -49%) scale(1) skewX(-4deg); }
+  100% { transform: translate(-50%, -50%) scale(1) skewX(0deg); }
+}
+
+/* Disparition glitch + fondu */
+.marker-disappear {
+  animation: marker-disappear-glitch 0.5s linear forwards;
+}
+@keyframes marker-disappear-glitch {
+  0% { opacity: 1; filter: none; }
+  20% { opacity: 1; filter: blur(1px) brightness(2); transform: translate(-50%, -50%) scale(1.1) skewX(8deg); }
+  40% { opacity: 0.7; filter: blur(2px) brightness(2); transform: translate(-52%, -48%) scale(0.95) skewX(-8deg); }
+  60% { opacity: 0.5; filter: blur(3px) brightness(1.5); transform: translate(-50%, -50%) scale(1.05) skewX(4deg); }
+  80% { opacity: 0.2; filter: blur(4px) brightness(1); transform: translate(-51%, -49%) scale(1) skewX(-4deg); }
+  100% { opacity: 0; filter: blur(6px) brightness(0.5); transform: translate(-50%, -50%) scale(0.8) skewX(0deg); }
+}
+
+/* Glitch permanent pour niveau 5 */
+.glitch-marker {
+  animation: glitch-marker-effect 0.3s infinite steps(2);
+}
+@keyframes glitch-marker-effect {
+  0% { filter: none; }
+  20% { filter: hue-rotate(10deg) brightness(1.2) blur(0.5px); transform: translate(-50%, -50%) scale(1.05) skewX(2deg); }
+  40% { filter: hue-rotate(-10deg) brightness(1.1) blur(1px); transform: translate(-52%, -48%) scale(0.98) skewX(-2deg); }
+  60% { filter: none; transform: translate(-50%, -50%) scale(1) skewX(0deg); }
+  100% { filter: none; }
+}
+
+.missionBriefing p,
+.missionBriefing h2,
+.missionBriefing h3,
+.missionBriefing h4,
+.missionBriefing span {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  overflow-x: auto !important;
+}
+
+.modalCancelButton {
+  background: linear-gradient(135deg, #ff0033 0%, #ff6666 100%) !important;
+  color: #111 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-family: 'Source Code Pro', 'Courier New', monospace !important;
+  font-size: 15px !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  box-shadow: 0 0 8px #ff003355 !important;
+}
+.modalCancelButton:hover {
+  background: linear-gradient(135deg, #ff6666 0%, #ff0033 100%) !important;
+}
+.modalAcceptButton {
+  background: linear-gradient(135deg, #00ff99 0%, #00cc66 100%) !important;
+  color: #111 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-family: 'Source Code Pro', ' Courier New', monospace !important;
+  font-size: 15px !important;
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  box-shadow: 0 0 8px #00ff9955 !important;
+}
+.modalAcceptButton:hover {
+  background: linear-gradient(135deg, #00cc66 0%, #00ff99 100%) !important;
 } 

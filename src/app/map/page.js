@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import CityMap from './CityMap';
 import { useRouter } from 'next/navigation';
+import ButtonWithLoading from '@/components/ButtonWithLoading';
 
 export default function ContractBoardPage() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const router = useRouter();
 
   // Charger les contrats disponibles
@@ -14,6 +16,7 @@ export default function ContractBoardPage() {
     const fetchContracts = async () => {
       try {
         setLoading(true);
+        console.log('[MAP] Chargement des contrats...');
         const response = await fetch('/api/contrats?status=Proposé&ownerId=null');
         
         if (!response.ok) {
@@ -21,7 +24,21 @@ export default function ContractBoardPage() {
         }
         
         const data = await response.json();
-        setContracts(data.contrats || []);
+        console.log('[MAP] Contrats récupérés:', data);
+        console.log('[MAP] Nombre de contrats:', data.length);
+        
+        if (Array.isArray(data)) {
+          data.forEach((contract, index) => {
+            console.log(`[MAP] Contrat ${index}:`, {
+              id: contract._id,
+              title: contract.title,
+              status: contract.status,
+              ownerId: contract.ownerId
+            });
+          });
+        }
+        
+        setContracts(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Erreur:', err);
         setError(err.message);
@@ -33,11 +50,31 @@ export default function ContractBoardPage() {
     fetchContracts();
   }, []);
 
+  // Générer un contrat
+  const handleGenerateContract = async () => {
+    setIsGeneratingContract(true);
+    try {
+      const response = await fetch('/api/contrats/generate', { method: 'POST' });
+      if (response.ok) {
+        // Recharger les contrats après génération
+        const refreshed = await fetch('/api/contrats?status=Proposé&ownerId=null');
+        if (refreshed.ok) {
+          const data = await refreshed.json();
+          setContracts(Array.isArray(data) ? data : []);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la génération du contrat:', error);
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  };
+
   // Gérer l'acceptation d'un contrat
   const handleContractAccept = (acceptedContract) => {
     // Retirer le contrat accepté de la liste
     setContracts(prevContracts => 
-      prevContracts.filter(contract => contract.id !== acceptedContract.id)
+      prevContracts.filter(contract => contract._id !== acceptedContract._id)
     );
     
     // Rediriger vers la page des contrats du joueur
@@ -79,6 +116,18 @@ export default function ContractBoardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Bouton Générer Contrat */}
+      <div className="flex justify-end mb-6">
+        <ButtonWithLoading
+          onClick={handleGenerateContract}
+          isLoading={isGeneratingContract}
+          loadingText="GÉNÉRATION..."
+          className="btn-primary"
+        >
+          Générer Contrat
+        </ButtonWithLoading>
+      </div>
+
       {/* En-tête */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-neon-pink mb-2">

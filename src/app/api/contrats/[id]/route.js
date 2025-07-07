@@ -65,11 +65,9 @@ export async function PUT(request, { params }) {
 
     // --- LA CORRECTION EST ICI ---
     const updatedContract = await Contract.findOneAndUpdate(
-      { _id: contractId, status: 'Proposé' },
+      { _id: contractId, status: 'Assigné', ownerId: userId },
       { 
         $set: {
-          status: 'Assigné',
-          ownerId: userId,
           assignedRunner: netrunnerId,
           // Timer de 15 secondes pour les tests
           initial_completion_duration_trp: 15, // 15 secondes pour les tests
