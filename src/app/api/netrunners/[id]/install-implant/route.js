@@ -90,10 +90,13 @@ export async function POST(request, { params }) {
 
     // Appliquer les effets de l'implant
     const effects = program.effects;
-    if (effects.permanent_skill_boost) {
+    if (
+      effects.permanent_skill_boost &&
+      typeof effects.permanent_skill_boost.skill === 'string' &&
+      effects.permanent_skill_boost.skill
+    ) {
       const skill = effects.permanent_skill_boost.skill.toLowerCase();
       const boost = effects.permanent_skill_boost.value;
-      
       if (runner.skills[skill] !== undefined) {
         runner.skills[skill] = Math.min(10, runner.skills[skill] + boost);
       }

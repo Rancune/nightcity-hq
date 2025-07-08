@@ -34,3 +34,34 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## API : Préparation de mission (Batch Loadout)
+
+POST `/api/contrats/[id]/prepare`
+
+Permet d'équiper plusieurs programmes one-shot d'un coup pour une mission.
+
+**Body :**
+```json
+{
+  "programs": [
+    { "programId": "ID1", "category": "one_shot" },
+    { "programId": "ID2", "category": "one_shot" }
+  ]
+}
+```
+
+- Vérifie l'inventaire du joueur pour chaque programme.
+- Applique les effets cumulés dans `activeProgramEffects` du contrat.
+- Consomme les programmes one-shot utilisés.
+
+**Réponse :**
+```json
+{
+  "success": true,
+  "message": "Programmes équipés avec succès",
+  "activeEffects": { /* effets cumulés */ }
+}
+```
+
+**Authentification requise (Clerk, Bearer token).**

@@ -9,17 +9,12 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
   if (!contract) return null;
 
   const isSuccess = contract.resolution_outcome === 'Succès';
-  
-  // Utiliser les données de l'API si disponibles, sinon calculer
-  const commission = financialSummary?.commission || contract.assignedRunner?.fixerCommission || 20;
-  const totalReward = financialSummary?.totalReward || contract.reward?.eddies || 0;
-  const fixerShare = financialSummary?.fixerShare || Math.round(totalReward * (commission / 100));
-  const runnerShare = financialSummary?.runnerShare || (totalReward - fixerShare);
-  const totalProgramCost = financialSummary?.totalProgramCost || 0;
-  const netGains = financialSummary?.netGains || (isSuccess ? fixerShare - totalProgramCost : -totalProgramCost);
-  
-  // Utiliser les programmes de l'API ou une liste vide
-  const programCosts = usedPrograms || [];
+  const runnerReports = contract.runnerReports || [];
+  const totalReward = contract.reward?.eddies || 0;
+  const totalReputation = contract.reward?.reputation || 0;
+  const fixerShare = contract.playerShare || 0;
+  // Calculer la perte de réputation si présente
+  const reputationLoss = contract.reputationLoss || (contract.runnerReports ? contract.runnerReports.reduce((sum, r) => sum + (r.reputationLoss || 0), 0) : 0);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -34,22 +29,11 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
               <Dialog.Title as="h3" className={`text-2xl font-bold leading-6 ${isSuccess ? 'text-neon-cyan' : 'text-neon-pink'} mb-2`}>
                 RAPPORT DE MISSION : {contract.title}
               </Dialog.Title>
+              {/* Affichage de la description */}
+              {contract.description && (
+                <p className="text-md text-text-secondary mb-2">{contract.description}</p>
+              )}
               <p className="font-bold text-lg">{isSuccess ? "RÉSULTAT : SUCCÈS" : "RÉSULTAT : ÉCHEC"}</p>
-
-              {/* Informations du runner */}
-              <div className="mt-4 bg-black/30 p-4 rounded">
-                <h4 className="font-bold text-neon-cyan mb-2">Runner assigné : {contract.assignedRunner?.name}</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p>Niveau : <span className="text-white">{contract.assignedRunner?.level}</span></p>
-                    <p>Commission Fixer : <span className="text-neon-pink">{commission}%</span></p>
-                  </div>
-                  <div>
-                    <p>XP gagnée : <span className="text-green-400">+{contract.assignedRunner?.xp || 0}</span></p>
-                    <p>Nouveau niveau : <span className="text-neon-cyan">{contract.assignedRunner?.level}</span></p>
-                  </div>
-                </div>
-              </div>
 
               {/* Rapport détaillé */}
               <div className="mt-4 bg-black/30 p-4 rounded">
@@ -58,70 +42,63 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
                 </p>
               </div>
 
-              {/* Résultats financiers */}
+              {/* Affichage par carte pour chaque runner */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {runnerReports.map((r, i) => (
+                  <div key={i} className={`rounded-lg p-4 shadow bg-black/40 border-2 ${r.status === 'Mort' ? 'border-red-500' : r.status === 'Grillé' ? 'border-yellow-400' : 'border-cyan-400'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-bold text-cyan-200 text-lg">{r.runner}</span>
+                      <span className="text-xs px-2 py-1 rounded bg-cyan-900/60 text-cyan-200 ml-2">{r.skill}</span>
+                      <span className={r.isSuccess ? 'text-green-400' : 'text-red-400'}>{r.isSuccess ? '✔️ Succès' : '❌ Échec'}</span>
+                    </div>
+                    <div className="text-sm mb-1">XP gagnée : <span className="text-green-400">+{r.xpGained || 0}</span></div>
+                    <div className="text-sm mb-1">Statut : <span className={r.status === 'Disponible' ? 'text-green-400' : r.status === 'Grillé' ? 'text-yellow-400' : 'text-red-400'}>{r.status}</span></div>
+                    {r.status === 'Mort' && r.deathCause && (
+                      <div className="text-xs text-red-400 mb-1">Cause : {r.deathCause}</div>
+                    )}
+                    <div className="text-sm mb-1">Part (€$) : <span className="text-cyan-200">{r.eddies !== undefined ? `+${r.eddies.toLocaleString('en-US')}` : '-'}</span></div>
+                    <div className="text-sm mb-1">Commission Fixer : <span className="text-pink-400">{r.fixerCommission || r.commission || 0}%</span></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Résultats financiers globaux */}
               <div className="mt-4 bg-black/30 p-4 rounded">
                 <h4 className="font-bold text-text-primary mb-3">Résultats financiers :</h4>
-                
-                {isSuccess && (
-                  <div className="space-y-2 mb-3">
-                    <div className="flex justify-between">
-                      <span>Récompense totale :</span>
-                      <span className="text-green-400">+{totalReward.toLocaleString('en-US')} €$</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Part du Fixer ({commission}%) :</span>
-                      <span className="text-neon-cyan">+{fixerShare.toLocaleString('en-US')} €$</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Part du Runner :</span>
-                      <span className="text-gray-400">+{runnerShare.toLocaleString('en-US')} €$</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Coûts des programmes */}
-                {programCosts.length > 0 && (
-                  <div className="border-t border-gray-600 pt-3 mb-3">
-                    <h5 className="font-bold text-red-400 mb-2">Coûts engagés :</h5>
-                    {programCosts.map((prog, index) => (
-                      <div key={index} className="flex justify-between text-sm">
-                        <span>Programme {prog.name} :</span>
-                        <span className="text-red-400">-{prog.cost.toLocaleString('en-US')} €$</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between font-bold border-t border-gray-600 pt-2 mt-2">
-                      <span>Total coûts :</span>
-                      <span className="text-red-400">-{totalProgramCost.toLocaleString('en-US')} €$</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Gains nets */}
-                <div className="flex justify-between font-bold text-lg border-t border-gray-600 pt-3">
-                  <span>Gains nets :</span>
-                  <span className={netGains >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {netGains >= 0 ? '+' : ''}{netGains.toLocaleString('en-US')} €$
-                  </span>
+                <div className="flex justify-between">
+                  <span>Récompense totale :</span>
+                  <span className="text-green-400">+{totalReward.toLocaleString('en-US')} €$</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Part du Fixer (total) :</span>
+                  <span className="text-neon-cyan">+{fixerShare.toLocaleString('en-US')} €$</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Part totale des Runners :</span>
+                  <span className="text-gray-400">+{(totalReward - fixerShare).toLocaleString('en-US')} €$</span>
                 </div>
               </div>
 
-              {/* Conséquences */}
+              {/* Conséquences et réputation */}
               <div className="mt-4 bg-black/30 p-4 rounded">
                 <h4 className="font-bold text-text-primary mb-2">Conséquences :</h4>
                 <div className="space-y-1">
                   <p className="text-text-secondary">
                     <Typewriter 
                       text={isSuccess 
-                        ? `+ ${reputationInfo?.gained || 0} Réputation` 
-                        : `- ${reputationInfo?.lost || 0} Réputation`
+                        ? `+ ${totalReputation} Réputation` 
+                        : `- ${reputationLoss} Réputation`
                       } 
                       speed={25} 
                     />
                   </p>
+                  {/* Statut de chaque runner en cas d'échec */}
                   {!isSuccess && (
-                    <p className="text-red-400 text-sm">
-                      Runner : {contract.assignedRunner?.status === 'Mort' ? 'Mort' : 'Grillé 24h'}
-                    </p>
+                    <ul className="text-red-400 text-sm mt-2">
+                      {runnerReports.map((r, i) => (
+                        <li key={i}>{r.runner} : {r.status}{r.status === 'Mort' && r.deathCause ? ` (${r.deathCause})` : ''}</li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>

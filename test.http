@@ -32,3 +32,17 @@ Content-Type: application/json
 GET http://localhost:2077/api/contrats
 
 */
+
+### TEST BATCH LOADOUT (Préparation de mission)
+POST http://localhost:3000/api/contrats/{{contractId}}/prepare
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "programs": [
+    { "programId": "ID1", "category": "one_shot" },
+    { "programId": "ID2", "category": "one_shot" }
+  ]
+}
+
+###

@@ -90,6 +90,108 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Description du jeu et fonctionnalités */}
+        <div className="card section-spacing">
+          <div className="card-header">
+            <h2 className="card-title">Night City HQ</h2>
+            <span className="text-sm text-[--color-neon-cyan] font-bold">v1.0</span>
+          </div>
+          
+          <div className="card-content">
+            <div className="mb-6">
+              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">🎮 À propos du jeu</h3>
+              <p className="text-[--color-text-secondary] leading-relaxed">
+                Night City HQ est un jeu de gestion de netrunners dans l'univers cyberpunk de Cyberpunk 2077. 
+                Recrutez des hackers talentueux, gérez vos contrats et construisez votre réputation dans les 
+                bas-fonds de Night City. Chaque décision compte dans votre ascension vers le statut de légende.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">⚡ Fonctionnalités actuelles</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
+                  <h4 className="text-[--color-neon-pink] font-bold mb-2">👥 Gestion d'équipe</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Recrutement de netrunners</li>
+                    <li>• Système de compétences (Hacking, Stealth, Combat)</li>
+                    <li>• Gestion des statuts et missions</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
+                  <h4 className="text-[--color-neon-cyan] font-bold mb-2">📋 Système de contrats</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Génération automatique de missions</li>
+                    <li>• Récompenses en Eddies et Réputation</li>
+                    <li>• Suivi des progrès en temps réel</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
+                  <h4 className="text-[--color-neon-green] font-bold mb-2">💰 Économie</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Monnaie Eddies (€$)</li>
+                    <li>• Système de réputation</li>
+                    <li>• Niveaux de prestige</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
+                  <h4 className="text-[--color-neon-yellow] font-bold mb-2">🗺️ Interface</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Carte interactive de Night City</li>
+                    <li>• Tableau de bord en temps réel</li>
+                    <li>• Design cyberpunk immersif</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">🚀 Fonctionnalités à venir</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-black/20 p-4 rounded-lg border border-[--color-border-dark] opacity-75">
+                  <h4 className="text-[--color-neon-purple] font-bold mb-2">🏪 Marché Noir</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Achat/vente d'équipement</li>
+                    <li>• Cyberware et implants</li>
+                    <li>• Armes et gadgets</li>
+                    <li>• Crafting et amélioration d'équipement</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/20 p-4 rounded-lg border border-[--color-border-dark] opacity-75">
+                  <h4 className="text-[--color-neon-orange] font-bold mb-2">⚔️ Missions spéciales</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Heists et braquages</li>
+                    <li>• Infiltration corporate</li>
+                    <li>• Missions de faction</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/20 p-4 rounded-lg border border-[--color-border-dark] opacity-75">
+                  <h4 className="text-[--color-neon-green] font-bold mb-2">🧠 Gestion avancée des runners</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Arbres de compétences évolutifs</li>
+                    <li>• Gestion du moral et de la motivation</li>
+                    <li>• Spécialisations et synergies d'équipe</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-black/20 p-4 rounded-lg border border-[--color-border-dark] opacity-75">
+                  <h4 className="text-[--color-neon-blue] font-bold mb-2">🎯 PvP & Compétition</h4>
+                  <ul className="text-sm text-[--color-text-secondary] space-y-1">
+                    <li>• Défis entre joueurs</li>
+                    <li>• Classements et leaderboards</li>
+                    <li>• Tournois de hacking</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Cartes de statistiques principales */}
         <div className="stats-grid">
           {/* Eddies */}

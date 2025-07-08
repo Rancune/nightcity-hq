@@ -8,7 +8,10 @@ const contractSchema = new Schema({
   
   // À qui est proposé ce contrat. Peut être null (offre publique).
   ownerId: { type: String, default: null }, 
-  assignedRunner: { type: Schema.Types.ObjectId, ref: 'Netrunner', default: null },
+  assignedRunners: [{
+    skill: { type: String, enum: ['hacking', 'stealth', 'combat'], required: true },
+    runner: { type: Schema.Types.ObjectId, ref: 'Netrunner', required: true }
+  }],
   
   status: { 
   type: String, 
@@ -90,7 +93,26 @@ const contractSchema = new Schema({
     }
   }],
 
+  runnerReports: [{
+    skill: { type: String },
+    runner: { type: String },
+    isSuccess: { type: Boolean },
+    result: { type: Schema.Types.Mixed },
+    status: { type: String },
+    xpGained: { type: Number },
+    fixerCommission: { type: Number },
+    eddies: { type: Number },
+    commissionAmount: { type: Number },
+    deathCause: { type: String },
+    reputationLoss: { type: Number }
+  }],
+
 }, { timestamps: true });
 
-const Contract = mongoose.models.Contract || mongoose.model('Contract', contractSchema);
+// Correction du schéma assignedRunners (doit déjà être correct)
+// Correction de la déclaration du modèle pour forcer le rechargement
+if (mongoose.models.Contract) {
+  delete mongoose.models.Contract;
+}
+const Contract = mongoose.model('Contract', contractSchema);
 export default Contract;

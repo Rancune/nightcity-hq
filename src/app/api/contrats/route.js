@@ -62,7 +62,7 @@ export async function GET(request) {
     let contractsQuery = Contract.find(query).sort({ createdAt: -1 });
     
     if (shouldPopulate) {
-      contractsQuery = contractsQuery.populate('assignedRunner');
+      contractsQuery = contractsQuery.populate('assignedRunners');
     }
     
     const contracts = await contractsQuery.lean();

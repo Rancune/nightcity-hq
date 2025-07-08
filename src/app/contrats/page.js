@@ -39,7 +39,7 @@ export default function ContratsPage() {
 
   const fetchData = async () => {
     try {
-      // Récupérer les contrats du joueur (assignés et en cours)
+      // Récupérer les contrats du joueur (assignés et actifs)
       const contratsResponse = await fetch('/api/contrats?playerContracts=true');
       if (contratsResponse.ok) {
         const contratsData = await contratsResponse.json();
@@ -135,29 +135,22 @@ export default function ContratsPage() {
   const handleTimerEnd = async (contractId) => {
     try {
       console.log(`[TIMER] Tentative de fin de timer pour le contrat ${contractId}`);
-      
-      // Récupérer les informations du contrat avant l'appel
       const contract = contrats.find(c => c._id === contractId);
       if (!contract) {
         console.error(`[TIMER] Contrat ${contractId} non trouvé dans la liste locale`);
         return;
       }
-      
       console.log(`[TIMER] Statut du contrat: ${contract.status}`);
       console.log(`[TIMER] Runner assigné:`, contract.assignedRunner);
-      
       const response = await fetch(`/api/contrats/${contractId}/timesup`, { 
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      
       console.log(`[TIMER] Réponse du serveur: ${response.status} ${response.statusText}`);
-      
       if (response.ok) {
         const data = await response.json();
         console.log(`[TIMER] Données reçues:`, data);
+        // Ne pas ouvrir la modal, juste mettre à jour les données
         await fetchData();
       } else {
         const errorText = await response.text();
@@ -245,7 +238,7 @@ export default function ContratsPage() {
   const filteredContrats = contrats.filter(contrat => {
     switch (filter) {
       case 'active':
-        return contrat.status === 'En cours' || contrat.status === 'Assigné';
+        return contrat.status === 'Actif' || contrat.status === 'Assigné';
       case 'completed':
         return contrat.status === 'Terminé';
       case 'pending':
@@ -259,7 +252,7 @@ export default function ContratsPage() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'En cours':
+      case 'Actif':
         return 'text-yellow-400';
       case 'Assigné':
         return 'text-orange-400';
@@ -436,7 +429,7 @@ export default function ContratsPage() {
                 filter === 'active' ? 'filter-button-active' : 'filter-button-inactive'
               }`}
             >
-              En Cours ({contrats.filter(c => c.status === 'En cours' || c.status === 'Assigné').length})
+              Actifs ({contrats.filter(c => c.status === 'Actif' || c.status === 'Assigné').length})
             </button>
             <button
               onClick={() => setFilter('pending')}
@@ -519,8 +512,8 @@ export default function ContratsPage() {
                   </div>
                 )}
                 
-                {/* Timer de mission pour les contrats assignés/en cours */}
-                {(contrat.status === 'Assigné' || contrat.status === 'En cours') && contrat.initial_completion_duration_trp > 0 && (
+                {/* Timer de mission pour les contrats actifs */}
+                {contrat.status === 'Actif' && contrat.initial_completion_duration_trp > 0 && (
                   <div className="p-3 bg-black/30 rounded border border-[--color-border-dark] mb-3">
                     <div className="text-center">
                       <p className="text-xs text-[--color-text-secondary] mb-1">⏰ Mission en cours</p>
@@ -599,7 +592,7 @@ export default function ContratsPage() {
                     Détails
                   </button>
                 </Link>
-                
+                {/* Bouton Assigner Runner : seulement pour Assigné sans runners assignés */}
                 {contrat.status === 'Assigné' && !contrat.assignedRunner && (
                   <button
                     onClick={() => openAssignModal(contrat._id)}
@@ -608,7 +601,7 @@ export default function ContratsPage() {
                     Assigner Runner
                   </button>
                 )}
-                
+                {/* Bouton Rapport : seulement pour En attente de rapport */}
                 {contrat.status === 'En attente de rapport' && (
                   <ButtonWithLoading
                     onClick={() => handleClaimReward(contrat._id)}
@@ -627,8 +620,6 @@ export default function ContratsPage() {
                      '📋 Rapport'}
                   </ButtonWithLoading>
                 )}
-                
-
               </div>
             </div>
           ))}
@@ -641,7 +632,7 @@ export default function ContratsPage() {
             <p className="empty-state-text">
                           {filter === 'all' ? 'Aucun contrat disponible' : 
              filter === 'assigned' ? 'Aucun contrat pris en charge' :
-             filter === 'active' ? 'Aucun contrat en cours' :
+             filter === 'active' ? 'Aucun contrat actif' :
              filter === 'pending' ? 'Aucun contrat en attente' :
              'Aucun contrat terminé'}
             </p>
@@ -661,6 +652,7 @@ export default function ContratsPage() {
         onAssign={handleAssignRunner}
         runners={netrunners.filter(r => r.status === 'Disponible')}
         contract={getSelectedContract()}
+        onAssigned={fetchData}
       />
       
       <DebriefingModal

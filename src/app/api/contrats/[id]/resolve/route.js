@@ -77,7 +77,7 @@ export async function POST(request, props) {
 
     await connectDb();
     const contractId = params.id;
-    const contract = await Contract.findById(contractId).populate('assignedRunner');
+    const contract = await Contract.findById(contractId).populate('assignedRunners');
 
     if (!contract || contract.ownerId !== userId || contract.status !== 'En attente de rapport') {
       return new NextResponse("Contrat non valide pour cette action.", { status: 404 });
@@ -86,209 +86,122 @@ export async function POST(request, props) {
     // --- SYSTÈME D'ÉQUIPE D'INFILTRATION ---
     // Pour l'instant, on garde la compatibilité avec un seul runner
     // TODO: Implémenter le système multi-runners dans une future version
-    
+    // Multi-runner : on mappe chaque skill requise à son runner
+    const assigned = Array.isArray(contract.assignedRunners) ? contract.assignedRunners : [];
     // Récupérer les effets actifs du joueur
     const playerEffects = contract.activeProgramEffects?.find(e => e.clerkId === userId)?.effects || {};
-    
-    // Test des compétences du runner assigné
-    const skillTest = testRunnerSkills(contract.assignedRunner, contract.requiredSkills, playerEffects);
-    const isSuccess = skillTest.isSuccess;
-    
-    // Log de débogage pour vérifier les récompenses
-    console.log(`[DEBUG] Récompenses du contrat:`, {
-      eddies: contract.reward?.eddies,
-      reputation: contract.reward?.reputation,
-      requiredSkills: contract.requiredSkills,
-      threatLevel: contract.threatLevel
-    });
-    
-    // Log détaillé des résultats de test avec effets
-    console.log(`[RESOLVE] Test de compétences pour ${contract.assignedRunner.name}:`);
-    Object.entries(skillTest.skillResults).forEach(([skill, result]) => {
-      const effectsInfo = [];
-      if (result.effects.bonusApplied > 0) effectsInfo.push(`+${result.effects.bonusApplied} bonus`);
-      if (result.effects.difficultyReduced > 0) effectsInfo.push(`-${result.effects.difficultyReduced} difficulté`);
-      if (result.effects.autoSuccess) effectsInfo.push('succès forcé');
-      
-      console.log(`  ${skill}: ${result.actual}/${result.required} (${Math.round(result.chance * 100)}% chance) → ${result.success ? 'SUCCÈS' : 'ÉCHEC'} ${effectsInfo.length > 0 ? `[${effectsInfo.join(', ')}]` : ''}`);
-    });
-    console.log(`[RESOLVE] Taux de réussite: ${Math.round(skillTest.successRate * 100)}% → ${isSuccess ? 'SUCCÈS' : 'ÉCHEC'}`);
-    console.log(`[RESOLVE] Niveau de menace: ${contract.threatLevel}`);
-    
-    // Mettre à jour le résultat du contrat
-    contract.resolution_outcome = isSuccess ? 'Succès' : 'Échec';
-    contract.skill_test_results = skillTest.skillResults;
-    contract.success_rate = skillTest.successRate;
-
-    // --- On génère le lore et on applique les conséquences ---
-    const contractData = {
-      description: contract.description,
-      requiredSkills: contract.requiredSkills,
-      reward: contract.reward,
-      threatLevel: contract.threatLevel
-    };
-    const debriefingText = await generateResolutionLore(contract.title, contract.assignedRunner.name, isSuccess, contractData);
-    contract.debriefing_log = debriefingText;
-
-    // --- MISE À JOUR DU PROFIL JOUEUR ---
-    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
-    if (playerProfile) {
+    const requiredSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0).map(([k, v]) => k);
+    // Préparer le rapport de résolution
+    let globalSuccess = true;
+    let skillTestResults = {};
+    let runnerReports = [];
+    let totalReward = contract.reward?.eddies || 0;
+    let totalReputation = contract.reward?.reputation || 0;
+    let totalCommission = 0;
+    let usedRunners = [];
+    // Pour chaque skill requise, tester le runner assigné
+    for (const skill of requiredSkills) {
+      const assign = assigned.find(a => a.skill === skill);
+      if (!assign) continue;
+      const runner = await Netrunner.findById(assign.runner);
+      if (!runner) continue;
+      usedRunners.push(runner);
+      // Test de compétence individuel
+      const skillObj = { [skill]: contract.requiredSkills[skill] };
+      const skillTest = testRunnerSkills(runner, skillObj, playerEffects);
+      skillTestResults[skill] = skillTest.skillResults[skill];
+      let isSuccess = skillTest.isSuccess;
+      globalSuccess = globalSuccess && isSuccess;
+      // Appliquer conséquences et XP
+      let runnerReport = { skill, runner: runner.name, isSuccess, result: skillTest.skillResults[skill] };
       if (isSuccess) {
-        // Succès - PARTAGE DES GAINS SELON LA COMMISSION DU RUNNER (GDD)
-        const commission = contract.assignedRunner.fixerCommission || 25;
-        const eddiesPourFixer = Math.round(contract.reward.eddies * (commission / 100));
-        const eddiesPourRunner = contract.reward.eddies - eddiesPourFixer;
-        const oldEddies = playerProfile.eddies;
-        const oldReputation = playerProfile.reputationPoints;
-        
-        playerProfile.eddies += eddiesPourFixer;
-        playerProfile.reputationPoints += contract.reward.reputation;
-        playerProfile.missionsCompleted += 1;
-        playerProfile.totalReputationGained += contract.reward.reputation;
-        
-        // Mettre à jour le statut du runner et lui donner de l'XP
-        contract.assignedRunner.status = 'Disponible';
-        
-        // Calculer l'XP gagnée basée sur la difficulté et le niveau de menace
-        const baseXP = 50; // XP de base
-        const difficultyMultiplier = {
-          'facile': 1,
-          'moyen': 1.5,
-          'difficile': 2,
-          'expert': 3
-        };
+        // XP et commission
+        const baseXP = 50;
+        const difficultyMultiplier = { 'facile': 1, 'moyen': 1.5, 'difficile': 2, 'expert': 3 };
         const difficulty = contract.loreDifficulty || 'moyen';
         const threatMultiplier = contract.threatLevel || 1;
         const xpGained = Math.floor(baseXP * difficultyMultiplier[difficulty] * threatMultiplier);
-        
-        // Ajouter l'XP au runner
-        contract.assignedRunner.xp += xpGained;
-        
-        // Level up : la commission du Fixer augmente de +1% (max 50%)
-        while (contract.assignedRunner.xp >= contract.assignedRunner.xpToNextLevel) {
-          contract.assignedRunner.xp -= contract.assignedRunner.xpToNextLevel;
-          contract.assignedRunner.level += 1;
-          contract.assignedRunner.xpToNextLevel = Math.floor(contract.assignedRunner.xpToNextLevel * 1.5);
-          contract.assignedRunner.fixerCommission = Math.min(50, (contract.assignedRunner.fixerCommission || 25) + 1);
+        runner.xp += xpGained;
+        // Level up
+        while (runner.xp >= runner.xpToNextLevel) {
+          runner.xp -= runner.xpToNextLevel;
+          runner.level += 1;
+          runner.xpToNextLevel = Math.floor(runner.xpToNextLevel * 1.5);
+          runner.fixerCommission = Math.min(50, (runner.fixerCommission || 25) + 1);
         }
-        await contract.assignedRunner.save();
-        
-        console.log(`[RESOLVE] Mission réussie! +${eddiesPourFixer} €$ (Fixer) / +${eddiesPourRunner} €$ (Runner) et +${contract.reward.reputation} PR`);
-        console.log(`[RESOLVE] Runner ${contract.assignedRunner.name} gagne ${xpGained} XP (Niveau ${contract.assignedRunner.level}, Commission Fixer: ${contract.assignedRunner.fixerCommission}%)`);
-        console.log(`[RESOLVE] Profil joueur: ${oldEddies} → ${playerProfile.eddies} €$, ${oldReputation} → ${playerProfile.reputationPoints} PR`);
+        runner.status = 'Disponible';
+        await runner.save();
+        runnerReport.xpGained = xpGained;
+        runnerReport.status = 'Disponible';
+        runnerReport.level = runner.level;
+        runnerReport.commission = runner.fixerCommission || 25;
+        totalCommission += runner.fixerCommission || 25;
       } else {
-        // Échec
-        const reputationLoss = calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3);
-        const oldReputation = playerProfile.reputationPoints;
-        
+        // Échec : mort ou grillé
+        const reputationLoss = calculateReputationLoss(determineDifficulty(skillObj), skillTest.successRate < 0.3);
+        if (skillTest.successRate < 0.3) {
+          runner.status = 'Mort';
+          runner.deathCause = generateDeathCause(contract, skillTest);
+          runner.deathDate = new Date();
+          runner.epitaph = generateEpitaph(runner.name, runner.deathCause, contract);
+          runnerReport.status = 'Mort';
+          runnerReport.deathCause = runner.deathCause;
+        } else {
+          runner.status = 'Grillé';
+          runner.recoveryUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          runnerReport.status = 'Grillé';
+        }
+        await runner.save();
+        runnerReport.reputationLoss = reputationLoss;
+        globalSuccess = false;
+      }
+      runnerReports.push(runnerReport);
+    }
+    // Répartition des récompenses : chaque runner prend sa commission, le reste va au joueur
+    let totalFixerShare = 0;
+    let totalRunnerShare = 0;
+    for (const report of runnerReports) {
+      if (report.status === 'Disponible') {
+        const commission = report.commission || 25;
+        const fixerShare = Math.round(totalReward * (commission / 100) / runnerReports.length);
+        const runnerShare = Math.round(totalReward / runnerReports.length) - fixerShare;
+        report.fixerShare = fixerShare;
+        report.runnerShare = runnerShare;
+        totalFixerShare += fixerShare;
+        totalRunnerShare += runnerShare;
+      }
+    }
+    // Mise à jour du profil joueur
+    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
+    if (playerProfile) {
+      if (globalSuccess) {
+        playerProfile.eddies += totalFixerShare;
+        playerProfile.reputationPoints += totalReputation;
+        playerProfile.missionsCompleted += 1;
+        playerProfile.totalReputationGained += totalReputation;
+      } else {
+        // Échec : perte de réputation
+        const reputationLoss = runnerReports.reduce((sum, r) => sum + (r.reputationLoss || 0), 0);
         playerProfile.reputationPoints = Math.max(0, playerProfile.reputationPoints - reputationLoss);
         playerProfile.missionsFailed += 1;
         playerProfile.totalReputationLost += reputationLoss;
-        
-        // Conséquences sur le runner selon le taux de réussite
-        if (skillTest.successRate < 0.3) {
-          // Échec critique - runner mort
-          contract.assignedRunner.status = 'Mort';
-          contract.assignedRunner.deathCause = generateDeathCause(contract, skillTest);
-          contract.assignedRunner.deathDate = new Date();
-          contract.assignedRunner.epitaph = generateEpitaph(contract.assignedRunner.name, contract.assignedRunner.deathCause, contract);
-          
-          console.log(`[RESOLVE] Échec critique! ${contract.assignedRunner.name} est mort. Cause: ${contract.assignedRunner.deathCause}`);
-        } else {
-          // Échec normal - runner grillé
-          contract.assignedRunner.status = 'Grillé';
-          contract.assignedRunner.recoveryUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-          console.log(`[RESOLVE] Échec! ${contract.assignedRunner.name} est grillé pour 24h.`);
-        }
-        await contract.assignedRunner.save();
-        
-        console.log(`[RESOLVE] Mission échouée! -${reputationLoss} PR (${oldReputation} → ${playerProfile.reputationPoints})`);
       }
-      
       await playerProfile.save();
     }
-
-    // --- IMPACTS SUR LES RELATIONS DE FACTION ---
-    if (contract.targetFaction && contract.employerFaction) {
-      const factionRelations = await FactionRelations.findOne({ clerkId: userId });
-      if (factionRelations) {
-        const impacts = calculateFactionImpacts(contract.targetFaction, contract.employerFaction, isSuccess);
-        
-        // Appliquer les impacts
-        if (impacts.targetFaction) {
-          factionRelations.factions[contract.targetFaction] = Math.max(-100, Math.min(100, 
-            (factionRelations.factions[contract.targetFaction] || 0) + impacts.targetFaction
-          ));
-        }
-        if (impacts.employerFaction) {
-          factionRelations.factions[contract.employerFaction] = Math.max(-100, Math.min(100, 
-            (factionRelations.factions[contract.employerFaction] || 0) + impacts.employerFaction
-          ));
-        }
-        
-        await factionRelations.save();
-        console.log(`[RESOLVE] Impacts faction: ${contract.targetFaction} ${impacts.targetFaction > 0 ? '+' : ''}${impacts.targetFaction}, ${contract.employerFaction} ${impacts.employerFaction > 0 ? '+' : ''}${impacts.employerFaction}`);
-      }
-    }
-
-    // Marquer le contrat comme terminé
+    // Statut du contrat
+    contract.resolution_outcome = globalSuccess ? 'Succès' : 'Échec';
+    contract.skill_test_results = skillTestResults;
+    contract.success_rate = globalSuccess ? 1 : 0;
     contract.status = 'Terminé';
+    contract.debriefing_log = `Mission ${globalSuccess ? 'réussie' : 'échouée'} :\n` + runnerReports.map(r => `${r.runner} (${r.skill}) : ${r.status}`).join('\n');
     await contract.save();
-
-    // Préparer les informations de réputation pour la modal
-    const reputationInfo = {
-      gained: isSuccess ? contract.reward.reputation : 0,
-      lost: !isSuccess ? calculateReputationLoss(determineDifficulty(contract.requiredSkills), skillTest.successRate < 0.3) : 0
-    };
-
-    // Préparer les informations sur les programmes utilisés
-    const usedPrograms = [];
-    if (contract.activeProgramEffects) {
-      const playerEffects = contract.activeProgramEffects.find(e => e.clerkId === userId);
-      if (playerEffects && playerEffects.effects) {
-        // Récupérer les détails des programmes utilisés
-        const { default: Program } = await import('@/models/Program');
-        for (const [programId, effects] of Object.entries(playerEffects.effects)) {
-          try {
-            const program = await Program.findById(programId).lean();
-            if (program) {
-              usedPrograms.push({
-                name: program.name,
-                cost: program.price || 1000, // Coût par défaut si pas défini
-                effects: effects
-              });
-            }
-          } catch (error) {
-            console.log(`[RESOLVE] Erreur lors de la récupération du programme ${programId}:`, error);
-          }
-        }
-      }
-    }
-
-    // Calculer les gains nets
-    const commission = contract.assignedRunner?.fixerCommission || 20;
-    const totalReward = contract.reward?.eddies || 0;
-    const fixerShare = Math.round(totalReward * (commission / 100));
-    const totalProgramCost = usedPrograms.reduce((sum, prog) => sum + prog.cost, 0);
-    const netGains = isSuccess ? fixerShare - totalProgramCost : -totalProgramCost;
-
+    // Retourner le rapport détaillé
     return NextResponse.json({
-      success: true,
-      outcome: isSuccess ? 'Succès' : 'Échec',
-      reward: isSuccess ? contract.reward : null,
-      debriefing: debriefingText,
-      skillTest: skillTest,
-      updatedContract: contract,
-      reputationInfo: reputationInfo,
-      usedPrograms: usedPrograms,
-      financialSummary: {
-        totalReward,
-        fixerShare,
-        runnerShare: totalReward - fixerShare,
-        commission,
-        totalProgramCost,
-        netGains
-      }
+      success: globalSuccess,
+      outcome: globalSuccess ? 'Succès' : 'Échec',
+      reward: globalSuccess ? contract.reward : null,
+      runnerReports,
+      updatedContract: contract
     });
 
   } catch (error) {

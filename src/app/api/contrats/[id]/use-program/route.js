@@ -151,7 +151,7 @@ export async function POST(request, { params }) {
       });
     }
     if (effects.reveal_skill) {
-      // Révéler la compétence la plus facile non révélée
+      // Révéler une compétence non révélée aléatoire (et non la plus facile)
       const skillValues = contract.requiredSkills || {};
       const skills = Object.entries(skillValues)
         .filter(([skill, value]) => value > 0)
@@ -163,9 +163,18 @@ export async function POST(request, { params }) {
       }
       const unrevealed = skills.filter(s => !revealedEntry.skills.includes(s.skill));
       if (unrevealed.length > 0) {
-        const minSkill = unrevealed.reduce((min, curr) => curr.value < min.value ? curr : min, unrevealed[0]);
-        revealedEntry.skills.push(minSkill.skill);
-        revealedSkill = minSkill.skill;
+        // Choisir une compétence aléatoire à révéler
+        const randomIdx = Math.floor(Math.random() * unrevealed.length);
+        const randomSkill = unrevealed[randomIdx];
+        revealedEntry.skills.push(randomSkill.skill);
+        revealedSkill = randomSkill.skill;
+      }
+      // Consommer le programme one-shot AVANT de retourner
+      if (category === 'one_shot') {
+        const success = playerInventory.useOneShotProgram(programId);
+        if (!success) {
+          return new NextResponse("Erreur lors de la consommation du programme", { status: 500 });
+        }
       }
       await Promise.all([
         playerInventory.save(),

@@ -2,22 +2,41 @@
 'use client';
 import { useState } from 'react';
 import Typewriter from './Typewriter';
+import { useEffect } from 'react';
 
-export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, contract }) {
-  const [selectedRunner, setSelectedRunner] = useState(null);
+export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, contract, onAssigned }) {
+  const [assignments, setAssignments] = useState({}); // { skill: runnerId }
   const [assigning, setAssigning] = useState(false);
 
   if (!isOpen) return null;
 
   const availableRunners = runners.filter(r => r.status === 'Disponible');
+  const requiredSkills = Object.entries(contract?.requiredSkills || {}).filter(([_, v]) => v > 0).map(([k]) => k);
 
-  const handleAssignRunner = async () => {
-    if (!selectedRunner) return;
-    
+  // Empêcher qu'un runner soit assigné à plusieurs skills
+  const getAvailableForSkill = (skill) => {
+    const usedRunnerIds = Object.entries(assignments)
+      .filter(([s, _]) => s !== skill)
+      .map(([_, id]) => id)
+      .filter(Boolean);
+    return availableRunners.filter(r => !usedRunnerIds.includes(r._id) || assignments[skill] === r._id);
+  };
+
+  const handleAssign = (skill, runnerId) => {
+    setAssignments(prev => ({ ...prev, [skill]: runnerId }));
+  };
+
+  const handleAssignRunners = async () => {
+    if (Object.keys(assignments).length !== requiredSkills.length) return;
     setAssigning(true);
     try {
-      await onAssign(selectedRunner._id);
+      await fetch(`/api/contrats/${contract._id}/assign-runners`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignments: requiredSkills.map(skill => ({ skill, runnerId: assignments[skill] })) })
+      });
       onClose();
+      if (onAssigned) onAssigned();
     } catch (error) {
       console.error('Erreur lors de l\'assignation:', error);
     } finally {
@@ -25,22 +44,18 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
     }
   };
 
-  const getSkillColor = (skill, value) => {
-    if (value >= 8) return 'text-green-400';
-    if (value >= 6) return 'text-blue-400';
-    if (value >= 4) return 'text-yellow-400';
-    return 'text-red-400';
+  const getSkillLabel = (skill) => {
+    if (skill === 'hacking') return '💻 Hacking';
+    if (skill === 'stealth') return '👁️ Infiltration';
+    if (skill === 'combat') return '⚔️ Combat';
+    return skill;
   };
 
-  const getRarityColor = (rarity) => {
-    switch (rarity) {
-      case 'common': return 'text-gray-400';
-      case 'uncommon': return 'text-green-400';
-      case 'rare': return 'text-blue-400';
-      case 'legendary': return 'text-purple-400';
-      default: return 'text-gray-400';
-    }
-  };
+  const getRunnerSkillsSummary = (runner) => (
+    <span className="block text-xs text-gray-400 whitespace-pre font-mono">
+      {`H:${runner.skills.hacking}\nS:${runner.skills.stealth}\nC:${runner.skills.combat}`}
+    </span>
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -48,17 +63,17 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="text-2xl text-[--color-neon-cyan] font-bold">
-              🎯 Assigner un Netrunner
+              🎯 Assigner les Netrunners
             </h3>
             <p className="text-[--color-text-secondary] mt-1">
-              Sélectionne un agent disponible pour cette mission
+              Sélectionnez un agent pour chaque compétence requise
             </p>
           </div>
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-white text-2xl"
           >
-            ✕
+            ×
           </button>
         </div>
 
@@ -82,170 +97,37 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
           </div>
         )}
 
-        {/* Runners disponibles */}
-        <div className="mb-6">
-          <h4 className="text-lg text-[--color-text-primary] font-bold mb-4">
-            Agents Disponibles ({availableRunners.length})
-          </h4>
-          
-          {availableRunners.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-              {availableRunners.map((runner, index) => {
-                const isSelected = selectedRunner?._id === runner._id;
-                return (
-                  <div 
-                    key={index}
-                    onClick={() => setSelectedRunner(runner)}
-                    className={`bg-white/5 p-4 rounded-lg border cursor-pointer transition-all ${
-                      isSelected 
-                        ? 'border-[--color-neon-cyan] bg-[--color-neon-cyan]/10' 
-                        : 'border-[--color-border-dark] hover:border-[--color-neon-cyan]/50'
-                    }`}
-                  >
-                    {/* En-tête du runner */}
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h5 className="text-lg text-[--color-text-primary] font-bold">
-                          {runner.name}
-                        </h5>
-                        <p className="text-xs text-[--color-text-secondary]">
-                          Agent #{runner._id.slice(-4)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-sm font-bold ${runner.status === 'Disponible' ? 'text-green-400' : 'text-red-400'}`}>
-                          {runner.status}
-                        </div>
-                        <div className="text-xs text-[--color-text-secondary]">
-                          Commission: {runner.commission}%
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Compétences */}
-                    <div className="mb-3">
-                      <p className="text-xs text-[--color-text-secondary] mb-2">Compétences:</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className={`text-center p-2 rounded bg-black/30 ${getSkillColor('hacking', runner.skills.hacking)}`}>
-                          <div className="text-xs font-bold">HACK</div>
-                          <div className="text-lg font-bold">{runner.skills.hacking}</div>
-                        </div>
-                        <div className={`text-center p-2 rounded bg-black/30 ${getSkillColor('stealth', runner.skills.stealth)}`}>
-                          <div className="text-xs font-bold">STEALTH</div>
-                          <div className="text-lg font-bold">{runner.skills.stealth}</div>
-                        </div>
-                        <div className={`text-center p-2 rounded bg-black/30 ${getSkillColor('combat', runner.skills.combat)}`}>
-                          <div className="text-xs font-bold">COMBAT</div>
-                          <div className="text-lg font-bold">{runner.skills.combat}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Implants installés */}
-                    {runner.installedImplants && runner.installedImplants.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs text-[--color-text-secondary] mb-1">Implants ({runner.installedImplants.length}):</p>
-                        <div className="space-y-1">
-                          {runner.installedImplants.slice(0, 2).map((implant, idx) => (
-                            <div key={idx} className="text-xs text-green-400 bg-green-900/20 px-2 py-1 rounded">
-                              <div className="flex items-center gap-1">
-                                <span>✓</span>
-                                <span className="font-medium">{implant.program?.name || 'Implant'}</span>
-                                {implant.program?.rarity && (
-                                  <span className={`text-xs ${getRarityColor(implant.program.rarity)}`}>
-                                    [{implant.program.rarity.toUpperCase()}]
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                          {runner.installedImplants.length > 2 && (
-                            <div className="text-xs text-[--color-text-secondary]">
-                              +{runner.installedImplants.length - 2} autres...
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Statistiques */}
-                    <div className="text-xs text-[--color-text-secondary]">
-                      <div className="flex justify-between">
-                        <span>Missions réussies:</span>
-                        <span className="text-green-400">{runner.stats?.successfulMissions || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Missions échouées:</span>
-                        <span className="text-red-400">{runner.stats?.failedMissions || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        {/* Sélection par compétence */}
+        <div className="space-y-4 mb-6">
+          {requiredSkills.map(skill => (
+            <div key={skill} className="flex items-center gap-4">
+              <span className="w-32 font-bold">{getSkillLabel(skill)}</span>
+              <select
+                className="p-2 rounded border"
+                value={assignments[skill] || ''}
+                onChange={e => handleAssign(skill, e.target.value)}
+              >
+                <option value="">Choisir un runner</option>
+                {getAvailableForSkill(skill).map(runner => (
+                  <option key={runner._id} value={runner._id}>
+                    {runner.name} (H:{runner.skills.hacking} S:{runner.skills.stealth} C:{runner.skills.combat})
+                  </option>
+                ))}
+              </select>
+              {/* Résumé vertical sous le select */}
+              {assignments[skill] && (
+                <div className="ml-2">{getRunnerSkillsSummary(availableRunners.find(r => r._id === assignments[skill]))}</div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">😵</div>
-              <p className="text-[--color-text-secondary]">
-                Aucun agent disponible.
-              </p>
-              <p className="text-[--color-text-secondary] text-sm mt-1">
-                Tous vos runners sont en mission ou grillés.
-              </p>
-            </div>
-          )}
+          ))}
         </div>
-
-        {/* Résumé de la sélection */}
-        {selectedRunner && (
-          <div className="bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]/30 rounded-lg p-4 mb-6">
-            <h4 className="text-[--color-neon-cyan] font-bold mb-2">
-              Agent sélectionné: {selectedRunner.name}
-            </h4>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="text-[--color-text-secondary]">Hacking:</span>
-                <span className={`ml-2 font-bold ${getSkillColor('hacking', selectedRunner.skills.hacking)}`}>
-                  {selectedRunner.skills.hacking}
-                </span>
-              </div>
-              <div>
-                <span className="text-[--color-text-secondary]">Stealth:</span>
-                <span className={`ml-2 font-bold ${getSkillColor('stealth', selectedRunner.skills.stealth)}`}>
-                  {selectedRunner.skills.stealth}
-                </span>
-              </div>
-              <div>
-                <span className="text-[--color-text-secondary]">Combat:</span>
-                <span className={`ml-2 font-bold ${getSkillColor('combat', selectedRunner.skills.combat)}`}>
-                  {selectedRunner.skills.combat}
-                </span>
-              </div>
-            </div>
-            {selectedRunner.installedImplants && selectedRunner.installedImplants.length > 0 && (
-              <div className="mt-2 text-sm text-green-400">
-                {selectedRunner.installedImplants.length} implant(s) actif(s)
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Boutons d'action */}
-        <div className="flex gap-4 justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleAssignRunner}
-            disabled={!selectedRunner || assigning}
-            className="px-6 py-2 bg-[--color-neon-cyan] text-background font-bold rounded hover:bg-white hover:text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {assigning ? 'ASSIGNATION...' : `Assigner ${selectedRunner ? selectedRunner.name : ''}`}
-          </button>
-        </div>
+        <button
+          className="w-full py-3 rounded bg-cyan-600 text-white font-bold text-lg disabled:opacity-50"
+          onClick={handleAssignRunners}
+          disabled={Object.keys(assignments).length !== requiredSkills.length || assigning}
+        >
+          {assigning ? 'Assignation...' : `Assigner ${requiredSkills.length} runner(s)`}
+        </button>
       </div>
     </div>
   );
