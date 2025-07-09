@@ -13,6 +13,11 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
   const availableRunners = runners.filter(r => r.status === 'Disponible');
   const requiredSkills = Object.entries(contract?.requiredSkills || {}).filter(([_, v]) => v > 0).map(([k]) => k);
 
+  // Utiliser uniquement les compétences révélées si elles existent
+  const revealedSkills = contract?.userRevealedSkills && contract.userRevealedSkills.length > 0
+    ? contract.userRevealedSkills
+    : requiredSkills;
+
   // Empêcher qu'un runner soit assigné à plusieurs skills
   const getAvailableForSkill = (skill) => {
     const usedRunnerIds = Object.entries(assignments)
@@ -49,6 +54,14 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
     if (skill === 'stealth') return '👁️ Infiltration';
     if (skill === 'combat') return '⚔️ Combat';
     return skill;
+  };
+
+  // Label pour les compétences, ou 'Compétence non révélée' si non révélée
+  const getSkillLabelMasked = (skill) => {
+    if (contract?.userRevealedSkills && !contract.userRevealedSkills.includes(skill)) {
+      return <span className="flex items-center gap-2"><span role="img" aria-label="hidden">❓</span> <span className="italic text-gray-400">Compétence non révélée</span></span>;
+    }
+    return getSkillLabel(skill);
   };
 
   const getRunnerSkillsSummary = (runner) => (
@@ -99,18 +112,18 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
 
         {/* Sélection par compétence */}
         <div className="space-y-4 mb-6">
-          {requiredSkills.map(skill => (
+          {revealedSkills.map(skill => (
             <div key={skill} className="flex items-center gap-4">
-              <span className="w-32 font-bold">{getSkillLabel(skill)}</span>
+              <span className="w-48 font-bold">{getSkillLabelMasked(skill)}</span>
               <select
-                className="p-2 rounded border"
+                className="p-2 rounded border text-base bg-gray-800 text-cyan-200 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all min-w-[260px]"
                 value={assignments[skill] || ''}
                 onChange={e => handleAssign(skill, e.target.value)}
               >
-                <option value="">Choisir un runner</option>
+                <option value="" className="text-gray-400 bg-gray-900">Choisir un runner</option>
                 {getAvailableForSkill(skill).map(runner => (
-                  <option key={runner._id} value={runner._id}>
-                    {runner.name} (H:{runner.skills.hacking} S:{runner.skills.stealth} C:{runner.skills.combat})
+                  <option key={runner._id} value={runner._id} className="text-cyan-300 bg-gray-900 font-semibold">
+                    {runner.name}  —  H:{runner.skills.hacking} S:{runner.skills.stealth} C:{runner.skills.combat}
                   </option>
                 ))}
               </select>

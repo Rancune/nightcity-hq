@@ -1,67 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Night City HQ
 
-## Getting Started
+**Night City HQ** est un jeu de gestion de netrunners dans l'univers cyberpunk de Night City (inspiré de Cyberpunk 2077). Incarnez un Fixer, recrutez et gérez une équipe de hackers d'élite, acceptez des contrats risqués, et bâtissez votre réputation dans les bas-fonds de la ville la plus dangereuse du futur.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Concept
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Incarnez un Fixer** : Gérez une équipe de netrunners, choisissez les meilleurs profils pour chaque mission.
+- **Contrats dynamiques** : Acceptez des missions générées par IA, chacune avec ses propres compétences requises, factions impliquées, et récompenses.
+- **Gestion multi-runner** : Assignez plusieurs runners à un même contrat, chaque compétence testée étant couverte par un spécialiste.
+- **Résolution automatisée** : Les missions se résolvent automatiquement après un timer, avec un rapport debriefing généré par IA (lore, conséquences, XP, réputation, récompenses, etc.).
+- **Progression & Level Up** : Les runners gagnent de l'expérience, montent de niveau, et peuvent mourir ou être grillés selon les risques pris.
+- **Réputation & factions** : Vos choix influencent votre réputation et vos relations avec les différentes factions de Night City.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🕹️ Mécaniques principales
 
-## Learn More
+- **Recrutement & gestion d'équipe** : Recrutez, équipez et spécialisez vos netrunners.
+- **Contrats** :
+  - Analysez les missions, assignez les runners selon leurs compétences (hacking, infiltration, combat).
+  - Lancez la mission, attendez la résolution automatique.
+  - Consultez le rapport détaillé (succès/échec, XP, statut, cause de mort, part du Fixer, etc.).
+- **Marché noir** : Achetez/équipez des programmes, cyberwares, gadgets pour booster vos chances.
+- **Lore dynamique** : Chaque mission génère un debriefing unique, immersif, et adapté à l'issue de la mission.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Installation & Lancement
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Cloner le repo**
+   ```bash
+   git clone https://github.com/Rancune/nightcity-hq.git
+   cd nightcity-hq
+   ```
+2. **Installer les dépendances**
+   ```bash
+   npm install
+   # ou
+   yarn install
+   ```
+3. **Lancer le serveur de dev**
+   ```bash
+   npm run dev
+   # ou
+   yarn dev
+   ```
+4. **Ouvrir le jeu**
+   - Rendez-vous sur [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📦 Tech Stack
+- **Next.js** (React, API routes)
+- **MongoDB** (stockage joueurs, runners, contrats)
+- **Clerk** (authentification)
+- **Tailwind CSS** (UI)
+- **OpenAI** (génération de lore et debriefing)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
 
-## API : Préparation de mission (Batch Loadout)
+## 📖 Exemples de flux de jeu
+1. **Accepter un contrat**
+2. **Assigner les runners aux compétences requises**
+3. **Lancer la mission (timer)**
+4. **Lire le rapport de mission généré par IA**
+5. **Gérer les conséquences (XP, mort, réputation, récompenses)**
 
-POST `/api/contrats/[id]/prepare`
+---
 
-Permet d'équiper plusieurs programmes one-shot d'un coup pour une mission.
+## 🤖 API & Personnalisation
+- Voir le dossier `/src/app/api/contrats/` pour les endpoints principaux (création, assignation, résolution, rapport, etc.).
+- Les missions, runners et récompenses sont entièrement dynamiques et adaptables.
 
-**Body :**
-```json
-{
-  "programs": [
-    { "programId": "ID1", "category": "one_shot" },
-    { "programId": "ID2", "category": "one_shot" }
-  ]
-}
-```
+---
 
-- Vérifie l'inventaire du joueur pour chaque programme.
-- Applique les effets cumulés dans `activeProgramEffects` du contrat.
-- Consomme les programmes one-shot utilisés.
 
-**Réponse :**
-```json
-{
-  "success": true,
-  "message": "Programmes équipés avec succès",
-  "activeEffects": { /* effets cumulés */ }
-}
-```
 
-**Authentification requise (Clerk, Bearer token).**
+---
+
+*Bienvenue à Night City, choomba. Prends le contrôle du réseau... ou meurs en essayant.*
