@@ -84,8 +84,7 @@ export async function POST(request, props) {
     }
 
     // --- SYSTÈME D'ÉQUIPE D'INFILTRATION ---
-    // Pour l'instant, on garde la compatibilité avec un seul runner
-    // TODO: Implémenter le système multi-runners dans une future version
+  
     // Multi-runner : on mappe chaque skill requise à son runner
     const assigned = Array.isArray(contract.assignedRunners) ? contract.assignedRunners : [];
     // Récupérer les effets actifs du joueur
@@ -193,7 +192,6 @@ export async function POST(request, props) {
     contract.skill_test_results = skillTestResults;
     contract.success_rate = globalSuccess ? 1 : 0;
     contract.status = 'Terminé';
-    contract.debriefing_log = `Mission ${globalSuccess ? 'réussie' : 'échouée'} :\n` + runnerReports.map(r => `${r.runner} (${r.skill}) : ${r.status}`).join('\n');
     await contract.save();
     // Retourner le rapport détaillé
     return NextResponse.json({

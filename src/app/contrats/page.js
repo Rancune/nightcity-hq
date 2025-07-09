@@ -164,28 +164,24 @@ export default function ContratsPage() {
   const handleClaimReward = async (contractId) => {
     try {
       setLoadingReports(prev => ({ ...prev, [contractId]: true }));
-      const response = await fetch(`/api/contrats/${contractId}/resolve`, { method: 'POST' });
+      const response = await fetch(`/api/contrats/${contractId}`); // On fetch le contrat à jour
       if (response.ok) {
-        const data = await response.json();
-        console.log('[CLAIM] Données de résolution reçues:', data);
-        
-        // Mettre à jour les états pour la modal
-        setDebriefingContract(data.updatedContract);
-        setDebriefingReputationInfo(data.reputationInfo);
-        setDebriefingUsedPrograms(data.usedPrograms || []);
-        setDebriefingFinancialSummary(data.financialSummary || null);
+        const contract = await response.json();
+        setDebriefingContract(contract);
+        setDebriefingReputationInfo(null);
+        setDebriefingUsedPrograms([]);
+        setDebriefingFinancialSummary(null);
         setShowDebriefing(true);
-        
         // Recharger les données après un court délai
         setTimeout(() => {
           fetchData();
         }, 1000);
       } else {
         const errorMessage = await response.text();
-        console.error(`[CLAIM] Erreur lors de la réclamation: ${errorMessage}`);
+        console.error(`[CLAIM] Erreur lors de la récupération du rapport: ${errorMessage}`);
       }
     } catch (error) {
-      console.error('Erreur lors de la réclamation de la récompense:', error);
+      console.error('Erreur lors de la récupération du rapport:', error);
     } finally {
       setLoadingReports(prev => ({ ...prev, [contractId]: false }));
     }

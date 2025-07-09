@@ -29,10 +29,7 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
               <Dialog.Title as="h3" className={`text-2xl font-bold leading-6 ${isSuccess ? 'text-neon-cyan' : 'text-neon-pink'} mb-2`}>
                 RAPPORT DE MISSION : {contract.title}
               </Dialog.Title>
-              {/* Affichage de la description */}
-              {contract.description && (
-                <p className="text-md text-text-secondary mb-2">{contract.description}</p>
-              )}
+              
               <p className="font-bold text-lg">{isSuccess ? "RÉSULTAT : SUCCÈS" : "RÉSULTAT : ÉCHEC"}</p>
 
               {/* Rapport détaillé */}
