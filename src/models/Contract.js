@@ -104,8 +104,13 @@ const contractSchema = new Schema({
     eddies: { type: Number },
     commissionAmount: { type: Number },
     deathCause: { type: String },
-    reputationLoss: { type: Number }
+    reputationLoss: { type: Number },
+    levelUp: { type: Boolean, default: false }
   }],
+
+  // Ajout explicite des parts financières
+  playerShare: { type: Number, default: 0 }, // Part du Fixer
+  totalRunnerNet: { type: Number, default: 0 }, // Part totale des runners
 
 }, { timestamps: true });
 

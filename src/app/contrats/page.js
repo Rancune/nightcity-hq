@@ -164,18 +164,31 @@ export default function ContratsPage() {
   const handleClaimReward = async (contractId) => {
     try {
       setLoadingReports(prev => ({ ...prev, [contractId]: true }));
-      const response = await fetch(`/api/contrats/${contractId}`); // On fetch le contrat à jour
+      // Étape 1 : POST pour résoudre le contrat et mettre à jour le statut
+      const resolveResponse = await fetch(`/api/contrats/${contractId}/resolve`, { method: 'POST' });
+      if (!resolveResponse.ok) {
+        const errorMessage = await resolveResponse.text();
+        console.error(`[CLAIM] Erreur lors de la résolution du contrat: ${errorMessage}`);
+        setLoadingReports(prev => ({ ...prev, [contractId]: false }));
+        return;
+      }
+      // Étape 2 : GET pour récupérer le contrat à jour
+      const response = await fetch(`/api/contrats/${contractId}`);
       if (response.ok) {
         const contract = await response.json();
-        setDebriefingContract(contract);
+        // Log pour debug complet du mapping runnerReports
+        if (contract.runnerReports) {
+          contract.runnerReports.forEach((r, i) => {
+            console.log(`[CLAIM] runnerReports[${i}]:`, r);
+          });
+        }
+        setDebriefingContract({ ...contract });
         setDebriefingReputationInfo(null);
         setDebriefingUsedPrograms([]);
         setDebriefingFinancialSummary(null);
         setShowDebriefing(true);
-        // Recharger les données après un court délai
-        setTimeout(() => {
-          fetchData();
-        }, 1000);
+        // Rafraîchir immédiatement la liste des contrats pour mettre à jour le statut
+        await fetchData();
       } else {
         const errorMessage = await response.text();
         console.error(`[CLAIM] Erreur lors de la récupération du rapport: ${errorMessage}`);

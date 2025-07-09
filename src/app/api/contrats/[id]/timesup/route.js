@@ -71,22 +71,40 @@ export async function POST(request, props) {
         const threatMultiplier = contract.threatLevel || 1;
         xpGained = Math.floor(baseXP * (difficultyMultiplier[difficulty] || 1.5) * threatMultiplier);
         runner.xp = (runner.xp || 0) + xpGained;
+        // Level up
+        let levelUp = false;
+        while (runner.xp >= runner.xpToNextLevel) {
+          runner.xp -= runner.xpToNextLevel;
+          runner.level += 1;
+          runner.xpToNextLevel = Math.floor(runner.xpToNextLevel * 1.5);
+          levelUp = true;
+        }
         runner.status = 'Disponible';
         await runner.save();
+        runnerReports.push({
+          skill,
+          runner: runner.name,
+          isSuccess,
+          result: skillTest.skillResults[skill],
+          status: runner.status,
+          xpGained,
+          fixerCommission: runner.fixerCommission || 25,
+          levelUp
+        });
       } else {
         runner.status = 'Grillé';
         runner.recoveryUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await runner.save();
+        runnerReports.push({
+          skill,
+          runner: runner.name,
+          isSuccess,
+          result: skillTest.skillResults[skill],
+          status: runner.status,
+          xpGained,
+          fixerCommission: runner.fixerCommission || 25
+        });
       }
-      runnerReports.push({
-        skill,
-        runner: runner.name,
-        isSuccess,
-        result: skillTest.skillResults[skill],
-        status: runner.status,
-        xpGained,
-        fixerCommission: runner.fixerCommission || 25
-      });
     }
     // Répartition de la récompense si succès
     let playerShare = 0;

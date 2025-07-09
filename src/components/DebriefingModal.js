@@ -41,38 +41,55 @@ export default function DebriefingModal({ isOpen, onClose, contract, reputationI
 
               {/* Affichage par carte pour chaque runner */}
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {runnerReports.map((r, i) => (
-                  <div key={i} className={`rounded-lg p-4 shadow bg-black/40 border-2 ${r.status === 'Mort' ? 'border-red-500' : r.status === 'Grillé' ? 'border-yellow-400' : 'border-cyan-400'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-bold text-cyan-200 text-lg">{r.runner}</span>
-                      <span className="text-xs px-2 py-1 rounded bg-cyan-900/60 text-cyan-200 ml-2">{r.skill}</span>
-                      <span className={r.isSuccess ? 'text-green-400' : 'text-red-400'}>{r.isSuccess ? '✔️ Succès' : '❌ Échec'}</span>
+                {runnerReports.map((r, i) => {
+                  // Log pour debug affichage du gain de niveau
+                  console.log(`[MODAL] Runner: ${r.runner}, isSuccess: ${r.isSuccess}, levelUp: ${r.levelUp}`);
+                  return (
+                    <div key={i} className={`rounded-lg p-4 shadow bg-black/40 border-2 ${r.status === 'Mort' ? 'border-red-500' : r.status === 'Grillé' ? 'border-yellow-400' : 'border-cyan-400'}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-bold text-cyan-200 text-lg">{r.runner}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-xs px-2 py-1 rounded bg-cyan-900/60 text-cyan-200 mr-2">{r.skill}</span>
+                        <span className={r.isSuccess ? 'text-green-400' : 'text-red-400'}>
+                          {r.isSuccess ? '✔️ Succès' : '❌ Échec'}
+                        </span>
+                      </div>
+                      <div className="text-sm mb-1">XP gagnée : <span className="text-green-400">+{isSuccess ? (r.xpGained || 0) : 0}</span></div>
+                      {/* Affichage du gain de niveau */}
+                      {isSuccess && r.levelUp && (
+                        <div className="text-xs text-yellow-300 mb-1 font-bold">Gain de niveau !</div>
+                      )}
+                      <div className="text-sm mb-1">Statut : <span className={r.status === 'Disponible' ? 'text-green-400' : r.status === 'Grillé' ? 'text-yellow-400' : 'text-red-400'}>{r.status}</span></div>
+                      {r.status === 'Mort' && r.deathCause && (
+                        <div className="text-xs text-red-400 mb-1">Cause : {r.deathCause}</div>
+                      )}
                     </div>
-                    <div className="text-sm mb-1">XP gagnée : <span className="text-green-400">+{r.xpGained || 0}</span></div>
-                    <div className="text-sm mb-1">Statut : <span className={r.status === 'Disponible' ? 'text-green-400' : r.status === 'Grillé' ? 'text-yellow-400' : 'text-red-400'}>{r.status}</span></div>
-                    {r.status === 'Mort' && r.deathCause && (
-                      <div className="text-xs text-red-400 mb-1">Cause : {r.deathCause}</div>
-                    )}
-                    <div className="text-sm mb-1">Part (€$) : <span className="text-cyan-200">{r.eddies !== undefined ? `+${r.eddies.toLocaleString('en-US')}` : '-'}</span></div>
-                    <div className="text-sm mb-1">Commission Fixer : <span className="text-pink-400">{r.fixerCommission || r.commission || 0}%</span></div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Résultats financiers globaux */}
               <div className="mt-4 bg-black/30 p-4 rounded">
                 <h4 className="font-bold text-text-primary mb-3">Résultats financiers :</h4>
                 <div className="flex justify-between">
-                  <span>Récompense totale :</span>
+                  <span>Paiement :</span>
                   <span className="text-green-400">+{totalReward.toLocaleString('en-US')} €$</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Part du Fixer (total) :</span>
-                  <span className="text-neon-cyan">+{fixerShare.toLocaleString('en-US')} €$</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Part totale des Runners :</span>
-                  <span className="text-gray-400">+{(totalReward - fixerShare).toLocaleString('en-US')} €$</span>
+                {runnerReports.map((r, i) => (
+                  <div className="flex justify-between" key={i}>
+                    <span>Part du Runner {r.runner} :</span>
+                    <span className="text-cyan-200">
+                      +{(r.eddies !== undefined ? r.eddies.toLocaleString('en-US') : '-')} €$
+                      {typeof r.fixerCommission === 'number' &&
+                        <span className="text-xs text-pink-400 ml-2">(commission {r.fixerCommission}%)</span>
+                      }
+                    </span>
+                  </div>
+                ))}
+                <div className="flex justify-between mt-2">
+                  <span>Part du Fixer :</span>
+                  <span className="text-green-400 font-bold">+{fixerShare.toLocaleString('en-US')} €$</span>
                 </div>
               </div>
 
