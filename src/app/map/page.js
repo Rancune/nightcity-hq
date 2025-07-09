@@ -135,7 +135,7 @@ export default function ContractBoardPage() {
         </h1>
         <p className="text-gray-300">
           Surveillez les opportunités qui apparaissent sur le réseau. 
-          Interceptez les contrats avant qu'ils ne soient pris par d'autres Fixers.
+          Interceptez les contrats avant qu&apos;ils ne soient pris par d&apos;autres Fixers.
         </p>
       </div>
 

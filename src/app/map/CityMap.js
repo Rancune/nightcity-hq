@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import ContractMarker from './ContractMarker';
 import MissionBriefing from './MissionBriefing';
 import styles from './CityMap.module.css';
+import Image from 'next/image';
 
 // Fonction pour générer une position aléatoire sur la carte
 function getRandomPositionOnMap() {
@@ -110,10 +111,12 @@ export default function CityMap({ contracts = [], onContractAccept }) {
     <div className={styles.cityMapContainer + (zoomed ? ' ' + styles.zoomed : '')} style={zoomed ? zoomStyle : {}}>
       {/* Image de fond de Night City */}
       <div className={styles.mapBackground}>
-        <img 
+        <Image 
           src="/nightcity-generic-map.jpg" 
           alt="Night City Map" 
           className={styles.cityImage}
+          layout="fill"
+          objectFit="cover"
         />
       </div>
 

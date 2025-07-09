@@ -10,7 +10,7 @@ export default function NotFound() {
         <span style={{ '--index': 2 }}>404</span>
       </div>
       <span className="introuvable_text">Page introuvable</span>
-      <Link href="/" className="back_home_btn">Retour à l'accueil</Link>
+      <Link href="/" className="back_home_btn">Retour à l&apos;accueil</Link>
     </div>
   );
 } 
