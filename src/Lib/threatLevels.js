@@ -178,6 +178,91 @@ export function calculateRewardsFromThreatLevel(threatLevel, factionMultiplier =
   };
 }
 
+// NOUVELLE FONCTION : Calculer les récompenses en tenant compte de la réputation avec la faction
+export function calculateRewardsWithFactionReputation(threatLevel, employerFaction, playerFactionReputation = 0) {
+  const baseRewards = {
+    1: { eddies: 8000, reputation: 15 },
+    2: { eddies: 15000, reputation: 30 },
+    3: { eddies: 25000, reputation: 50 },
+    4: { eddies: 40000, reputation: 80 },
+    5: { eddies: 60000, reputation: 120 }
+  };
+
+  const base = baseRewards[threatLevel] || baseRewards[1];
+  
+  // Multiplicateur de base selon le type de faction
+  const factionMultiplier = {
+    'arasaka': 1.5,
+    'militech': 1.5,
+    'kangTao': 1.4,
+    'netWatch': 1.3,
+    'ncpd': 1.2,
+    'maxTac': 1.4,
+    'traumaTeam': 1.1,
+    'maelstrom': 1.0,
+    'valentinos': 1.0,
+    'voodooBoys': 1.1,
+    'animals': 1.0,
+    'scavengers': 0.9,
+    'conseilMunicipal': 1.3,
+    'lobbyistes': 1.2,
+    'inframonde': 1.0,
+    'fixers': 1.0,
+    'ripperdocs': 1.0,
+    'nomads': 1.0
+  };
+  
+  const baseFactionMultiplier = factionMultiplier[employerFaction] || 1.0;
+  
+  // Modificateur basé sur la réputation avec la faction (-1000 à +1000)
+  // Réputation positive = plus de récompenses, réputation négative = moins de récompenses
+  let reputationMultiplier = 1.0;
+  
+  if (playerFactionReputation >= 500) {
+    // Allié : +50% de récompenses
+    reputationMultiplier = 1.5;
+  } else if (playerFactionReputation >= 200) {
+    // Ami : +30% de récompenses
+    reputationMultiplier = 1.3;
+  } else if (playerFactionReputation >= 50) {
+    // Favorable : +15% de récompenses
+    reputationMultiplier = 1.15;
+  } else if (playerFactionReputation >= -50) {
+    // Neutre : récompenses normales
+    reputationMultiplier = 1.0;
+  } else if (playerFactionReputation >= -200) {
+    // Hostile : -20% de récompenses
+    reputationMultiplier = 0.8;
+  } else if (playerFactionReputation >= -500) {
+    // Ennemi : -40% de récompenses
+    reputationMultiplier = 0.6;
+  } else {
+    // Mortel : -60% de récompenses
+    reputationMultiplier = 0.4;
+  }
+  
+  // Multiplicateur final combiné
+  const finalMultiplier = baseFactionMultiplier * reputationMultiplier;
+  
+  // Ajouter de la variabilité (±20%)
+  const eddiesVariation = 0.8 + (Math.random() * 0.4);
+  
+  const finalEddies = Math.floor(base.eddies * finalMultiplier * eddiesVariation);
+  const finalReputation = base.reputation;
+  
+  return {
+    eddies: finalEddies,
+    reputation: finalReputation,
+    breakdown: {
+      baseEddies: base.eddies,
+      baseFactionMultiplier,
+      reputationMultiplier,
+      finalMultiplier,
+      playerFactionReputation
+    }
+  };
+}
+
 // Analyser le lore pour détecter les compétences testées
 export function analyzeLoreForSkills(description) {
   const skillHints = {

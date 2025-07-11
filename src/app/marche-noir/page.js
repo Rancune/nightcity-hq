@@ -355,31 +355,33 @@ export default function MarcheNoirPage() {
                         )}
                         {item.dailyLimit && (
                           <div className="flex justify-between text-sm">
-                            <span>Limite quotidienne:</span>
+                            <span>Stock:</span>
                             <span className={item.dailyLimit.remaining > 0 ? 'text-green-400' : 'text-red-400'}>
-                              {item.dailyLimit.current}/{item.dailyLimit.max} par jour
+                              {item.dailyLimit.remaining} disponible
                             </span>
                           </div>
                         )}
                       </div>
-
-                      <ButtonWithLoading
-                        onClick={() => handlePurchase(item.id)}
-                        isLoading={purchasing[item.id]}
-                        loadingText="ACHAT..."
-                        disabled={!canAfford || !hasStreetCred || !isAvailable || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
-                        className={`w-full font-bold py-2 px-4 rounded transition-all ${
-                          canAfford && hasStreetCred && isAvailable && (!item.dailyLimit || item.dailyLimit.remaining > 0)
-                            ? 'btn-primary'
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {!canAfford ? 'Fonds insuffisants' : 
-                         !hasStreetCred ? 'Street Cred insuffisant' : 
-                         !isAvailable ? 'Stock épuisé' :
-                         (item.dailyLimit && item.dailyLimit.remaining <= 0) ? 'Limite quotidienne atteinte' :
-                         `Acheter (${item.cost.toLocaleString('en-US')} €$)`}
-                      </ButtonWithLoading>
+                      {/* Bouton acheter déplacé en bas du cadre */}
+                      <div className="mt-6">
+                        <ButtonWithLoading
+                          onClick={() => handlePurchase(item.id)}
+                          isLoading={purchasing[item.id]}
+                          loadingText="ACHAT..."
+                          disabled={!canAfford || !hasStreetCred || !isAvailable || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
+                          className={`w-full font-bold py-2 px-4 rounded transition-all ${
+                            canAfford && hasStreetCred && isAvailable && (!item.dailyLimit || item.dailyLimit.remaining > 0)
+                              ? 'btn-primary'
+                              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {!canAfford ? 'Fonds insuffisants' : 
+                           !hasStreetCred ? 'Street Cred insuffisant' : 
+                           !isAvailable ? 'Stock épuisé' :
+                           (item.dailyLimit && item.dailyLimit.remaining <= 0) ? 'Stock épuisé' :
+                           `Acheter (${item.cost.toLocaleString('en-US')} €$)`}
+                        </ButtonWithLoading>
+                      </div>
                     </div>
                   );
                 })}

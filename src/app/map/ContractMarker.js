@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { cityConfig, getDifficultyColor, getDifficultyPulseSpeed } from '@/lib/cityMapConfig';
 import styles from './CityMap.module.css';
+import Image from 'next/image';
 
 export default function ContractMarker({ contract, onClick, onHover, onHoverEnd, isDisappearing = false, onDisappearEnd, size = 40 }) {
   const [hovered, setHovered] = useState(false);
@@ -41,8 +42,7 @@ export default function ContractMarker({ contract, onClick, onHover, onHoverEnd,
     }
   }, [isDisappearing, disappearing, onDisappearEnd, contract.id]);
 
-  // Configuration du marqueur selon le type de contrat
-  const contractType = cityConfig.contractTypes[contract.missionType] || cityConfig.contractTypes.hacking;
+  // Configuration du marqueur selon le niveau de menace
   const difficultyColor = getDifficultyColor(contract.threatLevel);
   const pulseSpeed = getDifficultyPulseSpeed(contract.threatLevel);
 
@@ -92,12 +92,28 @@ export default function ContractMarker({ contract, onClick, onHover, onHoverEnd,
         style={{
           backgroundColor: difficultyColor,
           borderColor: '#00ffcc', // vert holographique
-          boxShadow: '0 0 12px 2px #00ffcc, 0 0 32px 8px #00ffcc55',
+          boxShadow: `0 0 20px 4px ${difficultyColor}, 0 0 40px 8px ${difficultyColor}55, 0 0 60px 12px ${difficultyColor}33`,
           width: size,
           height: size,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 3,
         }}
       >
-        <span className="markerIcon" style={{ fontSize: size * 0.5 }}>{contractType.icon}</span>
+        {/* Icône personnalisée au lieu de l'icône du type de mission */}
+        <Image
+          src="/contrat.png"
+          alt="Contrat disponible"
+          width={size * 1}
+          height={size * 1}
+          style={{
+            filter: 'drop-shadow(0 0 5px currentColor)',
+            opacity: 0.9,
+            display: 'block',
+          }}
+        />
       </div>
 
       {/* Effet de pulsation */}
@@ -110,11 +126,28 @@ export default function ContractMarker({ contract, onClick, onHover, onHoverEnd,
         }}
       />
 
+      {/* Deuxième anneau de pulsation pour plus d'effet */}
+      <div 
+        className="pulseRing2"
+        style={{
+          borderColor: difficultyColor,
+          width: size * 2,
+          height: size * 2,
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          border: '1px solid',
+          borderRadius: '50%',
+          opacity: 0.2,
+          zIndex: 0,
+        }}
+      />
+
       {/* Tooltip au survol */}
       {hovered && (
         <div className={styles.markerTooltip}>
           <h4>{contract.title}</h4>
-          <p><strong>Type:</strong> {contractType.description}</p>
           <p><strong>Difficulté:</strong> Niveau {contract.threatLevel}</p>
           <p><strong>Récompense:</strong> {contract.reward?.eddies?.toLocaleString()} €$</p>
           {contract.targetFaction && (

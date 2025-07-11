@@ -12,6 +12,7 @@ import {
   getAvailableThreatLevels, 
   generateRequiredSkillsFromThreatLevel, 
   calculateRewardsFromThreatLevel,
+  calculateRewardsWithFactionReputation,
   analyzeLoreForSkills 
 } from '@/Lib/threatLevels';
 
@@ -46,36 +47,26 @@ export async function POST() {
     const loreSkills = analyzeLoreForSkills(description);
     console.log(`[GENERATE] Lore analysis for "${title}":`, loreSkills);
 
-    // --- PARTIE 5 : CALCUL DES RÉCOMPENSES ---
+    // --- PARTIE 5 : CALCUL DES RÉCOMPENSES AVEC RÉPUTATION DE FACTION ---
     // Utiliser les factions du lore si disponibles, sinon fallback
     const targetFactions = factions && factions.length > 0 ? factions : ['inframonde'];
     const targetFaction = targetFactions[0]; // Faction principale
     const employerFaction = targetFactions.length > 1 ? targetFactions[1] : 'fixers';
 
-    // Multiplicateur selon le type de faction
-    const factionMultiplier = {
-      'arasaka': 1.5,
-      'militech': 1.5,
-      'kangTao': 1.4,
-      'netWatch': 1.3,
-      'ncpd': 1.2,
-      'maxTac': 1.4,
-      'traumaTeam': 1.1,
-      'maelstrom': 1.0,
-      'valentinos': 1.0,
-      'voodooBoys': 1.1,
-      'animals': 1.0,
-      'scavengers': 0.9,
-      'conseilMunicipal': 1.3,
-      'lobbyistes': 1.2,
-      'inframonde': 1.0,
-      'fixers': 1.0,
-      'ripperdocs': 1.0,
-      'nomads': 1.0
-    };
+    // Récupérer la réputation du joueur avec la faction employeur
+    let playerFactionReputation = 0;
+    try {
+      const FactionRelations = (await import('@/models/FactionRelations')).default;
+      const factionRelations = await FactionRelations.findOne({ clerkId: userId });
+      if (factionRelations && factionRelations.relations[employerFaction] !== undefined) {
+        playerFactionReputation = factionRelations.relations[employerFaction];
+      }
+    } catch (error) {
+      console.log(`[GENERATE] Impossible de récupérer la réputation de faction pour ${employerFaction}:`, error.message);
+    }
     
-    const factionBonus = factionMultiplier[targetFaction] || 1.0;
-    const rewards = calculateRewardsFromThreatLevel(threatLevel, factionBonus);
+    // Calculer les récompenses en tenant compte de la réputation avec la faction
+    const rewards = calculateRewardsWithFactionReputation(threatLevel, employerFaction, playerFactionReputation);
 
     // Durée pour accepter le contrat (entre 1 et 3 heures de jeu actif)
     const randomAcceptanceDeadline = Math.floor(Math.random() * (10800 - 3600 + 1) + 3600);
@@ -110,6 +101,7 @@ export async function POST() {
     console.log(`[GENERATE] Compétences requises:`, requiredSkills);
     console.log(`[GENERATE] Factions impliquées: ${targetFactions.join(', ')} - Type: ${type}`);
     console.log(`[GENERATE] Réputation joueur: ${playerProfile.reputationPoints} - Niveaux disponibles: [${availableThreatLevels.join(', ')}]`);
+    console.log(`[GENERATE] Réputation avec ${employerFaction}: ${playerFactionReputation} - Multiplicateur: ${rewards.breakdown?.reputationMultiplier || 1.0}`);
 
     return NextResponse.json(contract, { status: 201 });
   } catch (error) {

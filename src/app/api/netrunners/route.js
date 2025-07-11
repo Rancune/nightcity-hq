@@ -5,6 +5,7 @@ import connectDb from '@/Lib/database';
 import Netrunner from '@/models/Netrunner';
 import PlayerProfile from '@/models/PlayerProfile';
 import { updatePlayerTimers } from '@/Lib/trp';
+import { generateRunnerNameAndLore } from '@/Lib/ai';
 
 // GET : Pour récupérer la liste des runners du joueur connecté
 export async function GET() {
@@ -75,21 +76,35 @@ export async function POST(request) {
     const { name, skills } = body;
 
     // Génération des données du runner
-    let runnerName, runnerSkills;
+    let runnerName, runnerSkills, runnerLore;
     if (name && skills) {
       runnerName = name;
       runnerSkills = skills;
+      runnerLore = null; // Pas de lore pour les runners créés manuellement
     } else {
-      const firstNames = ["Jax", "Cyra", "Kael", "Nyx", "Rogue", "Spike", "Vex"];
-      const lastNames = ["Vector", "Byte", "Chrome", "Neon", "Silas", "Zero", "Glitch"];
-      const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      runnerName = `${randomFirstName} ${randomLastName}`;
+      // Générer les compétences aléatoirement
       runnerSkills = {
         hacking: Math.floor(Math.random() * 5) + 1,
         stealth: Math.floor(Math.random() * 5) + 1,
         combat: Math.floor(Math.random() * 5) + 1,
       };
+
+      // Générer le nom et le lore par IA
+      try {
+        const { name: aiName, lore: aiLore } = await generateRunnerNameAndLore(runnerSkills);
+        runnerName = aiName;
+        runnerLore = aiLore;
+        console.log(`[NETRUNNERS] Runner généré par IA: ${runnerName}`);
+      } catch (error) {
+        console.error("[NETRUNNERS] Erreur lors de la génération IA, utilisation du fallback:", error);
+        // Fallback avec des noms prédéfinis (sans lore)
+        const firstNames = ["Jax", "Cyra", "Kael", "Nyx", "Rogue", "Spike", "Vex"];
+        const lastNames = ["Vector", "Byte", "Chrome", "Neon", "Silas", "Zero", "Glitch"];
+        const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        runnerName = `${randomFirstName} ${randomLastName}`;
+        runnerLore = null;
+      }
     }
 
     // Calcul de la commission initiale du Fixer selon le GDD
@@ -103,6 +118,7 @@ export async function POST(request) {
     const newRunner = new Netrunner({
       ownerId: userId,
       name: runnerName,
+      lore: runnerLore,
       skills: runnerSkills,
       fixerCommission
     });

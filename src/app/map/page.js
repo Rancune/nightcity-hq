@@ -86,6 +86,9 @@ export default function ContractBoardPage() {
     window.location.reload();
   };
 
+  // Vérifier si on est en environnement de développement
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -118,14 +121,16 @@ export default function ContractBoardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Bouton Générer Contrat */}
       <div className="flex justify-end mb-6">
-        <ButtonWithLoading
-          onClick={handleGenerateContract}
-          isLoading={isGeneratingContract}
-          loadingText="GÉNÉRATION..."
-          className="btn-primary"
-        >
-          Générer Contrat
-        </ButtonWithLoading>
+        {isDevelopment && (
+          <ButtonWithLoading
+            onClick={handleGenerateContract}
+            isLoading={isGeneratingContract}
+            loadingText="GÉNÉRATION..."
+            className="btn-primary"
+          >
+            Générer Contrat
+          </ButtonWithLoading>
+        )}
       </div>
 
       {/* En-tête */}

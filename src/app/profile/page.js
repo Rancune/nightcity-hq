@@ -134,29 +134,25 @@ export default function ProfilePage() {
           <h2 className="text-2xl text-[--color-neon-pink] font-bold mb-4">L&apos;Échelle de Night City</h2>
           <div className="space-y-4">
             {[
-              { level: 1, title: "Rumeur de la Rue", min: 0, max: 150, color: "text-gray-400" },
-              { level: 2, title: "Nom qui Circule", min: 151, max: 500, color: "text-blue-400" }, 
-              { level: 3, title: "Faiseur de Rois", min: 501, max: 1200, color: "text-purple-400" },
-              { level: 4, title: "Légende de Night City", min: 1201, max: "∞", color: "text-yellow-400" }
+              getReputationLevelInfo(0),
+              getReputationLevelInfo(151),
+              getReputationLevelInfo(501),
+              getReputationLevelInfo(1200)
             ].map((tier) => (
-              <div key={tier.level} className={`flex items-center justify-between p-3 rounded ${playerProfile.reputationLevel === tier.level ? 'bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]' : 'bg-black/30'}`}>
+              <div key={tier.level} className={`flex items-center justify-between p-3 rounded ${reputationReport.currentLevel.level === tier.level ? 'bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]' : 'bg-black/30'}`}>
                 <div className="flex items-center gap-3">
-                  <span className={`text-lg font-bold ${tier.color}`}>Niv. {tier.level}</span>
-                  <span className={`font-bold ${tier.color}`}>{tier.title}</span>
+                  <span className={`text-lg font-bold ${tier.level === 1 ? 'text-gray-400' : tier.level === 2 ? 'text-blue-400' : tier.level === 3 ? 'text-purple-400' : 'text-yellow-400'}`}>Niv. {tier.level}</span>
+                  <span className={`font-bold ${tier.level === 1 ? 'text-gray-400' : tier.level === 2 ? 'text-blue-400' : tier.level === 3 ? 'text-purple-400' : 'text-yellow-400'}`}>{tier.title}</span>
                 </div>
                 <span className="text-[--color-text-secondary] text-sm">
-                  {tier.min} - {tier.max} PR
+                  {tier.level === 1 && '0 - 150 PR'}
+                  {tier.level === 2 && '151 - 500 PR'}
+                  {tier.level === 3 && '501 - 1199 PR'}
+                  {tier.level === 4 && '1200+ PR'}
                 </span>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Bouton retour */}
-        <div className="text-center">
-          <Link href="/" className="text-[--color-neon-cyan] hover:underline">
-            &larr; Retour aux contrats
-          </Link>
         </div>
       </div>
     </main>

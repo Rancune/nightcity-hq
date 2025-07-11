@@ -79,7 +79,7 @@ marketStateSchema.methods.performRotation = function() {
 };
 
 // Méthode pour vérifier et incrémenter la limite quotidienne d'un joueur pour un objet
-marketStateSchema.methods.checkAndIncrementDailyLimit = function(userId, itemId, maxDaily = 1) {
+marketStateSchema.methods.checkAndIncrementDailyLimit = function(userId, itemId, maxDaily = 2) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   

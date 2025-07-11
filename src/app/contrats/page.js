@@ -22,7 +22,7 @@ export default function ContratsPage() {
   const [netrunners, setNetrunners] = useState([]);
   const [playerInventory, setPlayerInventory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, active, completed, pending
+  const [filter, setFilter] = useState('assigned'); // all, active, completed, pending
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [loadingReports, setLoadingReports] = useState({});
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -401,14 +401,16 @@ export default function ContratsPage() {
                   Test Rewards
                 </button>
               )}
-              <ButtonWithLoading
-                onClick={handleGenerateContract}
-                isLoading={isGeneratingContract}
-                loadingText="GÉNÉRATION..."
-                className="btn-primary"
-              >
-                Générer Contrat
-              </ButtonWithLoading>
+              {isDevelopment && (
+                <ButtonWithLoading
+                  onClick={handleGenerateContract}
+                  isLoading={isGeneratingContract}
+                  loadingText="GÉNÉRATION..."
+                  className="btn-primary"
+                >
+                  Générer Contrat
+                </ButtonWithLoading>
+              )}
             </div>
           </div>
         </div>
@@ -416,14 +418,6 @@ export default function ContratsPage() {
         {/* Filtres */}
         <div className="filter-container">
           <div className="filter-list">
-            <button
-              onClick={() => setFilter('all')}
-              className={`filter-button ${
-                filter === 'all' ? 'filter-button-active' : 'filter-button-inactive'
-              }`}
-            >
-              Tous ({contrats.length})
-            </button>
             <button
               onClick={() => setFilter('assigned')}
               className={`filter-button ${
@@ -455,6 +449,14 @@ export default function ContratsPage() {
               }`}
             >
               Terminés ({contrats.filter(c => c.status === 'Terminé').length})
+            </button>
+            <button
+              onClick={() => setFilter('all')}
+              className={`filter-button ${
+                filter === 'all' ? 'filter-button-active' : 'filter-button-inactive'
+              }`}
+            >
+              Tous ({contrats.length})
             </button>
           </div>
         </div>

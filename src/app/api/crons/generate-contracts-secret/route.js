@@ -10,14 +10,18 @@ import {
   analyzeLoreForSkills 
 } from '@/Lib/threatLevels';
 
+// URL secrète intégrée (changez cette valeur)
+const SECRET_PATH = 'nightcity-auto-2024-secret';
+
 export async function GET(request) {
   // --- SÉCURITÉ ---
-  // Vérifier si on est en production et si CRON_SECRET est défini
-  if (process.env.NODE_ENV === 'production' && process.env.CRON_SECRET) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+  // Vérifier que l'URL contient le secret
+  const url = new URL(request.url);
+  const pathSegments = url.pathname.split('/');
+  const providedSecret = pathSegments[pathSegments.length - 1];
+  
+  if (providedSecret !== SECRET_PATH) {
+    return new NextResponse('Not Found', { status: 404 });
   }
 
   // --- VÉRIFICATION ENVIRONNEMENT ---

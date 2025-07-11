@@ -19,6 +19,7 @@ export default function NetrunnersPage() {
   const [installingImplants, setInstallingImplants] = useState(false);
   const { isSignedIn, isLoaded } = useAuth();
   const [showDeadRunnerModal, setShowDeadRunnerModal] = useState(false);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   const fetchRunners = async () => {
     const response = await fetch('/api/netrunners', { cache: 'no-store' });
@@ -42,32 +43,72 @@ export default function NetrunnersPage() {
     }
   };
 
-  const generateRecruitmentPool = () => {
-    const names = [
-      'Neo', 'Cipher', 'Ghost', 'Shadow', 'Echo', 'Void', 'Pulse', 'Static',
-      'Flicker', 'Glitch', 'Phantom', 'Specter', 'Wraith', 'Shade', 'Mirage',
-      'Raven', 'Crow', 'Vulture', 'Hawk', 'Falcon', 'Eagle', 'Owl', 'Bat',
-      'Spider', 'Scorpion', 'Viper', 'Cobra', 'Python', 'Anaconda', 'Rattlesnake'
-    ];
-    
-    const pool = [];
-    for (let i = 0; i < 6; i++) {
-      const name = names[Math.floor(Math.random() * names.length)];
-      const hacking = Math.floor(Math.random() * 10) + 1;
-      const stealth = Math.floor(Math.random() * 10) + 1;
-      const combat = Math.floor(Math.random() * 10) + 1;
-      const totalPower = hacking + stealth + combat;
-      const commission = Math.floor(totalPower * 50) + 200; // Commission dynamique
+  const generateRecruitmentPool = async () => {
+    try {
+      const response = await fetch('/api/netrunners/recruitment-pool');
+      if (response.ok) {
+        const pool = await response.json();
+        setRecruitmentPool(pool);
+      } else {
+        console.error('Erreur lors de la génération du pool de recrutement');
+        // Fallback avec des noms prédéfinis
+        const names = [
+          'Neo', 'Cipher', 'Ghost', 'Shadow', 'Echo', 'Void', 'Pulse', 'Static',
+          'Flicker', 'Glitch', 'Phantom', 'Specter', 'Wraith', 'Shade', 'Mirage',
+          'Raven', 'Crow', 'Vulture', 'Hawk', 'Falcon', 'Eagle', 'Owl', 'Bat',
+          'Spider', 'Scorpion', 'Viper', 'Cobra', 'Python', 'Anaconda', 'Rattlesnake'
+        ];
+        
+        const pool = [];
+        for (let i = 0; i < 6; i++) {
+          const name = names[Math.floor(Math.random() * names.length)];
+          const hacking = Math.floor(Math.random() * 10) + 1;
+          const stealth = Math.floor(Math.random() * 10) + 1;
+          const combat = Math.floor(Math.random() * 10) + 1;
+          const totalPower = hacking + stealth + combat;
+          const commission = Math.floor(totalPower * 50) + 200;
+          
+          pool.push({
+            id: `recruit-${i}`,
+            name,
+            lore: null,
+            skills: { hacking, stealth, combat },
+            commission,
+            totalPower
+          });
+        }
+        setRecruitmentPool(pool);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la génération du pool de recrutement:', error);
+      // Même fallback que ci-dessus
+      const names = [
+        'Neo', 'Cipher', 'Ghost', 'Shadow', 'Echo', 'Void', 'Pulse', 'Static',
+        'Flicker', 'Glitch', 'Phantom', 'Specter', 'Wraith', 'Shade', 'Mirage',
+        'Raven', 'Crow', 'Vulture', 'Hawk', 'Falcon', 'Eagle', 'Owl', 'Bat',
+        'Spider', 'Scorpion', 'Viper', 'Cobra', 'Python', 'Anaconda', 'Rattlesnake'
+      ];
       
-      pool.push({
-        id: `recruit-${i}`,
-        name,
-        skills: { hacking, stealth, combat },
-        commission,
-        totalPower
-      });
+      const pool = [];
+      for (let i = 0; i < 6; i++) {
+        const name = names[Math.floor(Math.random() * names.length)];
+        const hacking = Math.floor(Math.random() * 10) + 1;
+        const stealth = Math.floor(Math.random() * 10) + 1;
+        const combat = Math.floor(Math.random() * 10) + 1;
+        const totalPower = hacking + stealth + combat;
+        const commission = Math.floor(totalPower * 50) + 200;
+        
+        pool.push({
+          id: `recruit-${i}`,
+          name,
+          lore: null,
+          skills: { hacking, stealth, combat },
+          commission,
+          totalPower
+        });
+      }
+      setRecruitmentPool(pool);
     }
-    setRecruitmentPool(pool);
   };
 
   useEffect(() => {
@@ -236,6 +277,13 @@ export default function NetrunnersPage() {
                 </div>
               </div>
 
+              {/* Lore du runner */}
+              {runner.lore && (
+                <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
+                  {runner.lore}
+                </p>
+              )}
+
               {/* Implants installés */}
               {runner.implants && runner.implants.length > 0 && (
                 <div className="mb-3">
@@ -317,12 +365,14 @@ export default function NetrunnersPage() {
     <div className="card">
       <div className="card-header">
         <h2 className="card-title">Recrutement</h2>
-        <button
-          onClick={generateRecruitmentPool}
-          className="btn-secondary text-sm"
-        >
-          🔄 Régénérer
-        </button>
+        {isDevelopment && (
+          <button
+            onClick={generateRecruitmentPool}
+            className="btn-secondary text-sm"
+          >
+            🔄 Régénérer
+          </button>
+        )}
       </div>
       
       <div className="card-content">
@@ -333,12 +383,12 @@ export default function NetrunnersPage() {
                 <div>
                   <h3 className="text-lg text-[--color-text-primary] font-bold">{recruit.name}</h3>
                   <p className="text-sm text-[--color-text-secondary]">
-                    Niveau {recruit.level} • {recruit.background}
+                    Niveau 1 • Candidat
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-[--color-neon-pink] font-bold">
-                    Puissance: {recruit.skills.hacking + recruit.skills.stealth + recruit.skills.combat}
+                    Puissance: {recruit.totalPower}
                   </div>
                   <div className="flex gap-2 text-xs mt-1">
                     <span className="text-blue-400">H:{recruit.skills.hacking}</span>
@@ -348,9 +398,11 @@ export default function NetrunnersPage() {
                 </div>
               </div>
 
-              <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
-                {recruit.description}
-              </p>
+              {recruit.lore && (
+                <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
+                  {recruit.lore}
+                </p>
+              )}
 
               <div className="flex justify-between items-center">
                 <div className="text-sm text-[--color-neon-pink] font-bold">

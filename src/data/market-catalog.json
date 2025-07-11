@@ -1,14 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import connectDb from '@/Lib/database';
-import PlayerProfile from '@/models/PlayerProfile';
-import PlayerInventory from '@/models/PlayerInventory';
-import Program from '@/models/Program';
-import MarketState from '@/models/MarketState';
 
-// Catalogue complet du marché noir (copie de l'API programs)
-const MARKET_CATALOG = [
-  // === CHARCUDOC - IMPLANTS ===
+[
   {
     "id": "charcudoc-implant-neural-basique-hack",
     "vendor": "charcudoc",
@@ -17,7 +8,7 @@ const MARKET_CATALOG = [
     "type": "implant",
     "rarity": "uncommon",
     "streetCredRequired": 150,
-    "cost": 8000,
+    "cost": 80000,
     "effects": {
       "permanent_skill_boost": {
         "skill": "hacking",
@@ -33,7 +24,7 @@ const MARKET_CATALOG = [
     "type": "implant",
     "rarity": "uncommon",
     "streetCredRequired": 150,
-    "cost": 8000,
+    "cost": 70000,
     "effects": {
       "permanent_skill_boost": {
         "skill": "stealth",
@@ -49,7 +40,7 @@ const MARKET_CATALOG = [
     "type": "implant",
     "rarity": "uncommon",
     "streetCredRequired": 150,
-    "cost": 8000,
+    "cost": 65000,
     "effects": {
       "permanent_skill_boost": {
         "skill": "combat",
@@ -63,7 +54,7 @@ const MARKET_CATALOG = [
     "name": "Cortex Quantique 'Kiroshi' Mk.II",
     "description": "Un processeur de calcul quantique expérimental. Un véritable monstre. Augmente définitivement le Hacking d'un runner de +2.",
     "type": "implant",
-    "rarity": "legendary",
+    "rarity": "rare",
     "streetCredRequired": 1200,
     "cost": 25000,
     "effects": {
@@ -79,7 +70,7 @@ const MARKET_CATALOG = [
     "name": "Camouflage Thermo-Optique 'Spectre' Mk.II",
     "description": "Dévie la lumière et masque la signature thermique. Le top du top de l'infiltration. Augmente définitivement le Stealth d'un runner de +2.",
     "type": "implant",
-    "rarity": "legendary",
+    "rarity": "rare",
     "streetCredRequired": 1200,
     "cost": 25000,
     "effects": {
@@ -95,7 +86,7 @@ const MARKET_CATALOG = [
     "name": "Ossature en Titane 'Manticore' Mk.II",
     "description": "Un squelette renforcé en alliage de titane pour encaisser et rendre les coups. Augmente définitivement le Combat d'un runner de +2.",
     "type": "implant",
-    "rarity": "legendary",
+    "rarity": "rare",
     "streetCredRequired": 1200,
     "cost": 25000,
     "effects": {
@@ -113,13 +104,12 @@ const MARKET_CATALOG = [
     "type": "implant",
     "rarity": "rare",
     "streetCredRequired": 500,
-    "cost": 18000,
+    "cost": 55000,
     "effects": {
       "passive_heal_boost": 0.25
     }
   },
 
-  // === NETRUNNER FANTÔME - PROGRAMMES ===
   {
     "id": "netrunner-fantome-mouchard",
     "vendor": "netrunner_fantome",
@@ -129,6 +119,7 @@ const MARKET_CATALOG = [
     "rarity": "common",
     "streetCredRequired": 0,
     "cost": 800,
+    "maxDaily": 3,
     "effects": {
       "reveal_skill": true
     }
@@ -142,6 +133,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
+    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "hacking"
@@ -156,6 +148,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
+    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "stealth"
@@ -170,6 +163,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
+    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "combat"
@@ -184,6 +178,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 200,
     "cost": 4000,
+    "maxDaily": 1,
     "effects": {
       "reveal_all_skills": true
     }
@@ -197,6 +192,7 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 500,
     "cost": 7000,
+    "maxDaily": 1,
     "effects": {
       "reduce_difficulty": 1
     }
@@ -210,6 +206,7 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 600,
     "cost": 9000,
+    "maxDaily": 1,
     "effects": {
       "guarantee_one_success": true
     }
@@ -225,6 +222,7 @@ const MARKET_CATALOG = [
     "cost": 20000,
     "isSignature": true,
     "stock": 2,
+    "maxDaily": 1,
     "effects": {
       "guarantee_all_success": true
     }
@@ -240,6 +238,7 @@ const MARKET_CATALOG = [
     "cost": 35000,
     "isSignature": true,
     "stock": 1,
+    "maxDaily": 1,
     "effects": {
       "guarantee_all_success": true,
       "add_bonus_roll": 5,
@@ -247,7 +246,6 @@ const MARKET_CATALOG = [
     }
   },
 
-  // === INFORMATRICE - INFORMATIONS ===
   {
     "id": "informatrice-datashard-fixer",
     "vendor": "informatrice",
@@ -257,6 +255,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 100,
     "cost": 2500,
+    "maxDaily": 2,
     "effects": {
       "instant_reputation_gain": 50
     }
@@ -270,6 +269,7 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 500,
     "cost": 10000,
+    "maxDaily": 1,
     "effects": {
       "unlock_corpo_contract": true
     }
@@ -283,12 +283,12 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 400,
     "cost": 8000,
+    "maxDaily": 1,
     "effects": {
       "unlock_gang_contract": true
     }
   },
 
-  // === ANARCHISTE - SABOTAGE ===
   {
     "id": "anarchiste-virus-verrou",
     "vendor": "anarchiste",
@@ -298,6 +298,7 @@ const MARKET_CATALOG = [
     "rarity": "uncommon",
     "streetCredRequired": 200,
     "cost": 1500,
+    "maxDaily": 3,
     "effects": {
       "sabotage_difficulty_up": 2,
       "duration_trp": 3600
@@ -312,6 +313,7 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 400,
     "cost": 3000,
+    "maxDaily": 2,
     "effects": {
       "sabotage_bounty": true
     }
@@ -325,170 +327,9 @@ const MARKET_CATALOG = [
     "rarity": "rare",
     "streetCredRequired": 600,
     "cost": 5000,
+    "maxDaily": 1,
     "effects": {
       "sabotage_threat_up": true
     }
   }
-];
-
-export async function POST(request) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return new NextResponse("Non autorisé", { status: 401 });
-    }
-
-    await connectDb();
-
-    const { itemId } = await request.json();
-    if (!itemId) {
-      return new NextResponse("ID d'objet requis", { status: 400 });
-    }
-
-    // Récupérer le profil du joueur
-    const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
-    if (!playerProfile) {
-      return new NextResponse("Profil joueur non trouvé", { status: 404 });
-    }
-
-    // Récupérer l'inventaire du joueur
-    let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
-    if (!playerInventory) {
-      playerInventory = new PlayerInventory({ clerkId: userId });
-    }
-
-    // Récupérer l'état du marché
-    let marketState = await MarketState.findOne({ marketId: 'global' });
-    if (!marketState) {
-      marketState = new MarketState({ marketId: 'global' });
-      await marketState.save();
-    }
-
-    // Trouver l'objet dans le catalogue local
-    const targetItem = MARKET_CATALOG.find(item => item.id === itemId);
-    if (!targetItem) {
-      return new NextResponse("Objet non trouvé ou non disponible", { status: 404 });
-    }
-
-    // Vérifier le Street Cred
-    if (targetItem.streetCredRequired > playerProfile.reputationPoints) {
-      return new NextResponse("Street Cred insuffisant pour cet objet", { status: 403 });
-    }
-
-    // Vérifier les fonds
-    if (playerProfile.eddies < targetItem.cost) {
-      return new NextResponse("Fonds insuffisants", { status: 400 });
-    }
-
-    // Vérifier le stock pour les objets Signature
-    if (targetItem.isSignature) {
-      const stockInfo = marketState.currentStock.get(itemId);
-      const currentStock = stockInfo ? stockInfo.stock : (targetItem.stock || 0);
-      
-      if (currentStock <= 0) {
-        return new NextResponse("Stock épuisé pour cet objet", { status: 400 });
-      }
-    }
-
-    // Vérifier la limite quotidienne
-    const maxDaily = targetItem.maxDaily || 5; // Limite par défaut : 1 par jour
-    
-    // Logique de vérification de limite quotidienne
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Initialiser dailyLimits si nécessaire
-    if (!marketState.dailyLimits) {
-      marketState.dailyLimits = new Map();
-    }
-    
-    // Récupérer ou créer l'entrée pour cet utilisateur
-    if (!marketState.dailyLimits.has(userId)) {
-      marketState.dailyLimits.set(userId, new Map());
-    }
-    
-    const userLimits = marketState.dailyLimits.get(userId);
-    
-    // Récupérer ou créer l'entrée pour cet objet
-    if (!userLimits.has(itemId)) {
-      userLimits.set(itemId, { count: 0, lastReset: today });
-    }
-    
-    const itemLimit = userLimits.get(itemId);
-    
-    // Vérifier si c'est un nouveau jour
-    const lastReset = new Date(itemLimit.lastReset);
-    const lastResetDay = new Date(lastReset.getFullYear(), lastReset.getMonth(), lastReset.getDate());
-    
-    if (today.getTime() !== lastResetDay.getTime()) {
-      // Nouveau jour, réinitialiser le compteur
-      itemLimit.count = 0;
-      itemLimit.lastReset = today;
-    }
-    
-    // Vérifier si la limite est atteinte
-    if (itemLimit.count >= maxDaily) {
-      return new NextResponse(`Limite quotidienne atteinte pour cet objet (${itemLimit.count}/${maxDaily} par jour)`, { status: 400 });
-    }
-    
-    // Incrémenter le compteur
-    itemLimit.count += 1;
-
-    // Créer ou récupérer le programme dans la base de données
-    let program = await Program.findOne({ marketId: itemId });
-    if (!program) {
-      program = new Program({
-        name: targetItem.name,
-        description: targetItem.description,
-        rarity: targetItem.rarity,
-        category: targetItem.type,
-        price: targetItem.cost,
-        effects: targetItem.effects,
-        marketId: itemId,
-        vendor: targetItem.vendor
-      });
-      await program.save();
-    }
-
-    // Déduire le coût
-    playerProfile.eddies -= targetItem.cost;
-
-    // Ajouter à l'inventaire
-    playerInventory.oneShotPrograms.push({
-      programId: program._id,
-      purchasedAt: new Date()
-    });
-
-    // Réduire le stock si c'est un objet Signature
-    if (targetItem.isSignature) {
-      const stockInfo = marketState.currentStock.get(itemId);
-      const currentStock = stockInfo ? stockInfo.stock : (targetItem.stock || 0);
-      
-      marketState.currentStock.set(itemId, {
-        stock: currentStock - 1,
-        lastRestocked: stockInfo ? stockInfo.lastRestocked : new Date()
-      });
-    }
-
-    // Sauvegarder les modifications
-    await playerProfile.save();
-    await playerInventory.save();
-    await marketState.save();
-
-    return NextResponse.json({
-      success: true,
-      message: `${targetItem.name} acheté avec succès !`,
-      item: targetItem,
-      remainingEddies: playerProfile.eddies,
-      programId: program._id,
-      dailyLimit: {
-        current: itemLimit.count,
-        max: maxDaily
-      }
-    });
-
-  } catch (error) {
-    console.error("[API MARKET BUY] Erreur:", error);
-    return new NextResponse("Erreur interne du serveur", { status: 500 });
-  }
-} 
+]

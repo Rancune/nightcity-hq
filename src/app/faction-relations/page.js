@@ -132,13 +132,7 @@ export default function FactionRelationsPage() {
                 />
               </p>
             </div>
-            <Link 
-              href="/" 
-              className="hidden md:flex items-center px-6 py-3 bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]/30 rounded-lg hover:bg-[--color-neon-cyan]/20 transition-all duration-300 text-[--color-neon-cyan]"
-            >
-              <span className="mr-2">←</span>
-              Dashboard
-            </Link>
+            {/* Le lien Dashboard a été retiré ici */}
           </div>
 
           {/* Navigation par type */}

@@ -94,7 +94,7 @@ export default function DashboardPage() {
         <div className="card section-spacing">
           <div className="card-header">
             <h2 className="card-title">Night City HQ</h2>
-            <span className="text-sm text-[--color-neon-cyan] font-bold">v1.0</span>
+            <span className="text-sm text-[--color-neon-cyan] font-bold">v0.7</span>
           </div>
           
           <div className="card-content">

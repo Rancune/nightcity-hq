@@ -8,6 +8,9 @@ const netrunnerSchema = new Schema({
 
   name: { type: String, required: true },
 
+  // Lore généré par IA pour le background du runner
+  lore: { type: String, default: null },
+
   status: { 
     type: String, 
     enum: ['Disponible', 'En mission', 'Grillé', 'Mort'], 
