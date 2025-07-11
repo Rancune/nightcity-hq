@@ -132,6 +132,58 @@ node scripts/test-pulse-effects.js
 
 📖 **Documentation complète** : [docs/CONTRACT_MARKER_SYSTEM.md](docs/CONTRACT_MARKER_SYSTEM.md)
 
+---
+
+## ⚡ Système de Bonus de Compétences dans le Loadout
+
+Le système de loadout permet d'appliquer des bonus spécifiques aux compétences selon les objets utilisés.
+
+### Fonctionnalités
+- **Bonus spécifiques** : Objets ciblant une compétence particulière (Hacking, Stealth, Combat)
+- **Bonus globaux** : Objets affectant toutes les compétences requises
+- **Réduction de difficulté** : Effets appliqués à tous les tests
+- **Affichage clair** : Effets actifs visibles dans l'interface
+
+### Types d'Objets
+- **Patch de Focus** : +2 au Hacking uniquement
+- **Patch d'Infiltration** : +2 à la Stealth uniquement  
+- **Patch de Combat** : +2 au Combat uniquement
+- **Fragment du 'Blackwall'** : +5 à toutes les compétences
+- **Décharge IEM** : -1 à la difficulté de tous les tests
+
+### Utilisation
+```bash
+# Tester le système de bonus
+node scripts/test-skill-bonus.js
+```
+
+📖 **Documentation complète** : [docs/LOADOUT_BONUS_SYSTEM.md](docs/LOADOUT_BONUS_SYSTEM.md)
+
+---
+
+## 🔍 Système de Révélation de Compétences
+
+Le système de révélation permet de dévoiler les compétences requises par un contrat avant son acceptation.
+
+### Fonctionnalités
+- **Révélation immédiate** : Les compétences sont révélées dès le premier usage du programme
+- **Distinction des types** : Séparation claire entre programmes de révélation et de bonus
+- **Aucun effet parasite** : Les programmes de révélation n'appliquent pas d'effets de bonus vides
+- **Interface réactive** : Mise à jour immédiate de l'affichage des compétences
+
+### Types de Programmes
+- **Logiciel 'Mouchard'** : Révèle une compétence aléatoire non révélée
+- **Analyseur de Contrat** : Révèle toutes les compétences testées
+- **Programmes de bonus** : Appliquent des bonus sans révéler de compétences
+
+### Utilisation
+```bash
+# Tester le système de révélation
+node scripts/test-reveal-programs.js
+```
+
+📖 **Documentation complète** : [docs/REVEAL_PROGRAMS_SYSTEM.md](docs/REVEAL_PROGRAMS_SYSTEM.md)
+
 ### Configuration
 ```bash
 # Tester le système

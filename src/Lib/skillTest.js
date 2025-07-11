@@ -24,7 +24,7 @@ export function testRunnerSkills(runner, requiredSkills, activeEffects = {}) {
       let isSuccess = false;
       
       // Appliquer les effets actifs
-      if (activeEffects.bonusRoll && activeEffects.bonusSkill === skill) {
+      if (activeEffects.bonusRoll && (activeEffects.bonusSkill === skill || activeEffects.bonusSkill === 'all')) {
         runnerSkill += activeEffects.bonusRoll;
       }
       

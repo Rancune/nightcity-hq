@@ -100,12 +100,34 @@ export async function POST(request, { params }) {
       effectEntry.effects.autoSuccess = true;
     }
     // Sandevistan : +3 à un test (on applique sur la première compétence du contrat)
-    if (effects.add_bonus_roll) {
+    // Ne pas appliquer les bonus si le programme est utilisé pour révéler une compétence
+    if (effects.add_bonus_roll && !effects.reveal_skill && !effects.reveal_all_skills) {
       const contractSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0);
       if (contractSkills.length > 0) {
         effectEntry.effects.bonusRoll = (effectEntry.effects.bonusRoll || 0) + effects.add_bonus_roll;
-        effectEntry.effects.bonusSkill = contractSkills[0][0];
-        skill = contractSkills[0][0];
+        
+        // Utiliser la compétence spécifiée dans l'objet si elle existe, sinon la première du contrat
+        let targetSkill = null;
+        if (effects.skill && effects.skill !== 'all') {
+          // Vérifier que la compétence spécifiée est bien requise par le contrat
+          if (contract.requiredSkills[effects.skill] > 0) {
+            targetSkill = effects.skill;
+          }
+        }
+        
+        // Si aucune compétence spécifique ou si elle n'est pas requise, utiliser la première
+        if (!targetSkill) {
+          targetSkill = contractSkills[0][0];
+        }
+        
+        effectEntry.effects.bonusSkill = targetSkill;
+        skill = targetSkill;
+        
+        // Cas spécial : si skill === 'all', le bonus s'applique à toutes les compétences
+        if (effects.skill === 'all') {
+          effectEntry.effects.bonusSkill = 'all';
+          skill = 'all';
+        }
       }
     }
     // Décharge IEM : -1 difficulté à tous les tests

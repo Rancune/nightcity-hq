@@ -110,7 +110,8 @@ export default function ContractDetailsView({ initialContract }) {
               return [...prev, data.revealedSkill];
             });
           }
-          if (data.effects.add_bonus_roll) {
+          // Ne pas appliquer les bonus si le programme est utilisé pour révéler une compétence
+          if (data.effects.add_bonus_roll && !data.effects.reveal_skill && !data.effects.reveal_all_skills) {
             setSkillBonuses(prev => ({
               ...prev,
               [data.skill]: (prev[data.skill] || 0) + data.effects.add_bonus_roll
@@ -490,7 +491,7 @@ export default function ContractDetailsView({ initialContract }) {
               <li>• <b>Succès garanti</b> sur le prochain test de compétence</li>
             )}
             {activeEffects.bonusRoll > 0 && (
-              <li>• <b>+{activeEffects.bonusRoll}</b> sur le prochain test de <b>{activeEffects.bonusSkill?.toUpperCase()}</b></li>
+              <li>• <b>+{activeEffects.bonusRoll}</b> sur le prochain test de <b>{activeEffects.bonusSkill === 'all' ? 'TOUTES LES COMPÉTENCES' : activeEffects.bonusSkill?.toUpperCase()}</b></li>
             )}
             {activeEffects.reduceDifficulty > 0 && (
               <li>• <b>-{activeEffects.reduceDifficulty}</b> à la difficulté de tous les tests</li>
