@@ -144,7 +144,8 @@ export default function MarcheNoirPage() {
       case 'common': return 'border-gray-400';
       case 'uncommon': return 'border-green-400';
       case 'rare': return 'border-blue-400';
-      case 'legendary': return 'border-purple-400';
+      case 'epic': return 'border-purple-500';
+      case 'legendary': return 'border-orange-400';
       default: return 'border-gray-400';
     }
   };
@@ -168,6 +169,10 @@ export default function MarcheNoirPage() {
       default: return 'bg-gray-400/10 border-gray-400/30';
     }
   };
+
+  // Correspondance niveau Fixer -> tier max
+  const levelToTier = { 1: "common", 2: "uncommon", 3: "rare", 4: "epic", 5: "legendary" };
+  const rarityOrder = ["common", "uncommon", "rare", "epic", "legendary"];
 
   if (loading) {
     return (
@@ -313,13 +318,23 @@ export default function MarcheNoirPage() {
                   const canAfford = playerProfile.eddies >= item.cost;
                   const hasStreetCred = playerProfile.reputationPoints >= item.streetCredRequired;
                   const isAvailable = !item.isSignature || (item.available !== false);
-                  
+                  const fixerLevel = playerProfile.reputationLevel || 1;
+                  const maxTier = levelToTier[fixerLevel] || "common";
+                  const maxTierIndex = rarityOrder.indexOf(maxTier);
+                  const itemTierIndex = rarityOrder.indexOf(item.rarity);
+                  const canBuy = itemTierIndex <= maxTierIndex;
+
+                  // Adapter la couleur du cadre selon la rareté
+                  const borderColor = item.rarity === 'common' ? 'border-gray-400' :
+                    item.rarity === 'uncommon' ? 'border-green-400' :
+                    item.rarity === 'rare' ? 'border-blue-400' :
+                    item.rarity === 'epic' ? 'border-purple-500' :
+                    item.rarity === 'legendary' ? 'border-orange-400' : 'border-gray-400';
+
                   return (
                     <div
                       key={item.id}
-                      className={`card ${
-                        getRarityBorder(item.rarity)
-                      } ${!canAfford || !hasStreetCred || !isAvailable ? 'opacity-50' : 'hover:border-opacity-100'}`}
+                      className={`card ${borderColor} ${!canAfford || !hasStreetCred || !isAvailable || !canBuy ? 'opacity-50' : 'hover:border-opacity-100'}`}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="text-lg text-[--color-text-primary] font-bold">{item.name}</h3>
@@ -368,9 +383,9 @@ export default function MarcheNoirPage() {
                           onClick={() => handlePurchase(item.id)}
                           isLoading={purchasing[item.id]}
                           loadingText="ACHAT..."
-                          disabled={!canAfford || !hasStreetCred || !isAvailable || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
+                          disabled={!canAfford || !hasStreetCred || !isAvailable || !canBuy || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
                           className={`w-full font-bold py-2 px-4 rounded transition-all ${
-                            canAfford && hasStreetCred && isAvailable && (!item.dailyLimit || item.dailyLimit.remaining > 0)
+                            canAfford && hasStreetCred && isAvailable && canBuy && (!item.dailyLimit || item.dailyLimit.remaining > 0)
                               ? 'btn-primary'
                               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                           }`}
@@ -378,9 +393,15 @@ export default function MarcheNoirPage() {
                           {!canAfford ? 'Fonds insuffisants' : 
                            !hasStreetCred ? 'Street Cred insuffisant' : 
                            !isAvailable ? 'Stock épuisé' :
+                           !canBuy ? 'Niveau Fixer insuffisant' :
                            (item.dailyLimit && item.dailyLimit.remaining <= 0) ? 'Stock épuisé' :
                            `Acheter (${item.cost.toLocaleString('en-US')} €$)`}
                         </ButtonWithLoading>
+                        {!canBuy && (
+                          <div className="text-xs text-red-400 mt-2 text-center">
+                            Niveau de Fixer insuffisant pour acheter cet objet
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

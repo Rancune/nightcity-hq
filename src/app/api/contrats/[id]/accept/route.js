@@ -16,7 +16,8 @@ export async function POST(request, { params }) {
       );
     }
 
-    const contractId = params.id;
+    const awaitedParams = await params;
+    const contractId = awaitedParams.id;
 
     // Vérifier que le contrat existe et est disponible
     const contract = await Contract.findOne({ _id: contractId });

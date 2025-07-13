@@ -3,9 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import connectDb from '@/Lib/database';
 import PlayerProfile from '@/models/PlayerProfile';
 import MarketState from '@/models/MarketState';
-
-// On importe directement le catalogue depuis le fichier JSON
-import MARKET_CATALOG from '@/data/market-catalog.json';
+import Program from '@/models/Program';
+import { generateMarketStock } from '@/Lib/market';
 
 
 
@@ -46,7 +45,10 @@ export async function GET() {
 
     await connectDb();
 
-    // Vérifier et effectuer la rotation du stock si nécessaire
+    // Utiliser directement les programmes existants (désactivation de la génération automatique)
+    // await generateMarketStock();
+    
+    // Récupérer l'état du marché pour le timer
     let marketState = await MarketState.findOne({ marketId: 'global' });
     if (!marketState) {
       marketState = new MarketState({
@@ -57,12 +59,6 @@ export async function GET() {
       await marketState.save();
     }
 
-    // Vérifier si une rotation est nécessaire
-    if (marketState.needsRotation()) {
-      await marketState.performRotation();
-      console.log('[MARKET] Rotation automatique du stock effectuée');
-    }
-
     // Récupérer le profil du joueur pour vérifier le Street Cred
     const playerProfile = await PlayerProfile.findOne({ clerkId: userId });
     if (!playerProfile) {
@@ -71,56 +67,34 @@ export async function GET() {
 
     const streetCred = playerProfile.reputationPoints || 0;
 
-    // Filtrer les objets selon le Street Cred du joueur
-    let availableItems = MARKET_CATALOG.filter(item => 
-      item.streetCredRequired <= streetCred
-    );
+    // Définir l'ordre des raretés (avec epic)
+    const rarityOrder = ["common", "uncommon", "rare", "epic", "legendary"];
+    // Correspondance niveau Fixer -> tier max
+    const levelToTier = { 1: "uncommon", 2: "rare", 3: "epic", 4: "legendary" };
+    const fixerLevel = playerProfile.reputationLevel || 1;
+    const maxTier = levelToTier[fixerLevel] || "uncommon";
+    const maxTierIndex = rarityOrder.indexOf(maxTier);
 
-    // Gérer le stock des objets Signature
-    availableItems = availableItems.map(item => {
-      if (item.isSignature) {
-        const stockInfo = marketState.currentStock.get(item.id);
-        const currentStock = stockInfo ? stockInfo.stock : (item.stock || 0);
-        
-        return {
-          ...item,
-          currentStock: currentStock,
-          available: currentStock > 0
-        };
-      }
-      return item;
-    });
+    // Récupérer TOUS les programmes actifs et en stock > 0
+    let availableItems = await Program.find({
+      isActive: true,
+      stock: { $gt: 0 }
+    }).lean();
 
-    // Ajouter les informations de limite quotidienne du joueur
-    const userLimits = marketState.dailyLimits ? marketState.dailyLimits.get(userId) : null;
-    const playerDailyLimits = new Map();
-    
-    if (userLimits) {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      for (const [itemId, itemLimit] of userLimits.entries()) {
-        const lastReset = new Date(itemLimit.lastReset);
-        const lastResetDay = new Date(lastReset.getFullYear(), lastReset.getMonth(), lastReset.getDate());
-        
-        if (today.getTime() === lastResetDay.getTime()) {
-          playerDailyLimits.set(itemId, itemLimit.count);
-        } else {
-          playerDailyLimits.set(itemId, 0);
-        }
-      }
-    }
-    
+    // NE PAS filtrer selon la street cred ou la rareté, mais calculer canBuy
     availableItems = availableItems.map(item => {
-      const currentDaily = playerDailyLimits.get(item.id) || 0;
-      const maxDaily = item.maxDaily || 1;
-      
+      const itemTierIndex = rarityOrder.indexOf(item.rarity);
+      const canBuy = itemTierIndex <= maxTierIndex && item.streetCredRequired <= streetCred;
       return {
         ...item,
+        id: item.marketId,
+        canBuy,
+        currentStock: item.stock,
+        available: item.stock > 0,
         dailyLimit: {
-          current: currentDaily,
-          max: maxDaily,
-          remaining: maxDaily - currentDaily
+          current: 0,
+          max: item.maxDaily || 1,
+          remaining: item.maxDaily || 1
         }
       };
     });
@@ -128,9 +102,10 @@ export async function GET() {
     // Organiser par vendeur
     const organizedMarket = {};
     Object.keys(VENDORS).forEach(vendorKey => {
+      const vendorItems = availableItems.filter(item => item.vendor === vendorKey);
       organizedMarket[vendorKey] = {
         ...VENDORS[vendorKey],
-        items: availableItems.filter(item => item.vendor === vendorKey)
+        items: vendorItems
       };
     });
 

@@ -40,6 +40,10 @@ export async function GET() {
       await playerProfile.save();
     }
 
+    // Toujours recalculer le niveau/titre de réputation avant de renvoyer
+    playerProfile.calculateReputationLevel();
+    await playerProfile.save();
+
     // Générer le rapport de réputation
     const reputationReport = generateReputationReport(playerProfile);
 

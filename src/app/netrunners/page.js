@@ -52,25 +52,25 @@ export default function NetrunnersPage() {
       } else {
         console.error('Erreur lors de la génération du pool de recrutement');
         // Fallback avec des noms prédéfinis
-        const names = [
-          'Neo', 'Cipher', 'Ghost', 'Shadow', 'Echo', 'Void', 'Pulse', 'Static',
-          'Flicker', 'Glitch', 'Phantom', 'Specter', 'Wraith', 'Shade', 'Mirage',
-          'Raven', 'Crow', 'Vulture', 'Hawk', 'Falcon', 'Eagle', 'Owl', 'Bat',
-          'Spider', 'Scorpion', 'Viper', 'Cobra', 'Python', 'Anaconda', 'Rattlesnake'
-        ];
-        
-        const pool = [];
-        for (let i = 0; i < 6; i++) {
-          const name = names[Math.floor(Math.random() * names.length)];
-          const hacking = Math.floor(Math.random() * 10) + 1;
-          const stealth = Math.floor(Math.random() * 10) + 1;
-          const combat = Math.floor(Math.random() * 10) + 1;
-          const totalPower = hacking + stealth + combat;
+    const names = [
+      'Neo', 'Cipher', 'Ghost', 'Shadow', 'Echo', 'Void', 'Pulse', 'Static',
+      'Flicker', 'Glitch', 'Phantom', 'Specter', 'Wraith', 'Shade', 'Mirage',
+      'Raven', 'Crow', 'Vulture', 'Hawk', 'Falcon', 'Eagle', 'Owl', 'Bat',
+      'Spider', 'Scorpion', 'Viper', 'Cobra', 'Python', 'Anaconda', 'Rattlesnake'
+    ];
+    
+    const pool = [];
+    for (let i = 0; i < 6; i++) {
+      const name = names[Math.floor(Math.random() * names.length)];
+      const hacking = Math.floor(Math.random() * 10) + 1;
+      const stealth = Math.floor(Math.random() * 10) + 1;
+      const combat = Math.floor(Math.random() * 10) + 1;
+      const totalPower = hacking + stealth + combat;
           const commission = Math.floor(totalPower * 50) + 200;
-          
-          pool.push({
-            id: `recruit-${i}`,
-            name,
+      
+      pool.push({
+        id: `recruit-${i}`,
+        name,
             lore: null,
             skills: { hacking, stealth, combat },
             commission,
@@ -102,12 +102,12 @@ export default function NetrunnersPage() {
           id: `recruit-${i}`,
           name,
           lore: null,
-          skills: { hacking, stealth, combat },
-          commission,
-          totalPower
-        });
-      }
-      setRecruitmentPool(pool);
+        skills: { hacking, stealth, combat },
+        commission,
+        totalPower
+      });
+    }
+    setRecruitmentPool(pool);
     }
   };
 
@@ -399,9 +399,9 @@ export default function NetrunnersPage() {
               </div>
 
               {recruit.lore && (
-                <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
+              <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
                   {recruit.lore}
-                </p>
+              </p>
               )}
 
               <div className="flex justify-between items-center">
@@ -562,7 +562,7 @@ export default function NetrunnersPage() {
                     
                     {/* Implants */}
                     {(playerInventory.implants?.length || 0) > 0 && (
-                      <div>
+                      <div className="mb-6">
                         <h3 className="text-lg text-[--color-text-primary] font-bold mb-3 flex items-center gap-2">
                           <span>🔧</span>
                           Implants Disponibles
@@ -577,6 +577,11 @@ export default function NetrunnersPage() {
                                 <span className="text-[--color-text-primary] text-sm font-medium">
                                   {implant.program?.name || 'Implant inconnu'}
                                 </span>
+                                {implant.quantity > 1 && (
+                                  <span className="text-xs text-[--color-neon-pink] ml-2">
+                                    x{implant.quantity}
+                                  </span>
+                                )}
                               </div>
                               <div className={`text-xs ${getRarityColor(implant.program?.rarity)}`}>
                                 {implant.program?.rarity?.toUpperCase()}

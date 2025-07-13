@@ -23,9 +23,16 @@ export function testRunnerSkills(runner, requiredSkills, activeEffects = {}) {
       const requiredSkill = requiredSkills[skill];
       let isSuccess = false;
       
-      // Appliquer les effets actifs
+      console.log(`[SKILLTEST DEBUG] Test de ${skill} - Runner: ${runner.name}`);
+      console.log(`[SKILLTEST DEBUG] Compétence de base: ${runnerSkill}, Requise: ${requiredSkill}`);
+      console.log(`[SKILLTEST DEBUG] Effets actifs reçus:`, activeEffects);
+      
+      // Appliquer les effets actifs pour cette compétence spécifique
       if (activeEffects.bonusRoll && (activeEffects.bonusSkill === skill || activeEffects.bonusSkill === 'all')) {
         runnerSkill += activeEffects.bonusRoll;
+        console.log(`[SKILLTEST DEBUG] Bonus +${activeEffects.bonusRoll} appliqué à ${skill} (nouveau total: ${runnerSkill})`);
+      } else {
+        console.log(`[SKILLTEST DEBUG] Aucun bonus appliqué à ${skill} (bonusRoll: ${activeEffects.bonusRoll}, bonusSkill: ${activeEffects.bonusSkill})`);
       }
       
       if (activeEffects.reduceDifficulty) {

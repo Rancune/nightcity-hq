@@ -33,7 +33,7 @@ export async function POST(request, { params }) {
 
     // Récupérer le programme
     const program = await Program.findById(programId);
-    if (!program || program.category !== 'implant') {
+    if (!program || program.type !== 'implant') {
       return new NextResponse("Programme d'implant non trouvé", { status: 404 });
     }
 
@@ -50,7 +50,7 @@ export async function POST(request, { params }) {
     }
 
     // Vérifier que le joueur possède l'implant
-    const hasImplant = playerInventory.oneShotPrograms.some(item => 
+    const hasImplant = playerInventory.implants.some(item => 
       item.programId.equals(programId) && item.quantity > 0
     );
 
@@ -87,25 +87,48 @@ export async function POST(request, { params }) {
       programId: programId,
       installedAt: new Date()
     });
+    
+    // Ajouter l'implant installé à l'inventaire du joueur
+    if (!playerInventory.installedImplants) {
+      playerInventory.installedImplants = [];
+    }
+    
+    playerInventory.installedImplants.push({
+      runnerId: runner._id,
+      programId: programId,
+      installedAt: new Date()
+    });
 
     // Appliquer les effets de l'implant
-    const effects = program.effects;
+    const permanentBoost = program.permanent_skill_boost;
     if (
-      effects.permanent_skill_boost &&
-      typeof effects.permanent_skill_boost.skill === 'string' &&
-      effects.permanent_skill_boost.skill
+      permanentBoost &&
+      typeof permanentBoost.skill === 'string' &&
+      permanentBoost.skill
     ) {
-      const skill = effects.permanent_skill_boost.skill.toLowerCase();
-      const boost = effects.permanent_skill_boost.value;
+      const skill = permanentBoost.skill.toLowerCase();
+      const boost = permanentBoost.value;
       if (runner.skills[skill] !== undefined) {
         runner.skills[skill] = Math.min(10, runner.skills[skill] + boost);
+        console.log(`[INSTALL IMPLANT] ${program.name} appliqué: +${boost} à ${skill} sur ${runner.name}`);
       }
     }
 
     // Retirer l'implant de l'inventaire du joueur
-    const success = playerInventory.useOneShotProgram(programId);
-    if (!success) {
+    const implantIndex = playerInventory.implants.findIndex(item => 
+      item.programId.equals(programId) && item.quantity > 0
+    );
+    
+    if (implantIndex === -1) {
       return new NextResponse("Erreur lors de la suppression de l'implant de l'inventaire", { status: 500 });
+    }
+    
+    // Réduire la quantité ou supprimer l'item
+    const implantItem = playerInventory.implants[implantIndex];
+    implantItem.quantity -= 1;
+    
+    if (implantItem.quantity <= 0) {
+      playerInventory.implants.splice(implantIndex, 1);
     }
 
     // Sauvegarder les modifications
@@ -119,14 +142,14 @@ export async function POST(request, { params }) {
       success: true,
       message: `Implant ${program.name} installé avec succès sur ${runner.name}`,
       runnerName: runner.name,
-      effects: effects,
+      effects: program.effects,
       installationCost: INSTALLATION_COST,
       remainingEddies: playerProfile.eddies,
       implant: {
         name: program.name,
         description: program.description,
         rarity: program.rarity,
-        effects: program.effects
+        permanent_skill_boost: program.permanent_skill_boost
       }
     });
 

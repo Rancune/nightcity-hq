@@ -27,7 +27,7 @@ export async function POST(request, { params }) {
 
     // Récupérer le programme
     const program = await Program.findById(programId);
-    if (!program || program.category !== 'one_shot') {
+    if (!program || program.type !== 'one_shot') {
       return new NextResponse("Programme one-shot non trouvé", { status: 404 });
     }
 

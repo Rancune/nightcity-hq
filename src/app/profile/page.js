@@ -137,18 +137,32 @@ export default function ProfilePage() {
               getReputationLevelInfo(0),
               getReputationLevelInfo(151),
               getReputationLevelInfo(501),
-              getReputationLevelInfo(1200)
+              getReputationLevelInfo(1200),
+              getReputationLevelInfo(2500)
             ].map((tier) => (
               <div key={tier.level} className={`flex items-center justify-between p-3 rounded ${reputationReport.currentLevel.level === tier.level ? 'bg-[--color-neon-cyan]/10 border border-[--color-neon-cyan]' : 'bg-black/30'}`}>
                 <div className="flex items-center gap-3">
-                  <span className={`text-lg font-bold ${tier.level === 1 ? 'text-gray-400' : tier.level === 2 ? 'text-blue-400' : tier.level === 3 ? 'text-purple-400' : 'text-yellow-400'}`}>Niv. {tier.level}</span>
-                  <span className={`font-bold ${tier.level === 1 ? 'text-gray-400' : tier.level === 2 ? 'text-blue-400' : tier.level === 3 ? 'text-purple-400' : 'text-yellow-400'}`}>{tier.title}</span>
+                  <span className={`text-lg font-bold ${
+                    tier.level === 1 ? 'text-gray-400' :
+                    tier.level === 2 ? 'text-green-400' :
+                    tier.level === 3 ? 'text-blue-400' :
+                    tier.level === 4 ? 'text-purple-500' :
+                    'text-orange-400'
+                  }`}>Niv. {tier.level}</span>
+                  <span className={`font-bold ${
+                    tier.level === 1 ? 'text-gray-400' :
+                    tier.level === 2 ? 'text-green-400' :
+                    tier.level === 3 ? 'text-blue-400' :
+                    tier.level === 4 ? 'text-purple-500' :
+                    'text-orange-400'
+                  }`}>{tier.title}</span>
                 </div>
                 <span className="text-[--color-text-secondary] text-sm">
                   {tier.level === 1 && '0 - 150 PR'}
                   {tier.level === 2 && '151 - 500 PR'}
                   {tier.level === 3 && '501 - 1199 PR'}
-                  {tier.level === 4 && '1200+ PR'}
+                  {tier.level === 4 && '1200 - 2499 PR'}
+                  {tier.level === 5 && '2500+ PR'}
                 </span>
               </div>
             ))}

@@ -43,6 +43,7 @@ export default function ContractDetailsView({ initialContract }) {
   const [assigning, setAssigning] = useState(false);
   const requiredSkillsCount = Object.values(contract?.requiredSkills || {}).filter(v => v > 0).length;
   const [assignError, setAssignError] = useState(null);
+  const [expandedSkill, setExpandedSkill] = useState(null); // Pour afficher/masquer la liste des runners
 
   // Récupérer l'inventaire du joueur
   useEffect(() => {
@@ -87,6 +88,8 @@ export default function ContractDetailsView({ initialContract }) {
   const handleUseProgram = async (program, category) => {
     setLoading(true);
     try {
+      console.log(`[FRONTEND DEBUG] Utilisation du programme ${program.program.name} (${category})`);
+      
       const response = await fetch(`/api/contrats/${contract._id}/use-program`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -98,6 +101,9 @@ export default function ContractDetailsView({ initialContract }) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`[FRONTEND DEBUG] Réponse de l'API use-program:`, data);
+        console.log(`[FRONTEND DEBUG] skill reçu:`, data.skill);
+        console.log(`[FRONTEND DEBUG] activeEffects reçus:`, data.activeEffects);
         
         // Mettre à jour l'état local
         setUsedPrograms(prev => [...prev, program.program._id]);
@@ -112,6 +118,7 @@ export default function ContractDetailsView({ initialContract }) {
           }
           // Ne pas appliquer les bonus si le programme est utilisé pour révéler une compétence
           if (data.effects.add_bonus_roll && !data.effects.reveal_skill && !data.effects.reveal_all_skills) {
+            console.log(`[FRONTEND DEBUG] Application du bonus +${data.effects.add_bonus_roll} à ${data.skill}`);
             setSkillBonuses(prev => ({
               ...prev,
               [data.skill]: (prev[data.skill] || 0) + data.effects.add_bonus_roll
@@ -123,6 +130,7 @@ export default function ContractDetailsView({ initialContract }) {
         const contractRes = await fetch(`/api/contrats/${contract._id}`);
         if (contractRes.ok) {
           const updated = await contractRes.json();
+          console.log(`[FRONTEND DEBUG] Contrat rechargé après use-program:`, updated.activeProgramEffects);
           setContract(updated);
         }
         // Recharger l'inventaire
@@ -261,6 +269,8 @@ export default function ContractDetailsView({ initialContract }) {
       const userId = window.Clerk.user?.id || window.Clerk.user?.primaryEmailAddress?.id;
       if (userId) {
         const entry = contract.activeProgramEffects.find(e => e.clerkId === userId);
+        console.log(`[FRONTEND DEBUG] Effets actifs trouvés pour l'utilisateur ${userId}:`, entry?.effects);
+        console.log(`[FRONTEND DEBUG] skillBonuses dans les effets:`, entry?.effects?.skillBonuses);
         setActiveEffects(entry?.effects || null);
       }
     }
@@ -283,6 +293,8 @@ export default function ContractDetailsView({ initialContract }) {
     setLoadoutLoading(true);
     setLoadoutMessage(null);
     try {
+      console.log(`[FRONTEND DEBUG] Équipement de ${selectedPrograms.length} programmes:`, selectedPrograms);
+      
       const response = await fetch(`/api/contrats/${contract._id}/prepare`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -290,9 +302,14 @@ export default function ContractDetailsView({ initialContract }) {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log(`[FRONTEND DEBUG] Réponse de l'API prepare:`, data);
+        console.log(`[FRONTEND DEBUG] activeEffects reçus:`, data.activeEffects);
+        console.log(`[FRONTEND DEBUG] skillBonuses reçus:`, data.activeEffects?.skillBonuses);
+        
         setLoadoutMessage('Programmes équipés avec succès !');
         setActiveEffects(data.activeEffects);
         setSelectedPrograms([]);
+        
         // Recharger l'inventaire et le contrat
         const [invRes, contractRes] = await Promise.all([
           fetch('/api/player/inventory'),
@@ -304,6 +321,7 @@ export default function ContractDetailsView({ initialContract }) {
         }
         if (contractRes.ok) {
           const updated = await contractRes.json();
+          console.log(`[FRONTEND DEBUG] Contrat rechargé - activeProgramEffects:`, updated.activeProgramEffects);
           setContract(updated);
         }
       } else {
@@ -318,7 +336,8 @@ export default function ContractDetailsView({ initialContract }) {
   };
 
   // Affichage de la section préparation de mission (loadout)
-  const showLoadout = contract.status === 'Assigné' || contract.status === 'Actif';
+  // MODIFICATION: Permettre les tests de debug sur tous les contrats
+  const showLoadout = true; // contract.status === 'Assigné' || contract.status === 'Actif';
 
   // Correction : calculer le niveau de menace si absent ou invalide
   let threatLevel = contract.threatLevel;
@@ -332,6 +351,21 @@ export default function ContractDetailsView({ initialContract }) {
   const bonusPrograms = oneShotPrograms.filter(item =>
     (item.program?.effects?.skip_skill_check || item.program?.effects?.add_bonus_roll || item.program?.effects?.reduce_difficulty) && !item.program?.effects?.reveal_skill && !["Logiciel 'Mouchard'", 'Analyseur de Contrat'].includes(item.program?.name)
   );
+
+  // Debug logs pour les programmes disponibles
+  useEffect(() => {
+    console.log(`[FRONTEND DEBUG] Statut du contrat: ${contract.status}`);
+    console.log(`[FRONTEND DEBUG] Programmes one-shot disponibles:`, oneShotPrograms.length);
+    console.log(`[FRONTEND DEBUG] Programmes bonus disponibles:`, bonusPrograms.length);
+    console.log(`[FRONTEND DEBUG] Programmes de révélation disponibles:`, revealPrograms.length);
+    
+    if (bonusPrograms.length > 0) {
+      console.log(`[FRONTEND DEBUG] Détail des programmes bonus:`);
+      bonusPrograms.forEach(item => {
+        console.log(`   - ${item.program.name}: +${item.program.effects.add_bonus_roll} (skill: ${item.program.effects.skill || 'non spécifié'})`);
+      });
+    }
+  }, [contract.status, oneShotPrograms, bonusPrograms, revealPrograms]);
 
   // Utilisation immédiate d'un programme de révélation
   const [revealLoading, setRevealLoading] = useState(null); // id du programme en cours
@@ -482,24 +516,120 @@ export default function ContractDetailsView({ initialContract }) {
         </div>
       </div>
 
-      {/* Effets actifs */}
+      {/* Effets actifs - NOUVEAU DESIGN */}
       {activeEffects && (
-        <div className="w-full max-w-4xl mx-auto bg-yellow-900/20 rounded-xl shadow-lg p-6 border border-yellow-400/40 mb-4" style={{maxWidth: '80rem'}}>
-          <h3 className="text-lg text-yellow-300 font-bold mb-3">Effets Actifs</h3>
-          <ul className="space-y-1 text-yellow-200 text-sm">
-            {activeEffects.autoSuccess && (
-              <li>• <b>Succès garanti</b> sur le prochain test de compétence</li>
+        <div className="w-full max-w-4xl mx-auto bg-gradient-to-r from-cyan-900/20 to-purple-900/20 rounded-xl shadow-lg p-6 border border-cyan-400/40 mb-4" style={{maxWidth: '80rem'}}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full flex items-center justify-center">
+              <span className="text-black font-bold text-sm">⚡</span>
+            </div>
+            <h3 className="text-lg font-bold text-cyan-300">Effets Actifs sur cette Mission</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Bonus de compétences */}
+            {activeEffects.skillBonuses && Object.keys(activeEffects.skillBonuses).length > 0 && (
+              <div className="bg-green-900/30 rounded-lg p-4 border border-green-400/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-400 text-lg">🎯</span>
+                  <h4 className="font-bold text-green-300">Bonus de Compétence</h4>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(activeEffects.skillBonuses)
+                    .filter(([_, bonus]) => bonus > 0)
+                    .map(([skill, bonus]) => (
+                      <div key={skill} className="flex items-center gap-2">
+                        <span className="text-green-200 font-mono">+{bonus}</span>
+                        <span className="text-green-100">à la compétence</span>
+                        <span className="px-2 py-1 bg-green-800/50 rounded text-xs font-bold text-green-200">
+                          {skill === 'hacking' ? '💻 Hacking' : 
+                           skill === 'stealth' ? '👁️ Infiltration' : 
+                           skill === 'combat' ? '⚔️ Combat' : 
+                           skill.toUpperCase()}
+                        </span>
+                      </div>
+                  ))}
+                </div>
+              </div>
             )}
-            {activeEffects.bonusRoll > 0 && (
-              <li>• <b>+{activeEffects.bonusRoll}</b> sur le prochain test de <b>{activeEffects.bonusSkill === 'all' ? 'TOUTES LES COMPÉTENCES' : activeEffects.bonusSkill?.toUpperCase()}</b></li>
+
+            {/* Ancien format pour compatibilité */}
+            {activeEffects.bonusRoll > 0 && !activeEffects.skillBonuses && (
+              <div className="bg-green-900/30 rounded-lg p-4 border border-green-400/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-400 text-lg">🎯</span>
+                  <h4 className="font-bold text-green-300">Bonus de Compétence</h4>
+                </div>
+                <div className="space-y-2">
+                  {activeEffects.bonusSkill === 'all' ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-200 font-mono">+{activeEffects.bonusRoll}</span>
+                      <span className="text-green-100">à TOUTES les compétences testées</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-200 font-mono">+{activeEffects.bonusRoll}</span>
+                      <span className="text-green-100">à la compétence</span>
+                      <span className="px-2 py-1 bg-green-800/50 rounded text-xs font-bold text-green-200">
+                        {activeEffects.bonusSkill === 'hacking' ? '💻 Hacking' : 
+                         activeEffects.bonusSkill === 'stealth' ? '👁️ Infiltration' : 
+                         activeEffects.bonusSkill === 'combat' ? '⚔️ Combat' : 
+                         activeEffects.bonusSkill?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
+
+            {/* Réduction de difficulté */}
             {activeEffects.reduceDifficulty > 0 && (
-              <li>• <b>-{activeEffects.reduceDifficulty}</b> à la difficulté de tous les tests</li>
+              <div className="bg-blue-900/30 rounded-lg p-4 border border-blue-400/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-400 text-lg">🛡️</span>
+                  <h4 className="font-bold text-blue-300">Réduction de Difficulté</h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-200 font-mono">-{activeEffects.reduceDifficulty}</span>
+                  <span className="text-blue-100">à la difficulté de tous les tests</span>
+                </div>
+              </div>
             )}
+
+            {/* Succès automatique */}
+            {activeEffects.autoSuccess && (
+              <div className="bg-yellow-900/30 rounded-lg p-4 border border-yellow-400/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-yellow-400 text-lg">⭐</span>
+                  <h4 className="font-bold text-yellow-300">Succès Garanti</h4>
+                </div>
+                <p className="text-yellow-200 text-sm">
+                  Le test de compétence le plus difficile sera automatiquement réussi
+                </p>
+              </div>
+            )}
+
+            {/* Programme signature */}
             {activeEffects.signature && (
-              <li>• <b>Programme signature utilisé :</b> {activeEffects.signature}</li>
+              <div className="bg-purple-900/30 rounded-lg p-4 border border-purple-400/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-purple-400 text-lg">👑</span>
+                  <h4 className="font-bold text-purple-300">Programme Signature</h4>
+                </div>
+                <p className="text-purple-200 font-mono text-sm">
+                  {activeEffects.signature}
+                </p>
+              </div>
             )}
-          </ul>
+          </div>
+
+          {/* Résumé des effets */}
+          <div className="mt-4 p-3 bg-black/20 rounded-lg border border-cyan-400/20">
+            <p className="text-cyan-200 text-sm">
+              <strong>Note :</strong> Ces effets seront appliqués lors de la résolution de la mission. 
+              Les bonus de compétence s'appliquent uniquement aux tests correspondants.
+            </p>
+          </div>
         </div>
       )}
 
@@ -507,6 +637,14 @@ export default function ContractDetailsView({ initialContract }) {
       {showLoadout && (
         <div className="w-full max-w-4xl mx-auto bg-slate-900/80 rounded-xl shadow-lg p-6 border border-cyan-900/30 mb-4" style={{maxWidth: '80rem'}}>
           <h2 className="text-lg font-bold mb-4 text-cyan-200">Préparation de mission : Loadout</h2>
+          
+          {/* Debug info pour tous les contrats */}
+          <div className="mb-4 p-3 bg-yellow-900/30 rounded border border-yellow-400/40">
+            <p className="text-yellow-200 text-sm">
+              <strong>Debug Mode:</strong> Tests autorisés sur tous les contrats (statut: {contract.status})
+            </p>
+          </div>
+          
           <div className="flex gap-2 mb-6">
             <button
               className={`px-4 py-2 rounded-t transition-all duration-200 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60 ${loadoutTab === 'bonus' ? 'bg-cyan-700 text-white shadow' : 'bg-gray-800 text-gray-300 hover:bg-cyan-900/60'}`}
@@ -602,72 +740,196 @@ export default function ContractDetailsView({ initialContract }) {
         </button>
       )}
 
-      {/* Section assignation multi-runners visible en permanence */}
+      {/* Section assignation multi-runners - NOUVEAU DESIGN */}
       {(contract.status === 'Proposé' || contract.status === 'Assigné') && (
-        <div className="w-full max-w-4xl mx-auto bg-gray-900/80 rounded-xl shadow-lg p-6 border border-cyan-900/30 mb-4">
-          <h2 className="text-lg font-bold mb-4 text-cyan-200">Assigner les runners à la mission</h2>
-          <p className="mb-2 text-sm text-cyan-300">Cliquez sur une case pour assigner un runner à une compétence.</p>
-          <table className="table-auto border-collapse w-full mb-4">
-            <thead>
-              <tr>
-                <th className="px-2 py-1"></th>
-                {testedSkills.map(({ skill }) => (
-                  <th key={skill} className="px-4 py-2 text-cyan-300 font-bold text-center">
-                    {skill === 'hacking' ? '💻 Hacking' : skill === 'stealth' ? '👁️ Infiltration' : '⚔️ Combat'}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {availableRunners.map(runner => (
-                <tr key={runner._id}>
-                  <td className="font-bold px-2 text-cyan-200 text-center">
-                    {runner.name}
-                    <div className="block text-xs text-gray-400 whitespace-pre font-mono mt-1">
-                      {`H:${runner.skills.hacking}\nS:${runner.skills.stealth}\nC:${runner.skills.combat}`}
-                    </div>
-                  </td>
-                  {testedSkills.map(({ skill }) => {
-                    const isAssigned = selectedRunners[skill] === runner._id;
-                    const isRunnerUsed = Object.values(selectedRunners).includes(runner._id) && !isAssigned;
-                    return (
-                      <td key={skill} className="text-center">
-                        <button
-                          className={`px-2 py-1 rounded ${isAssigned ? 'bg-cyan-500 text-white' : isRunnerUsed ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-cyan-200'}`}
-                          disabled={isRunnerUsed}
-                          onClick={() => setSelectedRunners(prev => ({ ...prev, [skill]: isAssigned ? null : runner._id }))}
-                        >
-                          {isAssigned ? '✅' : isRunnerUsed ? '—' : 'Assigner'}
-                        </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mb-2 text-sm text-cyan-300 font-bold">
-            {Object.keys(selectedRunners).length} / {testedSkills.length} compétences assignées
+        <div className="w-full max-w-4xl mx-auto bg-gradient-to-r from-slate-900/90 to-gray-900/90 rounded-xl shadow-lg p-6 border border-cyan-900/30 mb-4" style={{maxWidth: '80rem'}}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center">
+              <span className="text-black font-bold text-lg">👥</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-cyan-200">Équipe de Mission</h2>
+              <p className="text-sm text-cyan-300">Assemblez votre équipe de runners pour cette mission</p>
+            </div>
           </div>
-          {assignError && <div className="mb-2 text-sm text-red-400">{assignError}</div>}
-          <button
-            className="w-full py-3 rounded bg-cyan-600 text-white font-bold text-lg disabled:opacity-50"
-            onClick={async () => {
-              setAssigning(true);
-              setAssignError(null);
-              try {
-                const assignments = testedSkills.map(({ skill }) => ({ skill, runnerId: selectedRunners[skill] }));
-                await handleAssignRunners(assignments);
-              } catch (err) {
-                setAssignError('Erreur réseau');
-              } finally {
-                setAssigning(false);
-              }
-            }}
-            disabled={Object.values(selectedRunners).filter(Boolean).length !== testedSkills.length || assigning}
-          >
-            {assigning ? 'Assignation...' : `Assigner ${testedSkills.length} runner(s)`}
-          </button>
+
+          {/* Compétences requises avec assignation */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {testedSkills.map(({ skill, value }) => {
+              const assignedRunnerId = selectedRunners[skill];
+              const assignedRunner = availableRunners.find(r => r._id === assignedRunnerId);
+              const isRevealed = revealedSkills.includes(skill) || allSkillsRevealed;
+              
+              return (
+                <div key={skill} className="bg-black/40 rounded-lg p-4 border border-cyan-400/30 hover:border-cyan-400/60 transition-all duration-200">
+                  {/* En-tête de la compétence */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">
+                        {isRevealed ? (
+                          skill === 'hacking' ? '💻' : skill === 'stealth' ? '👁️' : '⚔️'
+                        ) : '❓'}
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-cyan-200">
+                          {isRevealed ? (
+                            skill === 'hacking' ? 'Hacking' : 
+                            skill === 'stealth' ? 'Infiltration' : 'Combat'
+                          ) : 'Compétence inconnue'}
+                        </h3>
+                        {isRevealed && (
+                          <p className="text-xs text-cyan-300">
+                            Difficulté: {value}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+                    </div>
+                  </div>
+
+                  {/* Runner assigné ou sélection */}
+                  {assignedRunner ? (
+                    <div className="bg-green-900/30 rounded-lg p-3 border border-green-400/40">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-green-200">{assignedRunner.name}</span>
+                        <button
+                          onClick={() => setSelectedRunners(prev => ({ ...prev, [skill]: null }))}
+                          className="text-red-400 hover:text-red-300 text-sm"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="text-center">
+                          <div className="text-cyan-300">H</div>
+                          <div className="font-bold text-cyan-200">{assignedRunner.skills.hacking}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-cyan-300">S</div>
+                          <div className="font-bold text-cyan-200">{assignedRunner.skills.stealth}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-cyan-300">C</div>
+                          <div className="font-bold text-cyan-200">{assignedRunner.skills.combat}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-center">
+                        <span className="text-xs text-green-300 font-bold">
+                          Performance: {Math.round((assignedRunner.skills[skill] / value) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setExpandedSkill(expandedSkill === skill ? null : skill)}
+                      className="w-full bg-gray-800/50 hover:bg-cyan-900/30 rounded-lg p-3 border border-gray-600/40 hover:border-cyan-400/40 min-h-[80px] flex items-center justify-center transition-all duration-200"
+                    >
+                      <div className="text-center">
+                        <div className="text-gray-400 text-lg mb-1">➕</div>
+                        <p className="text-xs text-gray-400">
+                          {expandedSkill === skill ? 'Masquer les runners' : 'Sélectionner un runner'}
+                        </p>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Liste des runners disponibles pour cette compétence */}
+                  {!assignedRunner && expandedSkill === skill && (
+                    <div className="mt-3 space-y-2 max-h-32 overflow-y-auto">
+                      {availableRunners
+                        .filter(runner => !Object.values(selectedRunners).includes(runner._id) || selectedRunners[skill] === runner._id)
+                        .map(runner => (
+                          <button
+                            key={runner._id}
+                            onClick={() => {
+                              setSelectedRunners(prev => ({ ...prev, [skill]: runner._id }));
+                              setExpandedSkill(null); // Fermer la liste après sélection
+                            }}
+                            className="w-full bg-gray-800/50 hover:bg-cyan-900/30 rounded p-2 text-left transition-all duration-200 border border-gray-600/40 hover:border-cyan-400/40"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-cyan-200 text-sm">{runner.name}</span>
+                              <span className="text-xs text-cyan-300 font-bold">
+                                {runner.skills[skill]}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              Performance: {Math.round((runner.skills[skill] / value) * 100)}%
+                            </div>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Résumé et bouton d'assignation */}
+          <div className="bg-black/30 rounded-lg p-4 border border-cyan-400/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-cyan-300">📊</span>
+                  <span className="text-cyan-200 font-bold">
+                    {Object.values(selectedRunners).filter(Boolean).length} / {testedSkills.length} compétences assignées
+                  </span>
+                </div>
+                {Object.values(selectedRunners).filter(Boolean).length === testedSkills.length && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✅</span>
+                    <span className="text-green-300 text-sm font-bold">Équipe complète</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-cyan-300">Runners disponibles</div>
+                <div className="text-cyan-200 font-bold">
+                  {availableRunners.length - Object.values(selectedRunners).filter(Boolean).length}
+                </div>
+              </div>
+            </div>
+
+            {assignError && (
+              <div className="mb-4 p-3 bg-red-900/30 rounded-lg border border-red-400/40">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-400">⚠️</span>
+                  <span className="text-red-200 text-sm">{assignError}</span>
+                </div>
+              </div>
+            )}
+
+            <button
+              className="w-full py-4 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              onClick={async () => {
+                setAssigning(true);
+                setAssignError(null);
+                try {
+                  const assignments = testedSkills.map(({ skill }) => ({ skill, runnerId: selectedRunners[skill] }));
+                  await handleAssignRunners(assignments);
+                } catch (err) {
+                  setAssignError('Erreur réseau');
+                } finally {
+                  setAssigning(false);
+                }
+              }}
+              disabled={Object.values(selectedRunners).filter(Boolean).length !== testedSkills.length || assigning}
+            >
+              {assigning ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Assignation en cours...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <span>🚀</span>
+                  <span>Lancer la mission avec {testedSkills.length} runner(s)</span>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       )}
       <DebriefingModal

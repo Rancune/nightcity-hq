@@ -17,7 +17,7 @@
     "@headlessui/react": "^2.2.4",
     "@react-three/drei": "^10.3.0",
     "@react-three/fiber": "^9.1.4",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "framer-motion": "^12.18.1",
     "mongoose": "^8.15.2",
     "next": "15.3.3",

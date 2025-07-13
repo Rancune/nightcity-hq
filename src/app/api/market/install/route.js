@@ -19,7 +19,7 @@ export async function POST(request) {
 
     // Récupérer le programme
     const program = await Program.findById(programId);
-    if (!program || program.category !== 'implant') {
+    if (!program || program.type !== 'implant') {
       return new NextResponse("Programme d'implant invalide", { status: 404 });
     }
 
@@ -47,9 +47,10 @@ export async function POST(request) {
     // Installer l'implant
     if (playerInventory.installImplant(runnerId, programId)) {
       // Appliquer l'effet permanent
-      const skillBoost = program.effects.permanent_skill_boost;
+      const skillBoost = program.permanent_skill_boost;
       if (skillBoost && skillBoost.skill) {
-        runner.skills[skillBoost.skill] += skillBoost.value;
+        runner.skills[skillBoost.skill] = Math.min(10, runner.skills[skillBoost.skill] + skillBoost.value);
+        console.log(`[MARKET INSTALL] ${program.name} appliqué: +${skillBoost.value} à ${skillBoost.skill} sur ${runner.name}`);
       }
 
       // Retirer l'implant de l'inventaire

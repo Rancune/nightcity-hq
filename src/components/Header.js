@@ -116,19 +116,43 @@ export default function Header() {
             </div>
 
             {/* Réputation avec design amélioré */}
-            <div className="bg-gradient-to-r from-[--color-neon-cyan]/20 to-[--color-neon-cyan]/10 border border-[--color-neon-cyan] rounded-lg p-2 min-w-[140px]">
-              <div className="text-xs text-[--color-neon-cyan]/70 uppercase tracking-wider font-semibold truncate">
-                {playerProfile?.reputationTitle || 'Rumeur de la Rue'}
-              </div>
-              <div className="text-sm text-[--color-neon-cyan] font-bold">
-                <div className="flex items-center gap-2">
-                  
-                  <span className="text-[--color-neon-cyan] font-bold">
-                    {playerProfile?.reputationPoints?.toLocaleString('en-US') || '---'} PR
-                  </span>
+            {(() => {
+              const level = playerProfile?.reputationLevel || 1;
+              let borderColor = 'border-gray-200';
+              let bgColor = 'bg-white/10';
+              let textColor = 'text-gray-200';
+              if (level === 2) {
+                borderColor = 'border-green-400';
+                bgColor = 'bg-green-400/10';
+                textColor = 'text-green-400';
+              } else if (level === 3) {
+                borderColor = 'border-blue-400';
+                bgColor = 'bg-blue-400/10';
+                textColor = 'text-blue-400';
+              } else if (level === 4) {
+                borderColor = 'border-purple-500';
+                bgColor = 'bg-purple-500/10';
+                textColor = 'text-purple-500';
+              } else if (level === 5) {
+                borderColor = 'border-orange-400';
+                bgColor = 'bg-orange-400/10';
+                textColor = 'text-orange-400';
+              }
+              return (
+                <div className={`${bgColor} ${borderColor} rounded-lg p-2 min-w-[140px] border`}>
+                  <div className={`text-xs ${textColor}/70 uppercase tracking-wider font-semibold truncate`}>
+                    {playerProfile?.reputationTitle || 'Rumeur de la Rue'}
+                  </div>
+                  <div className={`text-sm font-bold ${textColor}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={textColor + ' font-bold'}>
+                        {playerProfile?.reputationPoints?.toLocaleString('en-US') || '---'} PR
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Bouton utilisateur */}
             <div className="flex-shrink-0">

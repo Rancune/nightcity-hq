@@ -22,7 +22,15 @@ export async function GET() {
     // Vérifier et générer le stock si nécessaire
     await generateMarketStock();
 
-    // Récupérer le stock disponible selon la réputation du joueur
+    // Définir l'ordre des raretés (avec epic)
+    const rarityOrder = ["common", "uncommon", "rare", "epic", "legendary"];
+    // Correspondance niveau Fixer -> tier max
+    const levelToTier = { 1: "uncommon", 2: "rare", 3: "epic", 4: "legendary" };
+    const fixerLevel = playerProfile.reputationLevel || 1;
+    const maxTier = levelToTier[fixerLevel] || "uncommon";
+    const maxTierIndex = rarityOrder.indexOf(maxTier);
+
+    // Récupérer TOUS les programmes disponibles selon la réputation
     let availablePrograms = await Program.find({
       isActive: true,
       stock: { $gt: 0 },
@@ -32,6 +40,11 @@ export async function GET() {
         { rotationExpiry: null }
       ]
     }).sort({ rarity: -1, price: 1 });
+    // Ajouter canBuy selon la rareté max autorisée
+    availablePrograms = availablePrograms.map(program => {
+      const itemTierIndex = rarityOrder.indexOf(program.rarity);
+      return { ...program.toObject(), canBuy: itemTierIndex <= maxTierIndex };
+    });
 
     // Si aucun programme disponible, forcer la génération
     if (availablePrograms.length === 0) {
@@ -126,12 +139,12 @@ export async function POST(request) {
       }
       
       // Ajouter le programme à l'inventaire selon sa catégorie
-      if (program.category === 'one-shot') {
+      if (program.type === 'one_shot') {
         playerInventory.addOneShotProgram(programId);
-      } else if (program.category === 'implant') {
+      } else if (program.type === 'implant') {
         // Les implants sont stockés mais pas installés automatiquement
         playerInventory.addOneShotProgram(programId);
-      } else if (program.category === 'information') {
+      } else if (program.type === 'information') {
         playerInventory.purchasedInformation.push({
           programId: programId,
           purchasedAt: new Date()
@@ -157,8 +170,9 @@ export async function POST(request) {
           name: program.name,
           description: program.description,
           rarity: program.rarity,
-          category: program.category,
+          type: program.type,
           effects: program.effects,
+          permanent_skill_boost: program.permanent_skill_boost,
           quantity: 1
         });
       }

@@ -13,10 +13,14 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
   const availableRunners = runners.filter(r => r.status === 'Disponible');
   const requiredSkills = Object.entries(contract?.requiredSkills || {}).filter(([_, v]) => v > 0).map(([k]) => k);
 
-  // Utiliser uniquement les compétences révélées si elles existent
-  const revealedSkills = contract?.userRevealedSkills && contract.userRevealedSkills.length > 0
-    ? contract.userRevealedSkills
-    : requiredSkills;
+  // Utiliser les compétences révélées si elles existent, sinon générer des placeholders anonymes
+  let assignSkills = [];
+  if (contract?.userRevealedSkills && contract.userRevealedSkills.length > 0) {
+    assignSkills = contract.userRevealedSkills;
+  } else {
+    // Générer des placeholders anonymes pour chaque compétence testée
+    assignSkills = requiredSkills.map((_, i) => `unknown_${i + 1}`);
+  }
 
   // Empêcher qu'un runner soit assigné à plusieurs skills
   const getAvailableForSkill = (skill) => {
@@ -32,13 +36,13 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
   };
 
   const handleAssignRunners = async () => {
-    if (Object.keys(assignments).length !== requiredSkills.length) return;
+    if (Object.keys(assignments).length !== assignSkills.length) return;
     setAssigning(true);
     try {
       await fetch(`/api/contrats/${contract._id}/assign-runners`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignments: requiredSkills.map(skill => ({ skill, runnerId: assignments[skill] })) })
+        body: JSON.stringify({ assignments: assignSkills.map(skill => ({ skill, runnerId: assignments[skill] })) })
       });
       onClose();
       if (onAssigned) onAssigned();
@@ -56,8 +60,11 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
     return skill;
   };
 
-  // Label pour les compétences, ou 'Compétence non révélée' si non révélée
-  const getSkillLabelMasked = (skill) => {
+  // Fonction pour afficher le label (nom réel ou placeholder)
+  const getSkillLabelMasked = (skill, idx) => {
+    if (skill.startsWith('unknown_')) {
+      return <span className="flex items-center gap-2"><span role="img" aria-label="hidden">❓</span> <span className="italic text-gray-400">Compétence inconnue #{idx + 1}</span></span>;
+    }
     if (contract?.userRevealedSkills && !contract.userRevealedSkills.includes(skill)) {
       return <span className="flex items-center gap-2"><span role="img" aria-label="hidden">❓</span> <span className="italic text-gray-400">Compétence non révélée</span></span>;
     }
@@ -112,9 +119,9 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
 
         {/* Sélection par compétence */}
         <div className="space-y-4 mb-6">
-          {revealedSkills.map(skill => (
+          {assignSkills.map((skill, idx) => (
             <div key={skill} className="flex items-center gap-4">
-              <span className="w-48 font-bold">{getSkillLabelMasked(skill)}</span>
+              <span className="w-48 font-bold">{getSkillLabelMasked(skill, idx)}</span>
               <select
                 className="p-2 rounded border text-base bg-gray-800 text-cyan-200 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all min-w-[260px]"
                 value={assignments[skill] || ''}
@@ -137,9 +144,9 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
         <button
           className="w-full py-3 rounded bg-cyan-600 text-white font-bold text-lg disabled:opacity-50"
           onClick={handleAssignRunners}
-          disabled={Object.keys(assignments).length !== requiredSkills.length || assigning}
+          disabled={Object.keys(assignments).length !== assignSkills.length || assigning}
         >
-          {assigning ? 'Assignation...' : `Assigner ${requiredSkills.length} runner(s)`}
+          {assigning ? 'Assignation...' : `Assigner ${assignSkills.length} runner(s)`}
         </button>
       </div>
     </div>

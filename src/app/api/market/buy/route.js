@@ -5,331 +5,7 @@ import PlayerProfile from '@/models/PlayerProfile';
 import PlayerInventory from '@/models/PlayerInventory';
 import Program from '@/models/Program';
 import MarketState from '@/models/MarketState';
-
-// Catalogue complet du marché noir (copie de l'API programs)
-const MARKET_CATALOG = [
-  // === CHARCUDOC - IMPLANTS ===
-  {
-    "id": "charcudoc-implant-neural-basique-hack",
-    "vendor": "charcudoc",
-    "name": "Implant Neural 'HackMaster' Mk.I",
-    "description": "Un co-processeur neural standard qui optimise les algorithmes de piratage. Augmente définitivement le Hacking d'un runner de +1.",
-    "type": "implant",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 8000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "hacking",
-        "value": 1
-      }
-    }
-  },
-  {
-    "id": "charcudoc-implant-optique-shadow-mk1",
-    "vendor": "charcudoc",
-    "name": "Implant Optique 'Shadow' Mk.I",
-    "description": "Amélioration de la cornée qui analyse les schémas de patrouille en temps réel. Augmente définitivement le Stealth d'un runner de +1.",
-    "type": "implant",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 8000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "stealth",
-        "value": 1
-      }
-    }
-  },
-  {
-    "id": "charcudoc-cyberbras-warrior-mk1",
-    "vendor": "charcudoc",
-    "name": "Cyberbras 'Warrior' Mk.I",
-    "description": "Actuateurs myomères renforcés pour une meilleure stabilisation de l'arme. Augmente définitivement le Combat d'un runner de +1.",
-    "type": "implant",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 8000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "combat",
-        "value": 1
-      }
-    }
-  },
-  {
-    "id": "charcudoc-cortex-quantique-mk2",
-    "vendor": "charcudoc",
-    "name": "Cortex Quantique 'Kiroshi' Mk.II",
-    "description": "Un processeur de calcul quantique expérimental. Un véritable monstre. Augmente définitivement le Hacking d'un runner de +2.",
-    "type": "implant",
-    "rarity": "legendary",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "hacking",
-        "value": 2
-      }
-    }
-  },
-  {
-    "id": "charcudoc-camouflage-thermo-optique-mk2",
-    "vendor": "charcudoc",
-    "name": "Camouflage Thermo-Optique 'Spectre' Mk.II",
-    "description": "Dévie la lumière et masque la signature thermique. Le top du top de l'infiltration. Augmente définitivement le Stealth d'un runner de +2.",
-    "type": "implant",
-    "rarity": "legendary",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "stealth",
-        "value": 2
-      }
-    }
-  },
-  {
-    "id": "charcudoc-ossature-titane-mk2",
-    "vendor": "charcudoc",
-    "name": "Ossature en Titane 'Manticore' Mk.II",
-    "description": "Un squelette renforcé en alliage de titane pour encaisser et rendre les coups. Augmente définitivement le Combat d'un runner de +2.",
-    "type": "implant",
-    "rarity": "legendary",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "combat",
-        "value": 2
-      }
-    }
-  },
-  {
-    "id": "charcudoc-regulateur-synaptique",
-    "vendor": "charcudoc",
-    "name": "Régulateur Synaptique",
-    "description": "Un implant qui stabilise les neuro-transmetteurs. Réduit de 25% le temps de récupération d'un runner 'Grillé'.",
-    "type": "implant",
-    "rarity": "rare",
-    "streetCredRequired": 500,
-    "cost": 18000,
-    "effects": {
-      "passive_heal_boost": 0.25
-    }
-  },
-
-  // === NETRUNNER FANTÔME - PROGRAMMES ===
-  {
-    "id": "netrunner-fantome-mouchard",
-    "vendor": "netrunner_fantome",
-    "name": "Logiciel 'Mouchard'",
-    "description": "Un simple script qui scanne les ports ouverts d'un système. Révèle une des compétences requises pour un contrat avant son acceptation.",
-    "type": "one_shot",
-    "rarity": "common",
-    "streetCredRequired": 0,
-    "cost": 800,
-    "effects": {
-      "reveal_skill": true
-    }
-  },
-  {
-    "id": "netrunner-fantome-patch-focus",
-    "vendor": "netrunner_fantome",
-    "name": "Patch de Focus",
-    "description": "Stimulant chimique qui améliore la concentration. +2 au prochain test de Hacking. Usage unique.",
-    "type": "one_shot",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 3000,
-    "effects": {
-      "add_bonus_roll": 2,
-      "skill": "hacking"
-    }
-  },
-  {
-    "id": "netrunner-fantome-patch-stealth",
-    "vendor": "netrunner_fantome",
-    "name": "Patch d'Infiltration",
-    "description": "Amortisseurs de son et inhibiteurs de mouvement. +2 au prochain test de Stealth. Usage unique.",
-    "type": "one_shot",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 3000,
-    "effects": {
-      "add_bonus_roll": 2,
-      "skill": "stealth"
-    }
-  },
-  {
-    "id": "netrunner-fantome-patch-combat",
-    "vendor": "netrunner_fantome",
-    "name": "Patch de Combat",
-    "description": "Cocktail de stimulants et d'adrénaline de synthèse. +2 au prochain test de Combat. Usage unique.",
-    "type": "one_shot",
-    "rarity": "uncommon",
-    "streetCredRequired": 150,
-    "cost": 3000,
-    "effects": {
-      "add_bonus_roll": 2,
-      "skill": "combat"
-    }
-  },
-  {
-    "id": "netrunner-fantome-analyseur-contrat",
-    "vendor": "netrunner_fantome",
-    "name": "Analyseur de Contrat",
-    "description": "Un programme d'analyse de risque complet. Révèle toutes les compétences testées d'un contrat avant son acceptation.",
-    "type": "one_shot",
-    "rarity": "uncommon",
-    "streetCredRequired": 200,
-    "cost": 4000,
-    "effects": {
-      "reveal_all_skills": true
-    }
-  },
-  {
-    "id": "netrunner-fantome-decharge-iem",
-    "vendor": "netrunner_fantome",
-    "name": "Décharge IEM",
-    "description": "Surcharge les systèmes cibles, les rendant plus vulnérables. Réduit la difficulté de tous les tests de compétence d'un contrat de -1.",
-    "type": "one_shot",
-    "rarity": "rare",
-    "streetCredRequired": 500,
-    "cost": 7000,
-    "effects": {
-      "reduce_difficulty": 1
-    }
-  },
-  {
-    "id": "netrunner-fantome-brise-glace",
-    "vendor": "netrunner_fantome",
-    "name": "Virus 'Brise-Glace'",
-    "description": "Un puissant virus qui exploite une faille connue. Garantit le succès d'UN test de compétence (le plus difficile) sur un contrat.",
-    "type": "one_shot",
-    "rarity": "rare",
-    "streetCredRequired": 600,
-    "cost": 9000,
-    "effects": {
-      "guarantee_one_success": true
-    }
-  },
-  {
-    "id": "netrunner-fantome-zero-day",
-    "vendor": "netrunner_fantome",
-    "name": "Virus 'Zero Day'",
-    "description": "Un exploit de faille inconnue, une véritable clé passe-partout. Garantit le succès de TOUS les tests de compétence d'une mission.",
-    "type": "one_shot",
-    "rarity": "legendary",
-    "streetCredRequired": 1200,
-    "cost": 20000,
-    "isSignature": true,
-    "stock": 2,
-    "effects": {
-      "guarantee_all_success": true
-    }
-  },
-  {
-    "id": "netrunner-fantome-blackwall",
-    "vendor": "netrunner_fantome",
-    "name": "Fragment du 'Blackwall'",
-    "description": "Une fraction d'un code ancien et terrifiant. Succès garanti sur tous les tests, et un bonus de +5 à tous les jets. Personne ne sait comment ça marche. Mieux vaut ne pas poser de questions.",
-    "type": "one_shot",
-    "rarity": "legendary",
-    "streetCredRequired": 1500,
-    "cost": 35000,
-    "isSignature": true,
-    "stock": 1,
-    "effects": {
-      "guarantee_all_success": true,
-      "add_bonus_roll": 5,
-      "skill": "all"
-    }
-  },
-
-  // === INFORMATRICE - INFORMATIONS ===
-  {
-    "id": "informatrice-datashard-fixer",
-    "vendor": "informatrice",
-    "name": "Datashard d'un Fixer Rival",
-    "description": "Contient le 'black book' d'un petit Fixer. Le décrypter donne un gain de réputation immédiat.",
-    "type": "information",
-    "rarity": "uncommon",
-    "streetCredRequired": 100,
-    "cost": 2500,
-    "effects": {
-      "instant_reputation_gain": 50
-    }
-  },
-  {
-    "id": "informatrice-datashard-corpo",
-    "vendor": "informatrice",
-    "name": "Datashard de Secrets Corpo",
-    "description": "Informations compromettantes sur un cadre d'une corporation. Débloque un contrat d'extorsion exclusif, très lucratif.",
-    "type": "information",
-    "rarity": "rare",
-    "streetCredRequired": 500,
-    "cost": 10000,
-    "effects": {
-      "unlock_corpo_contract": true
-    }
-  },
-  {
-    "id": "informatrice-datashard-gang",
-    "vendor": "informatrice",
-    "name": "Coordonnées d'une Planque de Gang",
-    "description": "La localisation d'un entrepôt de contrebande des Valentinos. Débloque un contrat d'assaut exclusif.",
-    "type": "information",
-    "rarity": "rare",
-    "streetCredRequired": 400,
-    "cost": 8000,
-    "effects": {
-      "unlock_gang_contract": true
-    }
-  },
-
-  // === ANARCHISTE - SABOTAGE ===
-  {
-    "id": "anarchiste-virus-verrou",
-    "vendor": "anarchiste",
-    "name": "Virus 'Verrou'",
-    "description": "À appliquer sur un contrat PUBLIC. Augmente sa difficulté de +2 pendant 1h TRP, le rendant trop difficile pour les Fixers rivaux.",
-    "type": "sabotage",
-    "rarity": "uncommon",
-    "streetCredRequired": 200,
-    "cost": 1500,
-    "effects": {
-      "sabotage_difficulty_up": 2,
-      "duration_trp": 3600
-    }
-  },
-  {
-    "id": "anarchiste-datalink-bruite",
-    "vendor": "anarchiste",
-    "name": "Datalink 'Bruité'",
-    "description": "À appliquer sur un contrat DÉJÀ ASSIGNÉ par un autre joueur. Place une 'prime' dessus. Si son runner échoue, vous touchez 20% de sa perte de réputation en eddies.",
-    "type": "sabotage",
-    "rarity": "rare",
-    "streetCredRequired": 400,
-    "cost": 3000,
-    "effects": {
-      "sabotage_bounty": true
-    }
-  },
-  {
-    "id": "anarchiste-faux-temoignage",
-    "vendor": "anarchiste",
-    "name": "Faux Témoignage Numérique",
-    "description": "À utiliser après qu'un autre joueur a réussi une mission. Implique son runner dans une autre affaire, augmentant le 'Niveau de Menace' de la faction cible contre lui.",
-    "type": "sabotage",
-    "rarity": "rare",
-    "streetCredRequired": 600,
-    "cost": 5000,
-    "effects": {
-      "sabotage_threat_up": true
-    }
-  }
-];
+import { getProgramById } from '@/Lib/programCatalog';
 
 export async function POST(request) {
   try {
@@ -354,7 +30,14 @@ export async function POST(request) {
     // Récupérer l'inventaire du joueur
     let playerInventory = await PlayerInventory.findOne({ clerkId: userId });
     if (!playerInventory) {
-      playerInventory = new PlayerInventory({ clerkId: userId });
+      playerInventory = new PlayerInventory({ 
+        clerkId: userId,
+        oneShotPrograms: [],
+        implants: [],
+        installedImplants: [],
+        purchasedInformation: [],
+        purchaseHistory: []
+      });
     }
 
     // Récupérer l'état du marché
@@ -364,19 +47,23 @@ export async function POST(request) {
       await marketState.save();
     }
 
-    // Trouver l'objet dans le catalogue local
-    const targetItem = MARKET_CATALOG.find(item => item.id === itemId);
+    // Trouver l'objet dans le catalogue centralisé
+    const targetItem = getProgramById(itemId);
     if (!targetItem) {
       return new NextResponse("Objet non trouvé ou non disponible", { status: 404 });
     }
 
     // Vérifier le Street Cred
+    console.log(`[MARKET BUY DEBUG] Street Cred requis: ${targetItem.streetCredRequired}, Joueur: ${playerProfile.reputationPoints}`);
     if (targetItem.streetCredRequired > playerProfile.reputationPoints) {
+      console.log(`[MARKET BUY DEBUG] Street Cred insuffisant pour ${targetItem.name}`);
       return new NextResponse("Street Cred insuffisant pour cet objet", { status: 403 });
     }
 
     // Vérifier les fonds
+    console.log(`[MARKET BUY DEBUG] Coût: ${targetItem.cost}, Fonds joueur: ${playerProfile.eddies}`);
     if (playerProfile.eddies < targetItem.cost) {
+      console.log(`[MARKET BUY DEBUG] Fonds insuffisants pour ${targetItem.name}`);
       return new NextResponse("Fonds insuffisants", { status: 400 });
     }
 
@@ -391,7 +78,7 @@ export async function POST(request) {
     }
 
     // Vérifier la limite quotidienne
-    const maxDaily = targetItem.maxDaily || 5; // Limite par défaut : 1 par jour
+    const maxDaily = targetItem.maxDaily || 5; // Limite par défaut : 5 par jour
     
     // Logique de vérification de limite quotidienne
     const now = new Date();
@@ -440,12 +127,15 @@ export async function POST(request) {
       program = new Program({
         name: targetItem.name,
         description: targetItem.description,
+        type: targetItem.type,
         rarity: targetItem.rarity,
-        category: targetItem.type,
-        price: targetItem.cost,
-        effects: targetItem.effects,
+        streetCredRequired: targetItem.streetCredRequired,
+        cost: targetItem.cost,
+        effects: targetItem.effects || {},
+        permanent_skill_boost: targetItem.permanent_skill_boost || null,
         marketId: itemId,
-        vendor: targetItem.vendor
+        vendor: targetItem.vendor,
+        vendorMessage: targetItem.vendorMessage
       });
       await program.save();
     }
@@ -453,13 +143,24 @@ export async function POST(request) {
     // Déduire le coût
     playerProfile.eddies -= targetItem.cost;
 
-    // Ajouter à l'inventaire
-    playerInventory.oneShotPrograms.push({
-      programId: program._id,
-      purchasedAt: new Date()
-    });
+    // Ajouter à l'inventaire selon le type
+    if (targetItem.type === 'implant') {
+      playerInventory.addImplant(program._id);
+    } else {
+      playerInventory.addOneShotProgram(program._id);
+    }
+    
+    // Ajouter à l'historique des achats
+    playerInventory.addPurchase(program._id, targetItem.cost);
 
-    // Réduire le stock si c'est un objet Signature
+    // Réduire le stock du programme
+    if (program.stock > 0) {
+      program.stock -= 1;
+      program.timesPurchased += 1;
+      await program.save();
+    }
+
+    // Réduire le stock si c'est un objet Signature (logique existante)
     if (targetItem.isSignature) {
       const stockInfo = marketState.currentStock.get(itemId);
       const currentStock = stockInfo ? stockInfo.stock : (targetItem.stock || 0);

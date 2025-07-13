@@ -1,135 +1,9 @@
 import Program from '@/models/Program';
 import connectDb from '@/Lib/database';
+import { PROGRAM_CATALOG, catalogToProgram, getProgramsByType, getSignaturePrograms } from './programCatalog';
 
-// Catalogue de programmes disponibles
-const PROGRAM_CATALOG = {
-  one_shot: [
-    {
-      name: "Virus 'Brise-Glace'",
-      description: "Garantit le succès d'un test de compétence. Utilisation unique.",
-      rarity: "rare",
-      reputationRequired: 100,
-      price: 2500,
-      effects: { skip_skill_check: true },
-      vendorMessage: "ICE breaker de qualité. Un seul usage, mais garanti."
-    },
-    {
-      name: "Booster 'Sandevistan'",
-      description: "Ajoute +3 à un jet de compétence. Utilisation unique.",
-      rarity: "uncommon",
-      reputationRequired: 50,
-      price: 1500,
-      effects: { add_bonus_roll: 3 },
-      vendorMessage: "Accélération temporaire. Risque de surchauffe."
-    },
-    {
-      name: "Logiciel 'Mouchard'",
-      description: "Révèle une compétence requise d'un contrat avant acceptation.",
-      rarity: "common",
-      reputationRequired: 0,
-      price: 800,
-      effects: { reveal_skill: true },
-      vendorMessage: "Espionnage de base. Informations précieuses."
-    },
-    {
-      name: "Analyseur de Contrat",
-      description: "Révèle toutes les compétences testées d'un contrat avant acceptation.",
-      rarity: "uncommon",
-      reputationRequired: 25,
-      price: 1200,
-      effects: { reveal_all_skills: true },
-      vendorMessage: "Analyse complète du contrat. Voir avant d'accepter."
-    },
-    {
-      name: "Décharge IEM",
-      description: "Réduit la difficulté de tous les tests d'un contrat de -1.",
-      rarity: "uncommon",
-      reputationRequired: 75,
-      price: 2000,
-      effects: { reduce_difficulty: 1 },
-      vendorMessage: "Perturbation électromagnétique. Effet global."
-    }
-  ],
-  implant: [
-    {
-      name: "Implant Neural 'HackMaster'",
-      description: "Augmente définitivement le Hacking d'un runner de +1.",
-      rarity: "rare",
-      reputationRequired: 200,
-      price: 8000,
-      effects: { permanent_skill_boost: { skill: 'hacking', value: 1 } },
-      vendorMessage: "Amélioration permanente. Installation risquée."
-    },
-    {
-      name: "Implant Neural 'Shadow'",
-      description: "Augmente définitivement le Stealth d'un runner de +1.",
-      rarity: "rare",
-      reputationRequired: 200,
-      price: 8000,
-      effects: { permanent_skill_boost: { skill: 'stealth', value: 1 } },
-      vendorMessage: "Discrétion améliorée. Invisibilité relative."
-    },
-    {
-      name: "Implant Neural 'Warrior'",
-      description: "Augmente définitivement le Combat d'un runner de +1.",
-      rarity: "rare",
-      reputationRequired: 200,
-      price: 8000,
-      effects: { permanent_skill_boost: { skill: 'combat', value: 1 } },
-      vendorMessage: "Combat amélioré. Réflexes augmentés."
-    }
-  ],
-  information: [
-    {
-      name: "Datashard 'Corpo Secrets'",
-      description: "Débloque un contrat exclusif très lucratif.",
-      rarity: "legendary",
-      reputationRequired: 300,
-      price: 15000,
-      effects: { unlocks_contract: true },
-      vendorMessage: "Informations exclusives. Contrat de haut niveau."
-    },
-    {
-      name: "Datashard 'Underground Network'",
-      description: "Débloque un contrat de gang exclusif.",
-      rarity: "rare",
-      reputationRequired: 150,
-      price: 10000,
-      effects: { unlocks_contract: true },
-      vendorMessage: "Réseau souterrain. Contacts exclusifs."
-    }
-  ]
-};
-
-// Programmes signature (ventes flash)
-const SIGNATURE_PROGRAMS = [
-  {
-    name: "Prototype ICE 'Blackwall'",
-    description: "ICE expérimental de nouvelle génération. Très instable mais puissant.",
-    category: "signature",
-    rarity: "legendary",
-    reputationRequired: 500,
-    price: 25000,
-    stock: 2,
-    maxStock: 2,
-    effects: { skip_skill_check: true, add_bonus_roll: 5 },
-    vendorMessage: "Prototype Blackwall. Seulement 2 disponibles. Fais vite.",
-    isSignature: true
-  },
-  {
-    name: "Virus 'Zero Day'",
-    description: "Exploit zero-day. Garantit le succès de tous les tests d'une mission.",
-    category: "signature",
-    rarity: "legendary",
-    reputationRequired: 400,
-    price: 20000,
-    stock: 1,
-    maxStock: 1,
-    effects: { skip_skill_check: true },
-    vendorMessage: "Zero-day exploit. Unique en son genre. Prix de la rareté.",
-    isSignature: true
-  }
-];
+// Programmes signature (ventes flash) - maintenant importés depuis le catalogue centralisé
+const SIGNATURE_PROGRAMS = getSignaturePrograms();
 
 // Fonction pour générer le stock du marché
 export async function generateMarketStock() {
@@ -165,15 +39,16 @@ export async function generateMarketStock() {
     const newStock = [];
     
     // Ajouter des programmes one-shot (3-5 items)
+    const oneShotPrograms = getProgramsByType('one_shot');
     const oneShotCount = Math.floor(Math.random() * 3) + 3;
     console.log(`[MARKET] Génération de ${oneShotCount} programmes one-shot...`);
     
     for (let i = 0; i < oneShotCount; i++) {
-      const program = PROGRAM_CATALOG.one_shot[Math.floor(Math.random() * PROGRAM_CATALOG.one_shot.length)];
+      const program = oneShotPrograms[Math.floor(Math.random() * oneShotPrograms.length)];
       const stock = Math.floor(Math.random() * 5) + 1;
       
       newStock.push({
-        ...program,
+        ...catalogToProgram(program),
         stock,
         maxStock: stock,
         rotationExpiry: new Date(now.getTime() + rotationDuration)
@@ -181,14 +56,15 @@ export async function generateMarketStock() {
     }
 
     // Ajouter des implants (1-2 items)
+    const implantPrograms = getProgramsByType('implant');
     const implantCount = Math.floor(Math.random() * 2) + 1;
     console.log(`[MARKET] Génération de ${implantCount} implants...`);
     
     for (let i = 0; i < implantCount; i++) {
-      const program = PROGRAM_CATALOG.implant[Math.floor(Math.random() * PROGRAM_CATALOG.implant.length)];
+      const program = implantPrograms[Math.floor(Math.random() * implantPrograms.length)];
       
       newStock.push({
-        ...program,
+        ...catalogToProgram(program),
         stock: 1,
         maxStock: 1,
         rotationExpiry: new Date(now.getTime() + rotationDuration)
@@ -198,10 +74,11 @@ export async function generateMarketStock() {
     // Ajouter des informations (0-1 item)
     if (Math.random() < 0.3) {
       console.log('[MARKET] Génération d\'une information...');
-      const program = PROGRAM_CATALOG.information[Math.floor(Math.random() * PROGRAM_CATALOG.information.length)];
+      const informationPrograms = getProgramsByType('information');
+      const program = informationPrograms[Math.floor(Math.random() * informationPrograms.length)];
       
       newStock.push({
-        ...program,
+        ...catalogToProgram(program),
         stock: 1,
         maxStock: 1,
         rotationExpiry: new Date(now.getTime() + rotationDuration)
@@ -209,13 +86,13 @@ export async function generateMarketStock() {
     }
 
     // Ajouter un programme signature (20% de chance)
-    if (Math.random() < 0.2) {
+    if (Math.random() < 0.2 && SIGNATURE_PROGRAMS.length > 0) {
       console.log('[MARKET] Génération d\'un programme signature...');
       const signature = SIGNATURE_PROGRAMS[Math.floor(Math.random() * SIGNATURE_PROGRAMS.length)];
       const signatureExpiry = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // 2h pour les signatures
       
       newStock.push({
-        ...signature,
+        ...catalogToProgram(signature),
         signatureExpiry
       });
     }
@@ -224,8 +101,8 @@ export async function generateMarketStock() {
 
     // Validation des programmes avant création
     newStock.forEach((program, index) => {
-      if (!program.category) {
-        console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de catégorie:`, program.name);
+      if (!program.type) {
+        console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de type:`, program.name);
       }
       if (!program.name) {
         console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de nom`);
@@ -233,8 +110,8 @@ export async function generateMarketStock() {
       if (!program.description) {
         console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de description`);
       }
-      if (!program.price) {
-        console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de prix`);
+      if (!program.cost) {
+        console.error(`[MARKET] ERREUR: Programme ${index} n'a pas de coût`);
       }
     });
 
@@ -242,9 +119,9 @@ export async function generateMarketStock() {
     const programs = newStock.map(programData => {
       console.log('[MARKET] Création du programme:', {
         name: programData.name,
-        category: programData.category,
+        type: programData.type,
         rarity: programData.rarity,
-        price: programData.price
+        cost: programData.cost
       });
       return new Program(programData);
     });

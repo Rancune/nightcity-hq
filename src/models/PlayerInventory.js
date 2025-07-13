@@ -12,6 +12,13 @@ const playerInventorySchema = new Schema({
     purchasedAt: { type: Date, default: Date.now }
   }],
   
+  // Implants achetés (non installés)
+  implants: [{
+    programId: { type: Schema.Types.ObjectId, ref: 'Program' },
+    quantity: { type: Number, default: 1 },
+    purchasedAt: { type: Date, default: Date.now }
+  }],
+  
   // Implants installés sur les runners
   installedImplants: [{
     runnerId: { type: Schema.Types.ObjectId, ref: 'Netrunner' },
@@ -46,6 +53,16 @@ playerInventorySchema.methods.addOneShotProgram = function(programId) {
     existing.quantity += 1;
   } else {
     this.oneShotPrograms.push({ programId, quantity: 1 });
+  }
+};
+
+// Méthode pour ajouter un implant acheté
+playerInventorySchema.methods.addImplant = function(programId) {
+  const existing = this.implants.find(item => item.programId.equals(programId));
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    this.implants.push({ programId, quantity: 1 });
   }
 };
 

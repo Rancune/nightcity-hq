@@ -43,12 +43,21 @@ const playerProfileSchema = new Schema({
 // Méthode pour calculer le niveau de réputation
 playerProfileSchema.methods.calculateReputationLevel = function() {
   const points = this.reputationPoints;
-  
-  if (points >= 1200) {
+
+  if (points >= 2500) {
+    this.reputationLevel = 5;
+    this.reputationTitle = "Mythe Urbain";
+    this.unlockedAccess = {
+      equipmentTier: "legendary",
+      vendorDiscount: 20,
+      specialMissions: true,
+      exclusiveContacts: true
+    };
+  } else if (points >= 1200) {
     this.reputationLevel = 4;
     this.reputationTitle = "Légende de Night City";
     this.unlockedAccess = {
-      equipmentTier: "legendary",
+      equipmentTier: "epic",
       vendorDiscount: 15,
       specialMissions: true,
       exclusiveContacts: true

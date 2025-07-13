@@ -85,8 +85,13 @@ const contractSchema = new Schema({
     clerkId: { type: String, required: true },
     effects: {
       autoSuccess: { type: Boolean, default: false },
-      bonusRoll: { type: Number, default: 0 },
-      bonusSkill: { type: String, enum: ['hacking', 'stealth', 'combat'], default: null },
+      bonusRoll: { type: Number, default: 0 }, // Ancien format pour compatibilité
+      bonusSkill: { type: String, enum: ['hacking', 'stealth', 'combat'], default: null }, // Ancien format pour compatibilité
+      skillBonuses: { // Nouveau format pour bonus multiples
+        hacking: { type: Number, default: 0 },
+        stealth: { type: Number, default: 0 },
+        combat: { type: Number, default: 0 }
+      },
       reduceDifficulty: { type: Number, default: 0 },
       signature: { type: String, default: null }, // nom du programme signature utilisé
       // ... autres effets à ajouter si besoin

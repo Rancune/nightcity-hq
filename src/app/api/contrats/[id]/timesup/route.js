@@ -50,15 +50,57 @@ export async function POST(request, props) {
     let runnerReports = [];
     let totalReward = contract.reward?.eddies || 0;
     let runnerShares = [];
+
+    // Récupérer les effets actifs du joueur
+    const effectEntry = contract.activeProgramEffects?.find(e => e.clerkId === contract.ownerId);
+    console.log(`[TIMESUP DEBUG] Effets actifs trouvés pour le joueur:`, effectEntry?.effects);
+    
     // Pour chaque skill requise, tester le runner assigné
     for (const skill of requiredSkills) {
+      console.log(`[TIMESUP DEBUG] Test de la compétence: ${skill}`);
       const assign = assigned.find(a => a.skill === skill);
       if (!assign) continue;
       const runner = await Netrunner.findById(assign.runner);
       if (!runner) continue;
-      // Test de compétence individuel
+      
+      // Préparer les effets actifs pour cette compétence spécifique
+      let activeEffects = {};
+      if (effectEntry && effectEntry.effects) {
+        console.log(`[TIMESUP DEBUG] skillBonuses disponibles:`, effectEntry.effects.skillBonuses);
+        
+        // Appliquer le bonus si il cible cette compétence (nouveau format skillBonuses)
+        if (effectEntry.effects.skillBonuses && effectEntry.effects.skillBonuses[skill]) {
+          activeEffects.bonusRoll = effectEntry.effects.skillBonuses[skill];
+          activeEffects.bonusSkill = skill;
+          console.log(`[TIMESUP DEBUG] Bonus appliqué via skillBonuses: +${activeEffects.bonusRoll} à ${skill}`);
+        }
+        // Compatibilité avec l'ancien format
+        else if (effectEntry.effects.bonusRoll && (effectEntry.effects.bonusSkill === skill || effectEntry.effects.bonusSkill === 'all')) {
+          activeEffects.bonusRoll = effectEntry.effects.bonusRoll;
+          activeEffects.bonusSkill = skill;
+          console.log(`[TIMESUP DEBUG] Bonus appliqué via ancien format: +${activeEffects.bonusRoll} à ${skill}`);
+        } else {
+          console.log(`[TIMESUP DEBUG] Aucun bonus trouvé pour la compétence ${skill}`);
+        }
+        
+        // Appliquer la réduction de difficulté si présente
+        if (effectEntry.effects.reduceDifficulty) {
+          activeEffects.reduceDifficulty = effectEntry.effects.reduceDifficulty;
+          console.log(`[TIMESUP DEBUG] Réduction de difficulté appliquée: -${activeEffects.reduceDifficulty}`);
+        }
+        
+        // Appliquer le succès automatique si présent
+        if (effectEntry.effects.autoSuccess) {
+          activeEffects.autoSuccess = effectEntry.effects.autoSuccess;
+          console.log(`[TIMESUP DEBUG] Succès automatique activé`);
+        }
+      }
+      
+      console.log(`[TIMESUP DEBUG] Effets actifs pour ${skill}:`, activeEffects);
+      
+      // Test de compétence individuel avec les effets actifs
       const skillObj = { [skill]: contract.requiredSkills[skill] };
-      const skillTest = testRunnerSkills(runner, skillObj);
+      const skillTest = testRunnerSkills(runner, skillObj, activeEffects);
       skillTestResults[skill] = skillTest.skillResults[skill];
       let isSuccess = skillTest.isSuccess;
       globalSuccess = globalSuccess && isSuccess;

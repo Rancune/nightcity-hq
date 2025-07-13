@@ -1,4 +1,3 @@
-
 [
   {
     "id": "charcudoc-implant-neural-basique-hack",
@@ -9,12 +8,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 80000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "hacking",
-        "value": 1
-      }
-    }
+    "permanent_skill_boost": {
+      "skill": "hacking",
+      "value": 1
+    },
+    "vendorMessage": "Amélioration permanente. Installation risquée."
   },
   {
     "id": "charcudoc-implant-optique-shadow-mk1",
@@ -25,12 +23,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 70000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "stealth",
-        "value": 1
-      }
-    }
+    "permanent_skill_boost": {
+      "skill": "stealth",
+      "value": 1
+    },
+    "vendorMessage": "Discrétion améliorée. Invisibilité relative."
   },
   {
     "id": "charcudoc-cyberbras-warrior-mk1",
@@ -41,12 +38,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 65000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "combat",
-        "value": 1
-      }
-    }
+    "permanent_skill_boost": {
+      "skill": "combat",
+      "value": 1
+    },
+    "vendorMessage": "Combat amélioré. Réflexes augmentés."
   },
   {
     "id": "charcudoc-cortex-quantique-mk2",
@@ -55,14 +51,13 @@
     "description": "Un processeur de calcul quantique expérimental. Un véritable monstre. Augmente définitivement le Hacking d'un runner de +2.",
     "type": "implant",
     "rarity": "rare",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "hacking",
-        "value": 2
-      }
-    }
+    "streetCredRequired": 500,
+    "cost": 250000,
+    "permanent_skill_boost": {
+      "skill": "hacking",
+      "value": 2
+    },
+    "vendorMessage": "Calcul quantique. Performance maximale."
   },
   {
     "id": "charcudoc-camouflage-thermo-optique-mk2",
@@ -71,14 +66,13 @@
     "description": "Dévie la lumière et masque la signature thermique. Le top du top de l'infiltration. Augmente définitivement le Stealth d'un runner de +2.",
     "type": "implant",
     "rarity": "rare",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "stealth",
-        "value": 2
-      }
-    }
+    "streetCredRequired": 500,
+    "cost": 250000,
+    "permanent_skill_boost": {
+      "skill": "stealth",
+      "value": 2
+    },
+    "vendorMessage": "Invisibilité thermique. Infiltration parfaite."
   },
   {
     "id": "charcudoc-ossature-titane-mk2",
@@ -87,29 +81,59 @@
     "description": "Un squelette renforcé en alliage de titane pour encaisser et rendre les coups. Augmente définitivement le Combat d'un runner de +2.",
     "type": "implant",
     "rarity": "rare",
-    "streetCredRequired": 1200,
-    "cost": 25000,
-    "effects": {
-      "permanent_skill_boost": {
-        "skill": "combat",
-        "value": 2
-      }
-    }
+    "streetCredRequired": 500,
+    "cost": 250000,
+    "permanent_skill_boost": {
+      "skill": "combat",
+      "value": 2
+    },
+    "vendorMessage": "Résistance maximale. Force augmentée."
   },
   {
-    "id": "charcudoc-regulateur-synaptique",
+    "id": "charcudoc-interface-neurale-nexus-mk3",
     "vendor": "charcudoc",
-    "name": "Régulateur Synaptique",
-    "description": "Un implant qui stabilise les neuro-transmetteurs. Réduit de 25% le temps de récupération d'un runner 'Grillé'.",
+    "name": "Interface Neurale 'Nexus' Mk.III",
+    "description": "Une interface corticale de qualité militaire qui prédit les contre-mesures des CI. Le nec plus ultra pour les netrunners d'élite. Augmente définitivement le Hacking d'un runner de +3.",
     "type": "implant",
-    "rarity": "rare",
-    "streetCredRequired": 500,
-    "cost": 55000,
-    "effects": {
-      "passive_heal_boost": 0.25
-    }
+    "rarity": "epic",
+    "streetCredRequired": 1200,
+    "cost": 550000,
+    "permanent_skill_boost": {
+      "skill": "hacking",
+      "value": 3
+    },
+    "vendorMessage": "Interface militaire. Prédiction des contre-mesures."
   },
-
+  {
+    "id": "charcudoc-camouflage-adaptatif-chimera-mk3",
+    "vendor": "charcudoc",
+    "name": "Camouflage Adaptatif 'Chimera' Mk.III",
+    "description": "Tisse des champs de lumière et de son pour créer une invisibilité quasi parfaite. Devenez une rumeur, un fantôme dans la ville. Augmente définitivement le Stealth d'un runner de +3.",
+    "type": "implant",
+    "rarity": "epic",
+    "streetCredRequired": 1200,
+    "cost": 520000,
+    "permanent_skill_boost": {
+      "skill": "stealth",
+      "value": 3
+    },
+    "vendorMessage": "Invisibilité parfaite. Fantôme de la ville."
+  },
+  {
+    "id": "charcudoc-endo-squelette-juggernaut-mk3",
+    "vendor": "charcudoc",
+    "name": "Endo-squelette 'Juggernaut' Mk.III",
+    "description": "Un remplacement complet de l'ossature par un alliage de combat qui renforce les myomères. Pour transformer un solo en véritable tank. Augmente définitivement le Combat d'un runner de +3.",
+    "type": "implant",
+    "rarity": "epic",
+    "streetCredRequired": 1200,
+    "cost": 500000,
+    "permanent_skill_boost": {
+      "skill": "combat",
+      "value": 3
+    },
+    "vendorMessage": "Tank humain. Force absolue."
+  },
   {
     "id": "netrunner-fantome-mouchard",
     "vendor": "netrunner_fantome",
@@ -119,10 +143,10 @@
     "rarity": "common",
     "streetCredRequired": 0,
     "cost": 800,
-    "maxDaily": 3,
     "effects": {
       "reveal_skill": true
-    }
+    },
+    "vendorMessage": "Espionnage de base. Informations précieuses."
   },
   {
     "id": "netrunner-fantome-patch-focus",
@@ -133,11 +157,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
-    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "hacking"
-    }
+    },
+    "vendorMessage": "Focus amélioré. Concentration maximale."
   },
   {
     "id": "netrunner-fantome-patch-stealth",
@@ -148,11 +172,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
-    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "stealth"
-    }
+    },
+    "vendorMessage": "Discrétion maximale. Mouvements silencieux."
   },
   {
     "id": "netrunner-fantome-patch-combat",
@@ -163,11 +187,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 150,
     "cost": 3000,
-    "maxDaily": 2,
     "effects": {
       "add_bonus_roll": 2,
       "skill": "combat"
-    }
+    },
+    "vendorMessage": "Combat amélioré. Réflexes augmentés."
   },
   {
     "id": "netrunner-fantome-analyseur-contrat",
@@ -178,10 +202,10 @@
     "rarity": "uncommon",
     "streetCredRequired": 200,
     "cost": 4000,
-    "maxDaily": 1,
     "effects": {
       "reveal_all_skills": true
-    }
+    },
+    "vendorMessage": "Analyse complète du contrat. Voir avant d'accepter."
   },
   {
     "id": "netrunner-fantome-decharge-iem",
@@ -192,10 +216,10 @@
     "rarity": "rare",
     "streetCredRequired": 500,
     "cost": 7000,
-    "maxDaily": 1,
     "effects": {
       "reduce_difficulty": 1
-    }
+    },
+    "vendorMessage": "Perturbation électromagnétique. Effet global."
   },
   {
     "id": "netrunner-fantome-brise-glace",
@@ -206,10 +230,10 @@
     "rarity": "rare",
     "streetCredRequired": 600,
     "cost": 9000,
-    "maxDaily": 1,
     "effects": {
       "guarantee_one_success": true
-    }
+    },
+    "vendorMessage": "ICE breaker de qualité. Un seul usage, mais garanti."
   },
   {
     "id": "netrunner-fantome-zero-day",
@@ -225,7 +249,8 @@
     "maxDaily": 1,
     "effects": {
       "guarantee_all_success": true
-    }
+    },
+    "vendorMessage": "Zero-day exploit. Unique en son genre. Prix de la rareté."
   },
   {
     "id": "netrunner-fantome-blackwall",
@@ -243,9 +268,9 @@
       "guarantee_all_success": true,
       "add_bonus_roll": 5,
       "skill": "all"
-    }
+    },
+    "vendorMessage": "Fragment Blackwall. Unique. Puissance absolue."
   },
-
   {
     "id": "informatrice-datashard-fixer",
     "vendor": "informatrice",
@@ -255,10 +280,10 @@
     "rarity": "uncommon",
     "streetCredRequired": 100,
     "cost": 2500,
-    "maxDaily": 2,
     "effects": {
       "instant_reputation_gain": 50
-    }
+    },
+    "vendorMessage": "Informations compromettantes. Réputation immédiate."
   },
   {
     "id": "informatrice-datashard-corpo",
@@ -269,10 +294,10 @@
     "rarity": "rare",
     "streetCredRequired": 500,
     "cost": 10000,
-    "maxDaily": 1,
     "effects": {
       "unlock_corpo_contract": true
-    }
+    },
+    "vendorMessage": "Informations exclusives. Contrat de haut niveau."
   },
   {
     "id": "informatrice-datashard-gang",
@@ -283,12 +308,11 @@
     "rarity": "rare",
     "streetCredRequired": 400,
     "cost": 8000,
-    "maxDaily": 1,
     "effects": {
       "unlock_gang_contract": true
-    }
+    },
+    "vendorMessage": "Réseau souterrain. Contacts exclusifs."
   },
-
   {
     "id": "anarchiste-virus-verrou",
     "vendor": "anarchiste",
@@ -298,11 +322,11 @@
     "rarity": "uncommon",
     "streetCredRequired": 200,
     "cost": 1500,
-    "maxDaily": 3,
     "effects": {
       "sabotage_difficulty_up": 2,
       "duration_trp": 3600
-    }
+    },
+    "vendorMessage": "Sabotage de contrat. Rendre la vie difficile aux rivaux."
   },
   {
     "id": "anarchiste-datalink-bruite",
@@ -313,10 +337,10 @@
     "rarity": "rare",
     "streetCredRequired": 400,
     "cost": 3000,
-    "maxDaily": 2,
     "effects": {
       "sabotage_bounty": true
-    }
+    },
+    "vendorMessage": "Prime sur échec. Profiter des malheurs des autres."
   },
   {
     "id": "anarchiste-faux-temoignage",
@@ -327,9 +351,9 @@
     "rarity": "rare",
     "streetCredRequired": 600,
     "cost": 5000,
-    "maxDaily": 1,
     "effects": {
       "sabotage_threat_up": true
-    }
+    },
+    "vendorMessage": "Faux témoignage. Impliquer les autres dans des ennuis."
   }
-]
+] 

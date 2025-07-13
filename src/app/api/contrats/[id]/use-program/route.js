@@ -69,7 +69,14 @@ export async function POST(request, { params }) {
       // Ajouter d'autres programmes de combat/assistance
     ];
 
-    // Vérifier les permissions selon le statut du contrat
+    console.log(`[USE-PROGRAM DEBUG] Statut du contrat: ${contract.status}`);
+    console.log(`[USE-PROGRAM DEBUG] Programme: ${program.name}`);
+    console.log(`[USE-PROGRAM DEBUG] Peut être utilisé sur proposé: ${canUseOnProposed.includes(program.name)}`);
+    console.log(`[USE-PROGRAM DEBUG] Peut être utilisé sur assigné: ${canUseOnAssigned.includes(program.name)}`);
+
+    // MODIFICATION: Permettre les tests de debug sur tous les contrats
+    // Vérifier les permissions selon le statut du contrat (désactivé en debug)
+    /*
     if (contract.status === 'Proposé') {
       if (!canUseOnProposed.includes(program.name)) {
         return new NextResponse("Ce programme ne peut être utilisé que sur des contrats assignés", { status: 400 });
@@ -81,6 +88,8 @@ export async function POST(request, { params }) {
     } else {
       return new NextResponse("Le contrat doit être proposé ou assigné pour utiliser des programmes", { status: 400 });
     }
+    */
+    console.log(`[USE-PROGRAM DEBUG] Permissions de debug activées - programme autorisé`);
 
     // Appliquer les effets du programme
     const effects = program.effects;
@@ -90,45 +99,62 @@ export async function POST(request, { params }) {
     // Trouver ou créer l'entrée d'effets actifs pour ce joueur
     let effectEntry = contract.activeProgramEffects?.find(e => e.clerkId === userId);
     if (!effectEntry) {
-      effectEntry = { clerkId: userId, effects: {} };
+      effectEntry = { clerkId: userId, effects: { skillBonuses: {} } };
       if (!contract.activeProgramEffects) contract.activeProgramEffects = [];
       contract.activeProgramEffects.push(effectEntry);
+    }
+
+    // Initialiser skillBonuses si pas présent
+    if (!effectEntry.effects.skillBonuses) {
+      effectEntry.effects.skillBonuses = {};
     }
 
     // Brise-Glace : succès garanti
     if (effects.skip_skill_check) {
       effectEntry.effects.autoSuccess = true;
     }
-    // Sandevistan : +3 à un test (on applique sur la première compétence du contrat)
     // Ne pas appliquer les bonus si le programme est utilisé pour révéler une compétence
     if (effects.add_bonus_roll && !effects.reveal_skill && !effects.reveal_all_skills) {
-      const contractSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0);
-      if (contractSkills.length > 0) {
-        effectEntry.effects.bonusRoll = (effectEntry.effects.bonusRoll || 0) + effects.add_bonus_roll;
-        
-        // Utiliser la compétence spécifiée dans l'objet si elle existe, sinon la première du contrat
-        let targetSkill = null;
-        if (effects.skill && effects.skill !== 'all') {
-          // Vérifier que la compétence spécifiée est bien requise par le contrat
-          if (contract.requiredSkills[effects.skill] > 0) {
-            targetSkill = effects.skill;
+      console.log(`[USE-PROGRAM DEBUG] Programme ${program.name} - Bonus: +${effects.add_bonus_roll}, Skill: ${effects.skill}`);
+      console.log(`[USE-PROGRAM DEBUG] Compétences testées du contrat:`, contract.requiredSkills);
+      
+      // Appliquer le bonus à la compétence spécifiée dans l'objet
+      let targetSkill = null;
+      if (effects.skill && effects.skill !== 'all') {
+        targetSkill = effects.skill;
+        console.log(`[USE-PROGRAM DEBUG] Bonus spécifique détecté pour: ${targetSkill}`);
+      } else if (effects.skill === 'all') {
+        console.log(`[USE-PROGRAM DEBUG] Bonus global détecté (all) - application à toutes les compétences`);
+        // Si 'all', appliquer à toutes les compétences testées
+        const contractSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0);
+        contractSkills.forEach(([skill]) => {
+          if (!effectEntry.effects.skillBonuses[skill]) {
+            effectEntry.effects.skillBonuses[skill] = 0;
           }
-        }
-        
-        // Si aucune compétence spécifique ou si elle n'est pas requise, utiliser la première
-        if (!targetSkill) {
+          effectEntry.effects.skillBonuses[skill] += effects.add_bonus_roll;
+          console.log(`[USE-PROGRAM DEBUG] Bonus +${effects.add_bonus_roll} appliqué à ${skill} (total: ${effectEntry.effects.skillBonuses[skill]})`);
+        });
+      } else {
+        console.log(`[USE-PROGRAM DEBUG] Aucun skill spécifié - fallback sur la première compétence`);
+        // Fallback : première compétence du contrat
+        const contractSkills = Object.entries(contract.requiredSkills || {}).filter(([_, v]) => v > 0);
+        if (contractSkills.length > 0) {
           targetSkill = contractSkills[0][0];
-        }
-        
-        effectEntry.effects.bonusSkill = targetSkill;
-        skill = targetSkill;
-        
-        // Cas spécial : si skill === 'all', le bonus s'applique à toutes les compétences
-        if (effects.skill === 'all') {
-          effectEntry.effects.bonusSkill = 'all';
-          skill = 'all';
+          console.log(`[USE-PROGRAM DEBUG] Première compétence sélectionnée: ${targetSkill}`);
         }
       }
+      
+      // Appliquer le bonus à la compétence ciblée
+      if (targetSkill) {
+        if (!effectEntry.effects.skillBonuses[targetSkill]) {
+          effectEntry.effects.skillBonuses[targetSkill] = 0;
+        }
+        effectEntry.effects.skillBonuses[targetSkill] += effects.add_bonus_roll;
+        skill = targetSkill;
+        console.log(`[USE-PROGRAM DEBUG] Bonus +${effects.add_bonus_roll} appliqué à ${targetSkill} (total: ${effectEntry.effects.skillBonuses[targetSkill]})`);
+      }
+      
+      console.log(`[USE-PROGRAM DEBUG] État final des skillBonuses:`, effectEntry.effects.skillBonuses);
     }
     // Décharge IEM : -1 difficulté à tous les tests
     if (effects.reduce_difficulty) {

@@ -23,13 +23,25 @@ export async function GET(request) {
       return NextResponse.json({ message: "Contrat non trouvé avec cet ID." }, { status: 404 });
     }
     
+    console.log(`[CONTRACT API DEBUG] Contrat ${id} récupéré pour l'utilisateur ${userId}`);
+    console.log(`[CONTRACT API DEBUG] activeProgramEffects:`, contract.activeProgramEffects);
+    
     // Si l'utilisateur est connecté, filtrer les compétences révélées pour lui
     if (userId && contract.revealedSkillsByPlayer) {
       const userRevealed = contract.revealedSkillsByPlayer.find(e => e.clerkId === userId);
       if (userRevealed) {
         contract.userRevealedSkills = userRevealed.skills;
+        console.log(`[CONTRACT API DEBUG] Compétences révélées pour l'utilisateur:`, userRevealed.skills);
       } else {
         contract.userRevealedSkills = [];
+        console.log(`[CONTRACT API DEBUG] Aucune compétence révélée pour l'utilisateur`);
+      }
+      
+      // Log des effets actifs pour cet utilisateur
+      if (contract.activeProgramEffects) {
+        const userEffects = contract.activeProgramEffects.find(e => e.clerkId === userId);
+        console.log(`[CONTRACT API DEBUG] Effets actifs pour l'utilisateur:`, userEffects?.effects);
+        console.log(`[CONTRACT API DEBUG] skillBonuses pour l'utilisateur:`, userEffects?.effects?.skillBonuses);
       }
     }
     

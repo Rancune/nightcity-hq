@@ -91,14 +91,23 @@ export function determineDifficulty(requiredSkills) {
 
 // Obtenir les informations sur un niveau de réputation
 export function getReputationLevelInfo(points) {
-  if (points >= 1200) {
+  if (points >= 2500) {
+    return {
+      level: 5,
+      title: "Mythe Urbain",
+      description: "Tu es une légende vivante, un mythe de la rue. Les corpos te craignent, les gangs te respectent.",
+      missions: "Contrats uniques, accès à tout le marché noir, missions spéciales mythiques",
+      equipment: "Accès à l'équipement légendaire, bonus maximum",
+      nextLevel: null
+    };
+  } else if (points >= 1200) {
     return {
       level: 4,
       title: "Légende de Night City",
       description: "Ton nom est un murmure dans les hautes sphères. Tu es une force de la nature.",
       missions: "Contrats qui peuvent redéfinir l'équilibre du pouvoir de toute la ville",
-      equipment: "Accès au marché noir expérimental, armes et cyberwares légendaires",
-      nextLevel: null
+      equipment: "Accès au marché noir épique, armes et cyberwares épiques",
+      nextLevel: 2500
     };
   } else if (points >= 501) {
     return {

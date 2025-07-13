@@ -35,21 +35,35 @@ export async function GET() {
             name: program.name,
             description: program.description,
             rarity: program.rarity,
-            category: program.category,
-            effects: program.effects
+            type: program.type,
+            effects: program.effects,
+            permanent_skill_boost: program.permanent_skill_boost
           } : null
         };
       })
     );
 
-    // Séparer les implants des programmes one-shot
-    const implants = oneShotPrograms.filter(item => item.program?.category === 'implant');
-    const actualOneShotPrograms = oneShotPrograms.filter(item => item.program?.category === 'one_shot');
+    // Récupérer les détails des implants achetés
+    const implants = await Promise.all(
+      playerInventory.implants.map(async (item) => {
+        const program = await Program.findById(item.programId);
+        return {
+          ...item.toObject(),
+          program: program ? {
+            _id: program._id,
+            name: program.name,
+            description: program.description,
+            rarity: program.rarity,
+            type: program.type,
+            effects: program.effects,
+            permanent_skill_boost: program.permanent_skill_boost
+          } : null
+        };
+      })
+    );
 
-    console.log('[INVENTORY] Debug - Total programmes:', oneShotPrograms.length);
-    console.log('[INVENTORY] Debug - Implants trouvés:', implants.length);
-    console.log('[INVENTORY] Debug - One-shot trouvés:', actualOneShotPrograms.length);
-    console.log('[INVENTORY] Debug - Catégories:', oneShotPrograms.map(item => item.program?.category));
+    console.log('[INVENTORY] Debug - One-shot programmes:', oneShotPrograms.length);
+    console.log('[INVENTORY] Debug - Implants achetés:', implants.length);
 
     // Récupérer les détails des implants installés sur les runners
     const installedImplants = await Promise.all(
@@ -62,8 +76,9 @@ export async function GET() {
             name: program.name,
             description: program.description,
             rarity: program.rarity,
-            category: program.category,
-            effects: program.effects
+            type: program.type,
+            effects: program.effects,
+            permanent_skill_boost: program.permanent_skill_boost
           } : null
         };
       })
@@ -80,8 +95,9 @@ export async function GET() {
             name: program.name,
             description: program.description,
             rarity: program.rarity,
-            category: program.category,
-            effects: program.effects
+            type: program.type,
+            effects: program.effects,
+            permanent_skill_boost: program.permanent_skill_boost
           } : null
         };
       })
@@ -92,7 +108,7 @@ export async function GET() {
       inventory: player.inventory || [],
       // Inventaire détaillé
       detailedInventory: {
-        oneShotPrograms: actualOneShotPrograms,
+        oneShotPrograms: oneShotPrograms,
         implants: implants,
         installedImplants,
         purchasedInformation,

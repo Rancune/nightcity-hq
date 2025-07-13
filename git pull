@@ -25,3 +25,12 @@ node scripts/test-faction-rewards.js
 
 
 node scripts/test-contract-marker.js
+
+
+
+Résumé
+Ajout = 1 ligne dans le JSON + relancer le script
+Aucune modification de code n’est nécessaire pour la plupart des ajouts standards.
+Pour des effets spéciaux, il faudra peut-être adapter la logique backend (API d’utilisation, etc).
+Après avoir modifié le catalogue, il suffit de relancer le script d’initialisation pour synchroniser la base :
+node scripts/init-program-database.js

@@ -18,10 +18,10 @@ export async function GET() {
       {
         name: "Virus 'Brise-Glace'",
         description: "Garantit le succès d'un test de compétence. Utilisation unique.",
-        category: "one_shot",
+        type: "one_shot",
         rarity: "rare",
-        reputationRequired: 0, // Accessible à tous pour les tests
-        price: 2500,
+        streetCredRequired: 0, // Accessible à tous pour les tests
+        cost: 2500,
         stock: 3,
         maxStock: 3,
         effects: { skip_skill_check: true },
@@ -32,10 +32,10 @@ export async function GET() {
       {
         name: "Booster 'Sandevistan'",
         description: "Ajoute +3 à un jet de compétence. Utilisation unique.",
-        category: "one_shot",
+        type: "one_shot",
         rarity: "uncommon",
-        reputationRequired: 0,
-        price: 1500,
+        streetCredRequired: 0,
+        cost: 1500,
         stock: 5,
         maxStock: 5,
         effects: { add_bonus_roll: 3 },
@@ -46,10 +46,10 @@ export async function GET() {
       {
         name: "Logiciel 'Mouchard'",
         description: "Révèle une compétence requise d'un contrat avant acceptation.",
-        category: "one_shot",
+        type: "one_shot",
         rarity: "common",
-        reputationRequired: 0,
-        price: 800,
+        streetCredRequired: 0,
+        cost: 800,
         stock: 2,
         maxStock: 2,
         effects: { reveal_skill: true },
@@ -58,15 +58,15 @@ export async function GET() {
         rotationExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000)
       },
       {
-        name: "Implant Neural 'HackMaster'",
-        description: "Augmente définitivement le Hacking d'un runner de +1.",
-        category: "implant",
-        rarity: "rare",
-        reputationRequired: 0,
-        price: 8000,
+        name: "Implant Neural 'HackMaster' Mk.I",
+        description: "Un co-processeur neural standard qui optimise les algorithmes de piratage. Augmente définitivement le Hacking d'un runner de +1.",
+        type: "implant",
+        rarity: "uncommon",
+        streetCredRequired: 0,
+        cost: 80000,
         stock: 1,
         maxStock: 1,
-        effects: { permanent_skill_boost: { skill: 'hacking', value: 1 } },
+        permanent_skill_boost: { skill: "hacking", value: 1 },
         vendorMessage: "Amélioration permanente. Installation risquée.",
         isActive: true,
         rotationExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -85,8 +85,8 @@ export async function GET() {
       programsCreated: programs.length,
       programs: basePrograms.map(p => ({
         name: p.name,
-        category: p.category,
-        price: p.price,
+        type: p.type,
+        cost: p.cost,
         stock: p.stock
       }))
     });
