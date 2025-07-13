@@ -13,13 +13,13 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
   const availableRunners = runners.filter(r => r.status === 'Disponible');
   const requiredSkills = Object.entries(contract?.requiredSkills || {}).filter(([_, v]) => v > 0).map(([k]) => k);
 
-  // Utiliser les compétences révélées si elles existent, sinon générer des placeholders anonymes
+  // Utiliser les compétences révélées si elles existent, sinon utiliser les vraies compétences (masquées à l'utilisateur)
   let assignSkills = [];
   if (contract?.userRevealedSkills && contract.userRevealedSkills.length > 0) {
     assignSkills = contract.userRevealedSkills;
   } else {
-    // Générer des placeholders anonymes pour chaque compétence testée
-    assignSkills = requiredSkills.map((_, i) => `unknown_${i + 1}`);
+    // Utiliser les vraies compétences requises (masquées à l'utilisateur)
+    assignSkills = requiredSkills;
   }
 
   // Empêcher qu'un runner soit assigné à plusieurs skills
@@ -62,20 +62,27 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
 
   // Fonction pour afficher le label (nom réel ou placeholder)
   const getSkillLabelMasked = (skill, idx) => {
-    if (skill.startsWith('unknown_')) {
+    // Si les compétences ne sont pas révélées, afficher des placeholders
+    if (!contract?.userRevealedSkills || contract.userRevealedSkills.length === 0) {
       return <span className="flex items-center gap-2"><span role="img" aria-label="hidden">❓</span> <span className="italic text-gray-400">Compétence inconnue #{idx + 1}</span></span>;
     }
-    if (contract?.userRevealedSkills && !contract.userRevealedSkills.includes(skill)) {
+    // Si les compétences sont révélées mais pas celle-ci
+    if (contract.userRevealedSkills && !contract.userRevealedSkills.includes(skill)) {
       return <span className="flex items-center gap-2"><span role="img" aria-label="hidden">❓</span> <span className="italic text-gray-400">Compétence non révélée</span></span>;
     }
     return getSkillLabel(skill);
   };
 
-  const getRunnerSkillsSummary = (runner) => (
-    <span className="block text-xs text-gray-400 whitespace-pre font-mono">
-      {`H:${runner.skills.hacking}\nS:${runner.skills.stealth}\nC:${runner.skills.combat}`}
-    </span>
-  );
+  const getRunnerSkillsSummary = (runner) => {
+    if (!runner || !runner.skills) {
+      return <span className="block text-xs text-red-400">Runner non trouvé</span>;
+    }
+    return (
+      <span className="block text-xs text-gray-400 whitespace-pre font-mono">
+        {`H:${runner.skills.hacking}\nS:${runner.skills.stealth}\nC:${runner.skills.combat}`}
+      </span>
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

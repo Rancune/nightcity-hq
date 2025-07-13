@@ -21,6 +21,37 @@ export default function NetrunnersPage() {
   const [showDeadRunnerModal, setShowDeadRunnerModal] = useState(false);
   const isDevelopment = process.env.NODE_ENV === 'development';
 
+  // Styles CSS pour le fond hachuré rouge (statique, sans animation)
+  const grilledRunnerStyles = `
+    .grilled-runner-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .grilled-runner-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(239, 68, 68, 0.1) 10px,
+        rgba(239, 68, 68, 0.1) 20px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .grilled-runner-card > * {
+      position: relative;
+      z-index: 2;
+    }
+  `;
+
   const fetchRunners = async () => {
     const response = await fetch('/api/netrunners', { cache: 'no-store' });
     if (response.ok) {
@@ -115,9 +146,18 @@ export default function NetrunnersPage() {
     if (isLoaded && isSignedIn) {
       fetchRunners();
       fetchInventory();
-      generateRecruitmentPool();
     }
   }, [isLoaded, isSignedIn]);
+
+  // Timer pour mettre à jour les temps de récupération en temps réel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Force le re-render pour mettre à jour les timers
+      setRunners(prev => [...prev]);
+    }, 60000); // Mise à jour toutes les minutes
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRecruit = async (recruit) => {
     setLoading(true);
@@ -242,123 +282,159 @@ export default function NetrunnersPage() {
   const deadRunners = runners.filter(r => r.status === 'Mort');
 
   // Composant pour l'onglet Équipe
-  const EquipeTab = () => (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">Mon Équipe</h2>
-        <span className="text-sm text-[--color-text-secondary]">
-          {livingRunners.length} runner{livingRunners.length > 1 ? 's' : ''} actif{livingRunners.length > 1 ? 's' : ''}
-        </span>
-      </div>
+  const EquipeTab = () => {
+    // Fonction pour calculer le temps restant de récupération
+    const getRecoveryTimeLeft = (recoveryUntil) => {
+      if (!recoveryUntil) return null;
+      const now = new Date();
+      const recoveryDate = new Date(recoveryUntil);
+      const timeLeft = recoveryDate - now;
       
-      <div className="card-content">
-        {livingRunners.length > 0 ? (
-          livingRunners.map((runner) => (
-            <div key={runner._id} className="bg-black/30 p-4 rounded border border-[--color-border-dark] hover:border-[--color-neon-cyan]/30 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="text-lg text-[--color-text-primary] font-bold">{runner.name}</h3>
-                  <p className="text-sm text-[--color-text-secondary]">
-                    Niveau {runner.level} • {runner.status}
-                  </p>
-                  <p className="text-xs text-[--color-neon-pink] mt-1">
-                    Commission Fixer : {runner.fixerCommission?.toFixed(1) || '??'}%
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-[--color-neon-cyan] font-bold">
-                    Puissance: {runner.skills.hacking + runner.skills.stealth + runner.skills.combat}
-                  </div>
-                  <div className="flex gap-2 text-xs mt-1">
-                    <span className="text-blue-400">H:{runner.skills.hacking}</span>
-                    <span className="text-green-400">S:{runner.skills.stealth}</span>
-                    <span className="text-red-400">C:{runner.skills.combat}</span>
-                  </div>
-                </div>
-              </div>
+      if (timeLeft <= 0) return "Prêt !";
+      
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      
+      return `${hours}h ${minutes}m`;
+    };
 
-              {/* Lore du runner */}
-              {runner.lore && (
-                <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
-                  {runner.lore}
-                </p>
-              )}
-
-              {/* Implants installés */}
-              {runner.implants && runner.implants.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs text-[--color-text-secondary] mb-1">Implants:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {runner.implants.map((implant, index) => (
-                      <span key={index} className="text-xs bg-[--color-neon-cyan]/20 text-[--color-neon-cyan] px-2 py-1 rounded">
-                        {implant.program?.name || 'Implant'}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Statistiques */}
-              <div className="mb-3 text-xs text-[--color-text-secondary]">
-                <span>Missions: {runner.missionsCompleted || 0} réussies, {runner.missionsFailed || 0} échouées</span>
-              </div>
-
-              {/* Barre d'expérience */}
-              <div className="mb-3">
-                <div className="flex justify-between text-xs text-[--color-text-secondary] mb-1">
-                  <span>XP: {runner.xp || 0} / {runner.xpToNextLevel || 100}</span>
-                  <span>Niveau {runner.level}</span>
-                </div>
-                <div className="w-full bg-gray-800 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-[--color-neon-cyan] to-[--color-neon-pink] h-2 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${Math.min(100, ((runner.xp || 0) / (runner.xpToNextLevel || 100)) * 100)}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Link href={`/netrunners/${runner._id}`}>
-                  <button className="btn-secondary flex-1 text-sm">
-                    Détails
-                  </button>
-                </Link>
-                
-                {runner.status === 'Blessé' && (
-                  <ButtonWithLoading
-                    onClick={() => handleHealRunner(runner._id)}
-                    isLoading={loading}
-                    loadingText="SOINS..."
-                    className="btn-primary flex-1 text-sm"
-                  >
-                    Soigner
-                  </ButtonWithLoading>
-                )}
-                
-                <button
-                  onClick={() => handleOpenImplantModal(runner)}
-                  className="btn-ghost text-sm"
+    return (
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">Mon Équipe</h2>
+          <span className="text-sm text-[--color-text-secondary]">
+            {livingRunners.length} runner{livingRunners.length > 1 ? 's' : ''} actif{livingRunners.length > 1 ? 's' : ''}
+          </span>
+        </div>
+        
+        <div className="card-content">
+          {livingRunners.length > 0 ? (
+            livingRunners.map((runner) => {
+              const isGrilled = runner.status === 'Grillé';
+              const recoveryTimeLeft = isGrilled ? getRecoveryTimeLeft(runner.recoveryUntil) : null;
+              
+              return (
+                <div 
+                  key={runner._id} 
+                  className={`p-4 rounded border transition-all ${
+                    isGrilled 
+                      ? 'bg-red-900/20 border-red-500/50 hover:border-red-500/70 grilled-runner-card' 
+                      : 'bg-black/30 border-[--color-border-dark] hover:border-[--color-neon-cyan]/30'
+                  }`}
                 >
-                  🔧
-                </button>
-              </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg text-[--color-text-primary] font-bold">{runner.name}</h3>
+                      <p className="text-sm text-[--color-text-secondary]">
+                        Niveau {runner.level} • {runner.status}
+                      </p>
+                      {isGrilled && recoveryTimeLeft && (
+                        <p className={`text-sm font-bold mt-1 ${
+                          recoveryTimeLeft === "Prêt !" ? "text-green-400" : "text-red-400"
+                        }`}>
+                          ⏰ {recoveryTimeLeft === "Prêt !" ? "Récupération terminée" : `Récupération dans ${recoveryTimeLeft}`}
+                        </p>
+                      )}
+                      <p className="text-xs text-[--color-neon-pink] mt-1">
+                        Commission Fixer : {runner.fixerCommission?.toFixed(1) || '??'}%
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-[--color-neon-cyan] font-bold">
+                        Puissance: {runner.skills.hacking + runner.skills.stealth + runner.skills.combat}
+                      </div>
+                      <div className="flex gap-2 text-xs mt-1">
+                        <span className="text-blue-400">H:{runner.skills.hacking}</span>
+                        <span className="text-green-400">S:{runner.skills.stealth}</span>
+                        <span className="text-red-400">C:{runner.skills.combat}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lore du runner */}
+                  {runner.lore && (
+                    <p className="text-sm text-[--color-text-secondary] mb-3 line-clamp-2">
+                      {runner.lore}
+                    </p>
+                  )}
+
+                  {/* Implants installés */}
+                  {runner.implants && runner.implants.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-[--color-text-secondary] mb-1">Implants:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {runner.implants.map((implant, index) => (
+                          <span key={index} className="text-xs bg-[--color-neon-cyan]/20 text-[--color-neon-cyan] px-2 py-1 rounded">
+                            {implant.program?.name || 'Implant'}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Statistiques */}
+                  <div className="mb-3 text-xs text-[--color-text-secondary]">
+                    <span>Missions: {runner.missionsCompleted || 0} réussies, {runner.missionsFailed || 0} échouées</span>
+                  </div>
+
+                  {/* Barre d'expérience */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs text-[--color-text-secondary] mb-1">
+                      <span>XP: {runner.xp || 0} / {runner.xpToNextLevel || 100}</span>
+                      <span>Niveau {runner.level}</span>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-[--color-neon-cyan] to-[--color-neon-pink] h-2 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${Math.min(100, ((runner.xp || 0) / (runner.xpToNextLevel || 100)) * 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <Link href={`/netrunners/${runner._id}`}>
+                      <button className="btn-secondary flex-1 text-sm">
+                        Détails
+                      </button>
+                    </Link>
+                    
+                    {runner.status === 'Blessé' && (
+                      <ButtonWithLoading
+                        onClick={() => handleHealRunner(runner._id)}
+                        isLoading={loading}
+                        loadingText="SOINS..."
+                        className="btn-primary flex-1 text-sm"
+                      >
+                        Soigner
+                      </ButtonWithLoading>
+                    )}
+                    
+                    <button
+                      onClick={() => handleOpenImplantModal(runner)}
+                      className="btn-ghost text-sm"
+                    >
+                      🔧
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="empty-state">
+              <div className="empty-state-icon">👥</div>
+              <p className="empty-state-text">Aucun netrunner dans ton équipe</p>
+              <p className="empty-state-subtext">
+                Va dans l&apos;onglet Recrutement pour engager des runners
+              </p>
             </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <div className="empty-state-icon">👥</div>
-            <p className="empty-state-text">Aucun netrunner dans ton équipe</p>
-            <p className="empty-state-subtext">
-              Va dans l&apos;onglet Recrutement pour engager des runners
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Composant pour l'onglet Recrutement
   const RecrutementTab = () => (
@@ -504,6 +580,7 @@ export default function NetrunnersPage() {
 
   return (
     <main className="page-container">
+      <style jsx>{grilledRunnerStyles}</style>
       <div className="content-wrapper">
         {/* Onglets */}
         <div className="tab-container">
@@ -525,10 +602,8 @@ export default function NetrunnersPage() {
               🎯 Recrutement
             </button>
             <button
-              onClick={() => setActiveTab('mur')}
-              className={`tab-button ${
-                activeTab === 'mur' ? 'tab-button-active' : 'tab-button-inactive'
-              }`}
+              onClick={() => setActiveTab('disparus')}
+              className={`tab-button ${activeTab === 'disparus' ? 'active' : ''}`}
             >
               🕯️ Mur des Disparus
             </button>
@@ -541,7 +616,7 @@ export default function NetrunnersPage() {
           <div className="lg:col-span-2">
             {activeTab === 'equipe' && <EquipeTab />}
             {activeTab === 'recrutement' && <RecrutementTab />}
-            {activeTab === 'mur' && <MurDesDisparusTab />}
+            {activeTab === 'disparus' && <MurDesDisparusTab />}
           </div>
 
           {/* Colonne de l'inventaire (visible seulement pour l'équipe) */}
