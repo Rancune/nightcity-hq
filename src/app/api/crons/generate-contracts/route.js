@@ -50,14 +50,10 @@ export async function GET(request) {
     const currentHour = now.getHours();
     
     // Heures de génération : 6h à 22h (journée active)
-    const isActiveHours = currentHour >= 6 && currentHour <= 22;
+    //const isActiveHours = currentHour >= 6 && currentHour <= 22;
+    const isActiveHours = true;
     
-    if (!isActiveHours) {
-      return NextResponse.json({ 
-        success: true, 
-        message: `Hors des heures actives (${currentHour}h), aucune génération.` 
-      });
-    }
+   
 
     // Probabilité de génération selon l'heure
     const hourProbabilities = {
@@ -92,9 +88,9 @@ export async function GET(request) {
 
     // --- GÉNÉRATION DU CONTRAT ---
     // Nombre de contrats à générer (1-3 selon l'heure)
-    const maxToGenerate = currentHour >= 12 && currentHour <= 19 ? 3 : 1;
+    const maxToGenerate = currentHour >= 12 && currentHour <= 19 ? 3 : 2;
     const toGenerate = Math.min(
-      Math.floor(Math.random() * maxToGenerate) + 1,
+      Math.floor(Math.random() * maxToGenerate) + 2,
       MAX_CONTRACTS - currentCount
     );
 
