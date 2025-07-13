@@ -155,7 +155,7 @@ async function autoGenerateContracts() {
       //console.log(`[AUTO-GENERATE] Hors des heures actives (${currentHour}h), arrêt.`);
       //return;
     //}
-    
+
     // Décider si on génère
     if (!shouldGenerate()) {
       const probability = getGenerationProbability();
@@ -224,7 +224,7 @@ async function testGeneration() {
     maxContracts: CONFIG.maxContracts,
     activeHours: CONFIG.activeHours,
     currentHour: new Date().getHours(),
-    isActiveHours: isActiveHours(),
+    isActiveHours: true,
     generationProbability: getGenerationProbability()
   });
   

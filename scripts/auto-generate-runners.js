@@ -204,7 +204,7 @@ async function testGeneration() {
     maxPoolSize: CONFIG.maxPoolSize,
     activeHours: CONFIG.activeHours,
     currentHour: new Date().getHours(),
-    isActiveHours: isActiveHours(),
+    isActiveHours: true,
     generationProbability: getGenerationProbability()
   });
   
