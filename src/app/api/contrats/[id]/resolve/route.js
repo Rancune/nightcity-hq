@@ -88,6 +88,34 @@ export async function POST(request, props) {
     await contract.save();
     console.log(`[RESOLVE] Contrat ${contract._id} mis à jour, nouveau statut: ${contract.status}`);
 
+    // --- AJOUT : MISE À JOUR DE LA RÉPUTATION DE FACTION ---
+    if (contract.resolution_outcome === 'Succès') {
+      const employerFaction = contract.employerFaction;
+      const targetFaction = contract.targetFaction || (contract.targetCorpo && contract.targetCorpo.toLowerCase());
+      const factionRelations = await FactionRelations.findOne({ clerkId: userId });
+      if (factionRelations) {
+        if (employerFaction) {
+          factionRelations.modifyRelation(employerFaction, 50, 'Contrat réussi pour la faction émettrice', contract._id);
+        }
+        if (targetFaction) {
+          factionRelations.modifyRelation(targetFaction, -50, 'Contrat réussi contre la faction cible', contract._id);
+        }
+        await factionRelations.save();
+      }
+    }
+
+    // --- AJOUT : MISE À JOUR DE LA MENACE DE FACTION ---
+    const targetFaction = contract.targetFaction || (contract.targetCorpo && contract.targetCorpo.toLowerCase());
+    if (targetFaction) {
+      const factionRelations = await FactionRelations.findOne({ clerkId: userId });
+      if (factionRelations) {
+        const menaceDelta = contract.resolution_outcome === 'Succès' ? 5 : 2;
+        factionRelations.threatLevels[targetFaction] = Math.min(10, (factionRelations.threatLevels[targetFaction] || 0) + menaceDelta);
+        factionRelations.lastThreatActivity[targetFaction] = new Date();
+        await factionRelations.save();
+      }
+    }
+
     // --- SYSTÈME D'ÉQUIPE D'INFILTRATION ---
   
     // Multi-runner : on mappe chaque skill requise à son runner

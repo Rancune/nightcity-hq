@@ -72,6 +72,50 @@ export default function FactionRelationsPage() {
     return 'text-red-400';
   };
 
+  // Icônes SVG personnalisées pour chaque niveau de menace
+  const ThreatIcons = {
+    low: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(40, 167, 69)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    ),
+    medium: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(255, 193, 7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    ),
+    high: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(253, 126, 20)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="22" y1="12" x2="18" y2="12"></line>
+        <line x1="6" y1="12" x2="2" y2="12"></line>
+        <line x1="12" y1="6" x2="12" y2="2"></line>
+        <line x1="12" y1="22" x2="12" y2="18"></line>
+      </svg>
+    ),
+    max: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(220, 53, 69)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
+        <path d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+        <path d="M12 18h.01"></path>
+        <path d="M7 18h.01"></path>
+        <path d="M17 18h.01"></path>
+      </svg>
+    )
+  };
+
+  // Fonction utilitaire pour l'icône de menace
+  const getThreatIcon = (level) => {
+    if (level >= 10) return <span title="Menace maximale">{ThreatIcons.max}</span>;
+    if (level >= 7) return <span title="Menace élevée">{ThreatIcons.high}</span>;
+    if (level >= 4) return <span title="Menace modérée">{ThreatIcons.medium}</span>;
+    if (level >= 1) return <span title="Menace faible">{ThreatIcons.low}</span>;
+    return null;
+  };
+
   const factionTypes = [
     { key: 'all', label: 'Toutes', icon: '🌐' },
     { key: 'megacorp', label: 'Mégacorpos', icon: '🏢' },
@@ -214,9 +258,13 @@ export default function FactionRelationsPage() {
               {/* En-tête de la carte */}
               <div className="mb-4">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-xl text-[--color-text-primary] font-bold group-hover:text-[--color-neon-cyan] transition-colors">
-                    {faction.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl text-[--color-text-primary] font-bold group-hover:text-[--color-neon-cyan] transition-colors">
+                      {faction.name}
+                    </h3>
+                    {/* Icône de menace */}
+                    {getThreatIcon(faction.threatLevel)}
+                  </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getTypeColor(faction.type)}`}>
                     {faction.type === 'megacorp' ? 'Mégacorp' : 
                      faction.type === 'gang' ? 'Gang' : 
@@ -263,24 +311,6 @@ export default function FactionRelationsPage() {
                 </div>
               </div>
 
-              {/* Niveau de menace */}
-              {faction.threatLevel > 0 && (
-                <div className="mb-4 p-3 bg-red-400/10 border border-red-400/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-red-400 font-bold">Niveau de Menace</span>
-                    <span className={`text-lg font-bold ${getThreatColor(faction.threatLevel)}`}>
-                      {faction.threatLevel}/10
-                    </span>
-                  </div>
-                  <div className="w-full bg-black/50 rounded-full h-2 mt-2">
-                    <div 
-                      className="h-2 rounded-full bg-gradient-to-r from-red-400 to-red-600"
-                      style={{ width: `${faction.threatLevel * 10}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
               {/* Conséquences et Opportunités */}
               <div className="space-y-3">
                 {faction.consequences.length > 0 && (
@@ -319,6 +349,33 @@ export default function FactionRelationsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Légende des niveaux de menace */}
+        <div className="mt-10 max-w-2xl mx-auto bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col gap-2">
+          <h4 className="text-lg font-bold text-[--color-neon-cyan] mb-2">Légende des niveaux de menace</h4>
+          <div className="flex flex-wrap gap-4 items-center justify-center">
+            <div className="flex items-center gap-2">
+              <span>{ThreatIcons.low}</span>
+              <span className="text-sm text-green-400 font-semibold">1-3</span>
+              <span className="text-xs text-[--color-text-secondary]">Surveillance (faible)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>{ThreatIcons.medium}</span>
+              <span className="text-sm text-yellow-400 font-semibold">4-6</span>
+              <span className="text-xs text-[--color-text-secondary]">Avertissement (moyenne)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>{ThreatIcons.high}</span>
+              <span className="text-sm text-orange-400 font-semibold">7-9</span>
+              <span className="text-xs text-[--color-text-secondary]">Chasse active (élevée)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>{ThreatIcons.max}</span>
+              <span className="text-sm text-red-400 font-semibold">10</span>
+              <span className="text-xs text-[--color-text-secondary]">Tuer à vue (max)</span>
+            </div>
+          </div>
         </div>
 
         {/* Bouton retour mobile */}

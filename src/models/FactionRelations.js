@@ -68,6 +68,27 @@ const factionRelationsSchema = new Schema({
     ripperdocs: { type: Number, default: 0, min: 0, max: 10 },
     nomads: { type: Number, default: 0, min: 0, max: 10 }
   },
+  // Ajout : suivi de la dernière activité de menace par faction
+  lastThreatActivity: {
+    arasaka: { type: Date, default: null },
+    militech: { type: Date, default: null },
+    kangTao: { type: Date, default: null },
+    netWatch: { type: Date, default: null },
+    maelstrom: { type: Date, default: null },
+    valentinos: { type: Date, default: null },
+    voodooBoys: { type: Date, default: null },
+    animals: { type: Date, default: null },
+    scavengers: { type: Date, default: null },
+    ncpd: { type: Date, default: null },
+    maxTac: { type: Date, default: null },
+    traumaTeam: { type: Date, default: null },
+    conseilMunicipal: { type: Date, default: null },
+    lobbyistes: { type: Date, default: null },
+    inframonde: { type: Date, default: null },
+    fixers: { type: Date, default: null },
+    ripperdocs: { type: Date, default: null },
+    nomads: { type: Date, default: null }
+  },
   
   // Opportunités débloquées par niveau de relation
   unlockedOpportunities: {
@@ -101,6 +122,8 @@ factionRelationsSchema.methods.modifyRelation = function(faction, change, reason
   // Mettre à jour le niveau de menace si nécessaire
   if (actualChange < 0) {
     this.threatLevels[faction] = Math.min(10, this.threatLevels[faction] + Math.abs(actualChange) / 100);
+    // MAJ du timestamp de menace
+    this.lastThreatActivity[faction] = new Date();
   }
   
   console.log(`[FACTION] ${faction}: ${oldValue} → ${this.relations[faction]} (${actualChange > 0 ? '+' : ''}${actualChange}) - ${reason}`);
