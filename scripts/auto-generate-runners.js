@@ -113,24 +113,20 @@ function makeRequest(urlString, options = {}) {
 }
 
 // Fonction pour vérifier si on est dans les heures actives
-function isActiveHours() {
-  const now = new Date();
-  const currentHour = now.getHours();
-  return currentHour >= CONFIG.activeHours.start && currentHour <= CONFIG.activeHours.end;
-}
+//function isActiveHours() {
+  //const now = new Date();
+  //const currentHour = now.getHours();
+  //return currentHour >= CONFIG.activeHours.start && currentHour <= CONFIG.activeHours.end;
+//}
 
 // Fonction pour obtenir la probabilité de génération selon l'heure
 function getGenerationProbability() {
-  const now = new Date();
-  const currentHour = now.getHours();
-  return CONFIG.hourProbabilities[currentHour] || 0.5;
+  
+  return  0.5;
 }
 
 // Fonction pour décider si on doit générer des runners
 function shouldGenerate() {
-  if (!isActiveHours()) {
-    return false;
-  }
   
   const probability = getGenerationProbability();
   return Math.random() < probability;
@@ -149,11 +145,11 @@ async function autoGenerateRunners() {
     }
 
     // Vérifier les heures actives
-    if (!isActiveHours()) {
-      const currentHour = new Date().getHours();
-      console.log(`[AUTO-RUNNERS] Hors des heures actives (${currentHour}h), arrêt.`);
-      return;
-    }
+    //if (!isActiveHours()) {
+      //const currentHour = new Date().getHours();
+      //console.log(`[AUTO-RUNNERS] Hors des heures actives (${currentHour}h), arrêt.`);
+      //return;
+    //}
 
     // Décider si on génère
     if (!shouldGenerate()) {
