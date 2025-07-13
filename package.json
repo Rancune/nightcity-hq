@@ -9,7 +9,12 @@
     "lint": "next lint",
     "tailwind:init": "tailwindcss init -p",
     "market:rotate": "node scripts/rotate-market-stock.js",
-    "market:test": "NODE_ENV=development node scripts/rotate-market-stock.js"
+    "market:test": "NODE_ENV=development node scripts/rotate-market-stock.js",
+    "contracts:auto": "node scripts/auto-generate-contracts.js",
+    "contracts:auto-simple": "node scripts/auto-generate-simple.js",
+    "runners:auto": "node scripts/auto-generate-runners.js",
+    "setup:cron": "chmod +x scripts/setup-production-cron.sh && ./scripts/setup-production-cron.sh",
+    "test:auto-generation": "node scripts/test-auto-generation.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",

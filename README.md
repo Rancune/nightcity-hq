@@ -186,14 +186,46 @@ node scripts/test-reveal-programs.js
 
 ### Configuration
 ```bash
-# Tester le système
-node scripts/test-auto-generation.js
+# Configuration automatique (recommandée)
+npm run setup:cron
 
-# Configuration du cron (production)
-*/15 6-22 * * * /usr/bin/node /chemin/vers/scripts/auto-generate-contracts.js
+# Test du système
+npm run test:auto-generation
+
+# Exécution manuelle
+npm run contracts:auto
+# ou
+npm run contracts:auto-simple
 ```
 
 📖 **Documentation complète** : [docs/auto-contract-generation.md](docs/auto-contract-generation.md)
+
+---
+
+## 🤖 Système de Génération Automatique de Runners
+
+Le système de génération automatique de runners renouvelle automatiquement le pool de recrutement avec de nouveaux candidats.
+
+### Fonctionnalités
+- **Génération IA** : Noms et lore uniques générés par Gemini
+- **Pool dynamique** : 6-8 candidats disponibles en permanence
+- **Compétences variées** : Hacking, Stealth, Combat équilibrés
+- **Heures actives** : Génération entre 8h et 20h
+- **Fallback robuste** : Système de secours en cas d'indisponibilité de l'IA
+
+### Configuration
+```bash
+# Configuration du cron (toutes les 3 heures)
+0 */3 8-20 * * * /usr/bin/node /chemin/vers/scripts/auto-generate-runners.js
+
+# Test du système
+npm run runners:auto -- --test
+
+# Exécution manuelle
+npm run runners:auto
+```
+
+📖 **Documentation complète** : [docs/RUNNER_GENERATION_SYSTEM.md](docs/RUNNER_GENERATION_SYSTEM.md)
 
 ---
 
