@@ -95,7 +95,7 @@ export default function MarcheNoirPage() {
   const handleRotateStock = async () => {
     setRotatingStock(true);
     try {
-      const response = await fetch('/api/market/rotate-stock', {
+      const response = await fetch('/api/market/reset-stocks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function MarcheNoirPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setVendorMessage(`Stock régénéré ! ${result.details.signatureStocksReset} stocks Signature et ${result.details.dailyLimitsReset} limites quotidiennes réinitialisées.`);
+        setVendorMessage(`Stocks régénérés ! ${result.details.programsUpdated} programmes mis à jour.`);
         await fetchMarketData(); // Recharger les données
       } else {
         const error = await response.text();
@@ -317,7 +317,7 @@ export default function MarcheNoirPage() {
                 {activeVendorData.items.map((item) => {
                   const canAfford = playerProfile.eddies >= item.cost;
                   const hasStreetCred = playerProfile.reputationPoints >= item.streetCredRequired;
-                  const isAvailable = !item.isSignature || (item.available !== false);
+                  const hasStock = item.currentStock > 0;
                   const fixerLevel = playerProfile.reputationLevel || 1;
                   const maxTier = levelToTier[fixerLevel] || "common";
                   const maxTierIndex = rarityOrder.indexOf(maxTier);
@@ -334,7 +334,7 @@ export default function MarcheNoirPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`card ${borderColor} ${!canAfford || !hasStreetCred || !isAvailable || !canBuy ? 'opacity-50' : 'hover:border-opacity-100'}`}
+                      className={`card ${borderColor} ${!canAfford || !hasStreetCred || !hasStock || !canBuy ? 'opacity-50' : 'hover:border-opacity-100'}`}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="text-lg text-[--color-text-primary] font-bold">{item.name}</h3>
@@ -360,22 +360,12 @@ export default function MarcheNoirPage() {
                             {item.streetCredRequired} PR
                           </span>
                         </div>
-                        {item.isSignature && (
-                          <div className="flex justify-between text-sm">
-                            <span>Stock:</span>
-                            <span className={item.available ? 'text-green-400' : 'text-red-400'}>
-                              {item.currentStock || 0} disponible
-                            </span>
-                          </div>
-                        )}
-                        {item.dailyLimit && (
-                          <div className="flex justify-between text-sm">
-                            <span>Stock:</span>
-                            <span className={item.dailyLimit.remaining > 0 ? 'text-green-400' : 'text-red-400'}>
-                              {item.dailyLimit.remaining} disponible
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex justify-between text-sm">
+                          <span>Stock:</span>
+                          <span className={item.currentStock > 0 ? 'text-green-400' : 'text-red-400'}>
+                            {item.currentStock || 0} disponible
+                          </span>
+                        </div>
                       </div>
                       {/* Bouton acheter déplacé en bas du cadre */}
                       <div className="mt-6">
@@ -383,18 +373,17 @@ export default function MarcheNoirPage() {
                           onClick={() => handlePurchase(item.id)}
                           isLoading={purchasing[item.id]}
                           loadingText="ACHAT..."
-                          disabled={!canAfford || !hasStreetCred || !isAvailable || !canBuy || (item.dailyLimit && item.dailyLimit.remaining <= 0)}
+                          disabled={!canAfford || !hasStreetCred || !hasStock || !canBuy}
                           className={`w-full font-bold py-2 px-4 rounded transition-all ${
-                            canAfford && hasStreetCred && isAvailable && canBuy && (!item.dailyLimit || item.dailyLimit.remaining > 0)
+                            canAfford && hasStreetCred && hasStock && canBuy
                               ? 'btn-primary'
                               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                           }`}
                         >
                           {!canAfford ? 'Fonds insuffisants' : 
                            !hasStreetCred ? 'Street Cred insuffisant' : 
-                           !isAvailable ? 'Stock épuisé' :
+                           !hasStock ? 'Stock épuisé' :
                            !canBuy ? 'Niveau Fixer insuffisant' :
-                           (item.dailyLimit && item.dailyLimit.remaining <= 0) ? 'Stock épuisé' :
                            `Acheter (${item.cost.toLocaleString('en-US')} €$)`}
                         </ButtonWithLoading>
                         {!canBuy && (
