@@ -29,14 +29,10 @@ export async function GET(request) {
     const currentHour = now.getHours();
     
     // Heures de génération : 8h à 20h (journée active)
-    const isActiveHours = currentHour >= 8 && currentHour <= 20;
+    //const isActiveHours = currentHour >= 8 && currentHour <= 20;
+    const isActiveHours = true;
     
-    if (!isActiveHours) {
-      return NextResponse.json({ 
-        success: true, 
-        message: `Hors des heures actives (${currentHour}h), aucune génération.` 
-      });
-    }
+  
 
     // Probabilité de génération selon l'heure
     const hourProbabilities = {
