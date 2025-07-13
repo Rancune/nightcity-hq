@@ -627,7 +627,7 @@ export default function ContractDetailsView({ initialContract }) {
           <div className="mt-4 p-3 bg-black/20 rounded-lg border border-cyan-400/20">
             <p className="text-cyan-200 text-sm">
               <strong>Note :</strong> Ces effets seront appliqués lors de la résolution de la mission. 
-              Les bonus de compétence s'appliquent uniquement aux tests correspondants.
+              Les bonus de compétence s&apos;appliquent uniquement aux tests correspondants.
             </p>
           </div>
         </div>
