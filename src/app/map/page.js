@@ -121,16 +121,14 @@ export default function ContractBoardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Bouton Générer Contrat */}
       <div className="flex justify-end mb-6">
-        {isDevelopment && (
-          <ButtonWithLoading
-            onClick={handleGenerateContract}
-            isLoading={isGeneratingContract}
-            loadingText="GÉNÉRATION..."
-            className="btn-primary"
-          >
-            Générer Contrat
-          </ButtonWithLoading>
-        )}
+        <ButtonWithLoading
+          onClick={handleGenerateContract}
+          isLoading={isGeneratingContract}
+          loadingText="GÉNÉRATION..."
+          className="btn-primary"
+        >
+          Générer Contrat (DEV)
+        </ButtonWithLoading>
       </div>
 
       {/* En-tête */}

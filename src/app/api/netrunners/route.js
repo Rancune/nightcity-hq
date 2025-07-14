@@ -20,8 +20,22 @@ export async function GET() {
 
     await connectDb();
     // On ajoute .lean() par bonne pratique pour la performance
-    const runners = await Netrunner.find({ ownerId: userId }).lean(); 
-    
+    let runners = await Netrunner.find({ ownerId: userId }); // plus lean ici car on va peut-être modifier
+
+    // Mise à jour auto des runners grillés dont le timer est fini
+    const now = new Date();
+    let hasUpdates = false;
+    for (const runner of runners) {
+      if (runner.status === 'Grillé' && runner.recoveryUntil && runner.recoveryUntil <= now) {
+        runner.status = 'Disponible';
+        runner.recoveryUntil = null;
+        await runner.save();
+        hasUpdates = true;
+      }
+    }
+    // On repasse en lean pour la suite
+    runners = runners.map(r => r.toObject());
+
     // Récupérer les détails des implants installés
     const runnersWithImplants = await Promise.all(
       runners.map(async (runner) => {

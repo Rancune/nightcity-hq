@@ -88,6 +88,22 @@ export async function POST(request, props) {
     await contract.save();
     console.log(`[RESOLVE] Contrat ${contract._id} mis à jour, nouveau statut: ${contract.status}`);
 
+    // --- AJOUT : RÉCOMPENSES AU JOUEUR ---
+    let updatedPlayerProfile = null;
+    if (contract.resolution_outcome === 'Succès') {
+      updatedPlayerProfile = await PlayerProfile.findOne({ clerkId: userId });
+      if (updatedPlayerProfile) {
+        if (contract.reward?.eddies) {
+          updatedPlayerProfile.eddies = (updatedPlayerProfile.eddies || 0) + contract.reward.eddies;
+        }
+        if (contract.reward?.reputation) {
+          updatedPlayerProfile.addReputation(contract.reward.reputation, `Contrat ${contract.title} réussi`);
+        }
+        updatedPlayerProfile.missionsCompleted = (updatedPlayerProfile.missionsCompleted || 0) + 1;
+        await updatedPlayerProfile.save();
+      }
+    }
+
     // --- AJOUT : MISE À JOUR DE LA RÉPUTATION DE FACTION ---
     if (contract.resolution_outcome === 'Succès') {
       const employerFaction = contract.employerFaction;
@@ -130,7 +146,12 @@ export async function POST(request, props) {
       playerShare: contract.playerShare,
       totalRunnerNet: contract.totalRunnerNet,
       debriefing_log: contract.debriefing_log,
-      updatedContract: contract
+      updatedContract: contract,
+      updatedPlayerProfile: updatedPlayerProfile ? {
+        eddies: updatedPlayerProfile.eddies,
+        reputationPoints: updatedPlayerProfile.reputationPoints,
+        reputationTitle: updatedPlayerProfile.reputationTitle
+      } : null
     });
 
   } catch (error) {

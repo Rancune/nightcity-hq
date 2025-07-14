@@ -17,6 +17,17 @@ import { THREAT_LEVELS } from '@/Lib/threatLevels';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import RequiredSkillsDisplay from '@/components/RequiredSkillsDisplay';
 
+// Helper pour savoir si un runner grillé est prêt
+function isRunnerActuallyAvailable(runner) {
+  if (runner.status === 'Disponible') return true;
+  if (runner.status === 'Grillé' && runner.recoveryUntil) {
+    const now = new Date();
+    const recoveryDate = new Date(runner.recoveryUntil);
+    return recoveryDate - now <= 0;
+  }
+  return false;
+}
+
 export default function ContratsPage() {
   const [contrats, setContrats] = useState([]);
   const [netrunners, setNetrunners] = useState([]);
@@ -33,6 +44,7 @@ export default function ContratsPage() {
   const [debriefingUsedPrograms, setDebriefingUsedPrograms] = useState([]);
   const [debriefingFinancialSummary, setDebriefingFinancialSummary] = useState(null);
   const { isSignedIn, isLoaded } = useAuth();
+  const [playerProfile, setPlayerProfile] = useState(null); // Ajouté pour stocker l'état local
 
   // Vérifier si on est en environnement de développement
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -79,6 +91,13 @@ export default function ContratsPage() {
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       fetchData();
+      // Récupérer le profil joueur pour affichage initial
+      fetch('/api/player/reputation').then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          setPlayerProfile(data.playerProfile);
+        }
+      });
     }
   }, [isLoaded, isSignedIn]);
 
@@ -161,6 +180,12 @@ export default function ContratsPage() {
     }
   };
 
+  // Met à jour le profil joueur après une récompense
+  const updatePlayerProfileFromReward = (profileData) => {
+    if (!profileData) return;
+    setPlayerProfile(prev => ({ ...prev, ...profileData }));
+  };
+
   const handleClaimReward = async (contractId) => {
     try {
       setLoadingReports(prev => ({ ...prev, [contractId]: true }));
@@ -171,6 +196,11 @@ export default function ContratsPage() {
         console.error(`[CLAIM] Erreur lors de la résolution du contrat: ${errorMessage}`);
         setLoadingReports(prev => ({ ...prev, [contractId]: false }));
         return;
+      }
+      const resolveData = await resolveResponse.json();
+      // Met à jour le profil joueur si récompense
+      if (resolveData.updatedPlayerProfile) {
+        updatePlayerProfileFromReward(resolveData.updatedPlayerProfile);
       }
       // Étape 2 : GET pour récupérer le contrat à jour
       const response = await fetch(`/api/contrats/${contractId}`);
@@ -661,7 +691,7 @@ export default function ContratsPage() {
         isOpen={isAssignModalOpen}
         onClose={closeAssignModal}
         onAssign={handleAssignRunner}
-        runners={netrunners.filter(r => r.status === 'Disponible')}
+        runners={netrunners.filter(isRunnerActuallyAvailable)}
         contract={getSelectedContract()}
         onAssigned={fetchData}
       />

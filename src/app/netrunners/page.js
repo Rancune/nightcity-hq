@@ -20,6 +20,53 @@ export default function NetrunnersPage() {
   const { isSignedIn, isLoaded } = useAuth();
   const [showDeadRunnerModal, setShowDeadRunnerModal] = useState(false);
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const [isGeneratingPool, setIsGeneratingPool] = useState(false);
+
+  // Ajout du cooldown pour le bouton 'Activer un contact'
+  const COOLDOWN_HOURS = 3;
+  const COOLDOWN_KEY = 'recruitment_cooldown_until';
+  const [cooldownUntil, setCooldownUntil] = useState(null);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
+
+  // Initialisation du cooldown depuis le localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(COOLDOWN_KEY);
+      if (stored) {
+        setCooldownUntil(new Date(stored));
+      }
+    }
+  }, []);
+
+  // Timer pour mettre à jour le temps restant
+  useEffect(() => {
+    if (!cooldownUntil) return;
+    const interval = setInterval(() => {
+      const now = new Date();
+      const left = new Date(cooldownUntil) - now;
+      setCooldownLeft(left > 0 ? left : 0);
+      if (left <= 0) {
+        setCooldownUntil(null);
+        localStorage.removeItem(COOLDOWN_KEY);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
+
+  const handleGenerateRecruitmentWithCooldown = async () => {
+    setIsGeneratingPool(true);
+    await generateRecruitmentPool();
+    const next = new Date(Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000);
+    setCooldownUntil(next);
+    localStorage.setItem(COOLDOWN_KEY, next.toISOString());
+    setIsGeneratingPool(false);
+  };
+
+  const handleDevGenerateRecruitment = async () => {
+    setIsGeneratingPool(true);
+    await generateRecruitmentPool();
+    setIsGeneratingPool(false);
+  };
 
   // Styles CSS pour le fond hachuré rouge (statique, sans animation)
   const grilledRunnerStyles = `
@@ -49,6 +96,32 @@ export default function NetrunnersPage() {
     .grilled-runner-card > * {
       position: relative;
       z-index: 2;
+    }
+  `;
+
+  // Ajout d'une animation CSS pour le halo bleu
+  const onMissionStyles = `
+    .on-mission-anim {
+      position: relative;
+      display: inline-block;
+    }
+    .on-mission-anim::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2.5em;
+      height: 2.5em;
+      background: rgba(59,130,246,0.25); /* blue-500 */
+      border-radius: 9999px;
+      transform: translate(-50%, -50%);
+      animation: pulse-blue 1.5s infinite;
+      z-index: 0;
+    }
+    @keyframes pulse-blue {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+      70% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
     }
   `;
 
@@ -183,7 +256,8 @@ export default function NetrunnersPage() {
         // alert(errorMessage || "Erreur de recrutement");
       } else {
         fetchRunners();
-        generateRecruitmentPool(); // Régénère le pool
+        // On retire le runner recruté de la liste sans régénérer tout le pool
+        setRecruitmentPool(prev => prev.filter(r => r !== recruit));
         // alert(`${recruit.name} a été recruté avec succès !`);
       }
     } catch (error) {
@@ -317,28 +391,43 @@ export default function NetrunnersPage() {
           {livingRunners.length > 0 ? (
             livingRunners.map((runner) => {
               const isGrilled = runner.status === 'Grillé';
+              const isOnMission = runner.status === 'En mission';
               const recoveryTimeLeft = isGrilled ? getRecoveryTimeLeft(runner.recoveryUntil) : null;
-              
+              // Nouveau : passage auto en dispo si timer fini
+              let displayStatus = runner.status;
+              if (isGrilled && recoveryTimeLeft === 'Prêt !') {
+                displayStatus = 'Disponible';
+              }
+              const isVisuallyGrilled = isGrilled && recoveryTimeLeft !== null && recoveryTimeLeft !== 'Prêt !';
+              let cardClass = '';
+              if (isVisuallyGrilled) {
+                cardClass = 'bg-red-900/20 border-red-500/50 hover:border-red-500/70 grilled-runner-card';
+              } else if (isOnMission) {
+                cardClass = 'bg-blue-900/30 border-blue-400/60 opacity-70';
+              } else {
+                cardClass = 'bg-black/30 border-[--color-border-dark] hover:border-[--color-neon-cyan]/30';
+              }
               return (
                 <div 
                   key={runner._id} 
-                  className={`p-4 rounded border transition-all ${
-                    isGrilled 
-                      ? 'bg-red-900/20 border-red-500/50 hover:border-red-500/70 grilled-runner-card' 
-                      : 'bg-black/30 border-[--color-border-dark] hover:border-[--color-neon-cyan]/30'
-                  }`}
+                  className={`p-4 rounded border transition-all ${cardClass}`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="text-lg text-[--color-text-primary] font-bold">{runner.name}</h3>
+                      <div className="flex items-center gap-2">
+                        {/* Pictogramme et animation si en mission */}
+                        {isOnMission && (
+                          <span className="on-mission-anim text-blue-400 text-xl relative z-10">🚀</span>
+                        )}
+                        <h3 className="text-lg text-[--color-text-primary] font-bold">{runner.name}</h3>
+                      </div>
                       <p className="text-sm text-[--color-text-secondary]">
-                        Niveau {runner.level} • {runner.status}
+                        Niveau {runner.level} • {displayStatus}
                       </p>
-                      {isGrilled && recoveryTimeLeft && (
-                        <p className={`text-sm font-bold mt-1 ${
-                          recoveryTimeLeft === "Prêt !" ? "text-green-400" : "text-red-400"
-                        }`}>
-                          ⏰ {recoveryTimeLeft === "Prêt !" ? "Récupération terminée" : `Récupération dans ${recoveryTimeLeft}`}
+                      {/* Affiche le timer ou la récupération uniquement si pas prêt */}
+                      {isGrilled && recoveryTimeLeft && recoveryTimeLeft !== 'Prêt !' && (
+                        <p className={`text-sm font-bold mt-1 text-red-400`}>
+                          ⏰ Récupération dans {recoveryTimeLeft}
                         </p>
                       )}
                       <p className="text-xs text-[--color-neon-pink] mt-1">
@@ -447,18 +536,36 @@ export default function NetrunnersPage() {
     <div className="card">
       <div className="card-header">
         <h2 className="card-title">Recrutement</h2>
-        
-          <button
-            onClick={generateRecruitmentPool}
+        <div className="flex gap-2 items-center">
+          <ButtonWithLoading
+            onClick={handleGenerateRecruitmentWithCooldown}
+            isLoading={isGeneratingPool}
+            disabled={!!cooldownUntil && cooldownLeft > 0}
             className="btn-secondary text-sm"
           >
-            🔄 Régénérer
-          </button>
-        
+            {cooldownUntil && cooldownLeft > 0
+              ? `Contact dispo dans ${Math.floor(cooldownLeft / 1000 / 60 / 60)}h ${Math.floor((cooldownLeft / 1000 / 60) % 60)}m`
+              : 'Activer un contact'}
+          </ButtonWithLoading>
+          {isDevelopment && (
+            <ButtonWithLoading
+              onClick={handleDevGenerateRecruitment}
+              isLoading={isGeneratingPool}
+              className="btn-ghost text-xs"
+            >
+              Régénérer (DEV)
+            </ButtonWithLoading>
+          )}
+        </div>
       </div>
       
       <div className="card-content">
-        {recruitmentPool.length > 0 ? (
+        {isGeneratingPool ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-[--color-neon-cyan] border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-[--color-text-secondary] text-lg font-bold text-center">Les contacts cherchent de nouveaux runners...</p>
+          </div>
+        ) : recruitmentPool.length > 0 ? (
           recruitmentPool.map((recruit, index) => (
             <div key={index} className="bg-black/30 p-4 rounded border border-[--color-border-dark] hover:border-[--color-neon-pink]/30 transition-all">
               <div className="flex items-center justify-between mb-3">
@@ -509,9 +616,15 @@ export default function NetrunnersPage() {
           <div className="empty-state">
             <div className="empty-state-icon">🎯</div>
             <p className="empty-state-text">Aucun candidat disponible</p>
-            <p className="empty-state-subtext">
-              Clique sur &quot;Régénérer&quot; pour voir de nouveaux candidats
-            </p>
+            {cooldownUntil && cooldownLeft > 0 ? (
+              <p className="empty-state-subtext text-center">
+                Prochain contact possible dans <span className="text-[--color-neon-cyan] font-bold">{Math.floor(cooldownLeft / 1000 / 60 / 60)}h {Math.floor((cooldownLeft / 1000 / 60) % 60)}m</span>
+              </p>
+            ) : (
+              <p className="empty-state-subtext text-center">
+                Utilise le bouton <span className="text-[--color-neon-cyan] font-bold">Activer un contact</span> pour trouver de nouveaux runners.
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -587,6 +700,7 @@ export default function NetrunnersPage() {
   return (
     <main className="page-container">
       <style jsx>{grilledRunnerStyles}</style>
+      <style jsx>{onMissionStyles}</style>
       <div className="content-wrapper">
         {/* Onglets */}
         <div className="tab-container">
