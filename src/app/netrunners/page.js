@@ -159,6 +159,12 @@ export default function NetrunnersPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'recrutement') {
+      generateRecruitmentPool();
+    }
+  }, [activeTab]);
+
   const handleRecruit = async (recruit) => {
     setLoading(true);
     try {
