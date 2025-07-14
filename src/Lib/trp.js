@@ -27,10 +27,13 @@ export async function updatePlayerTimers(clerkId) {
 
   // --- CORRECTION 1 : Mise à jour des minuteurs ---
   // On cible maintenant les contrats proposés qui sont soit publics, soit privés au joueur.
+  // On NE touche PAS aux contrats créés il y a moins d'1 minute pour éviter l'expiration immédiate
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
   await Contract.updateMany(
     { 
       status: 'Proposé',
-      $or: [{ ownerId: null }, { ownerId: clerkId }]
+      $or: [{ ownerId: null }, { ownerId: clerkId }],
+      createdAt: { $lt: oneMinuteAgo }
     },
     { $inc: { acceptance_deadline_trp: -trpElapsedSeconds } }
   );

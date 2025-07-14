@@ -441,14 +441,14 @@ export default function NetrunnersPage() {
     <div className="card">
       <div className="card-header">
         <h2 className="card-title">Recrutement</h2>
-        {isDevelopment && (
+        
           <button
             onClick={generateRecruitmentPool}
             className="btn-secondary text-sm"
           >
             🔄 Régénérer
           </button>
-        )}
+        
       </div>
       
       <div className="card-content">

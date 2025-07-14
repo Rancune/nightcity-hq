@@ -33,7 +33,7 @@ const CONFIG = {
   cronSecret: process.env.CRON_SECRET || null,
   
   // Limite maximale de contrats
-  maxContracts: 12,
+  maxContracts: 20,
   
   // Heures actives (6h-22h)
   activeHours: { start: 6, end: 22 },
@@ -127,7 +127,7 @@ function isActiveHours() {
 // Fonction pour obtenir la probabilité de génération selon l'heure
 function getGenerationProbability() {
 
-  return  0.5;
+  return  1;
 }
 
 // Fonction pour décider si on doit générer des contrats

@@ -51,7 +51,7 @@ export async function GET(request) {
       20: 0.5   // Fin de journée
     };
 
-    const generationProbability = hourProbabilities[currentHour] || 0.5;
+    const generationProbability = hourProbabilities[currentHour] || 1;
     const shouldGenerate = Math.random() < generationProbability;
 
     if (!shouldGenerate) {

@@ -39,3 +39,12 @@ node scripts/init-program-database.js
 
   npm run contracts:auto
   npm run runners:auto
+
+
+
+
+  curl -H "Authorization: Bearer 9lxWDWu34vmuKEtrJkupSiKXjjH88x6rToYbTRSW" https://fixer.rancune.games/api/crons/generate-contracts
+
+  curl -H "Authorization: Bearer 9lxWDWu34vmuKEtrJkupSiKXjjH88x6rToYbTRSW" https://fixer.rancune.games/api/crons/generate-runners-pool
+
+  curl -H "Authorization: Bearer 9lxWDWu34vmuKEtrJkupSiKXjjH88x6rToYbTRSW" https://fixer.rancune.games/api/crons/generate-runners-pool

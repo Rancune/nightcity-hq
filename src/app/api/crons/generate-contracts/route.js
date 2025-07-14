@@ -36,7 +36,7 @@ export async function GET(request) {
     const currentCount = await Contract.countDocuments({ status: 'Proposé' });
     
     // Limite maximale de 12 contrats
-    const MAX_CONTRACTS = 12;
+    const MAX_CONTRACTS = 20;
     
     if (currentCount >= MAX_CONTRACTS) {
       return NextResponse.json({ 
@@ -76,7 +76,7 @@ export async function GET(request) {
       22: 0.3   // Fin de journée
     };
 
-    const generationProbability = hourProbabilities[currentHour] || 0.5;
+    const generationProbability = hourProbabilities[currentHour] || 1;
     const shouldGenerate = Math.random() < generationProbability;
 
     if (!shouldGenerate) {
