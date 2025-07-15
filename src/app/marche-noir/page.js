@@ -176,7 +176,7 @@ export default function MarcheNoirPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="min-h-screen p-4 sm:p-8 px-2">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-[--color-neon-cyan] border-t-transparent rounded-full mx-auto"></div>
           <p className="text-[--color-text-secondary] mt-4">Connexion au Marché de l&apos;Ombre...</p>
@@ -187,7 +187,7 @@ export default function MarcheNoirPage() {
 
   if (!marketData || !playerProfile) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="min-h-screen p-4 sm:p-8 px-2">
         <div className="text-center">
           <p className="text-[--color-text-secondary]">Erreur de chargement du marché</p>
         </div>
@@ -270,7 +270,7 @@ export default function MarcheNoirPage() {
         {/* Sélection des vendeurs */}
         <div className="section-spacing">
           <h2 className="card-title mb-4">Vendeurs</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(marketData.vendors).map(([vendorKey, vendor]) => (
               <button
                 key={vendorKey}

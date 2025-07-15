@@ -80,27 +80,27 @@ export default function DashboardPage() {
   const runnerStats = getRunnerStats();
 
   return (
-    <main className="page-container">
+    <main className="page-container px-2 sm:px-4">
       <div className="content-wrapper">
         {/* En-tête du tableau de bord */}
         <div className="page-header">
-          <h1 className="page-title">Tableau de Bord</h1>
-          <p className="page-subtitle">
+          <h1 className="page-title text-2xl sm:text-3xl lg:text-4xl">Tableau de Bord</h1>
+          <p className="page-subtitle text-xs sm:text-sm lg:text-base">
             <Typewriter text={`Bienvenue, ${playerProfile.handle}. Voici l'état de tes opérations dans Night City.`} speed={10} />
           </p>
         </div>
 
         {/* Description du jeu et fonctionnalités */}
-        <div className="card section-spacing">
+        <div className="card section-spacing p-3 sm:p-4 lg:p-6">
           <div className="card-header">
-            <h2 className="card-title">Night City HQ</h2>
-            <span className="text-sm text-[--color-neon-cyan] font-bold">v0.7</span>
+            <h2 className="card-title text-lg sm:text-xl lg:text-2xl">Night City HQ</h2>
+            <span className="text-xs sm:text-sm text-[--color-neon-cyan] font-bold">v0.7</span>
           </div>
           
           <div className="card-content">
             <div className="mb-6">
-              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">🎮 À propos du jeu</h3>
-              <p className="text-[--color-text-secondary] leading-relaxed">
+              <h3 className="text-base sm:text-lg text-[--color-text-primary] font-bold mb-3">🎮 À propos du jeu</h3>
+              <p className="text-[--color-text-secondary] leading-relaxed text-xs sm:text-sm">
                 Night City HQ est un jeu de gestion de netrunners dans l&apos;univers cyberpunk de Cyberpunk 2077. 
                 Recrutez des hackers talentueux, gérez vos contrats et construisez votre réputation dans les 
                 bas-fonds de Night City. Chaque décision compte dans votre ascension vers le statut de légende.
@@ -108,7 +108,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="mb-6">
-              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">⚡ Fonctionnalités actuelles</h3>
+              <h3 className="text-base sm:text-lg text-[--color-text-primary] font-bold mb-3">⚡ Fonctionnalités actuelles</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-black/30 p-4 rounded-lg border border-[--color-border-dark]">
                   <h4 className="text-[--color-neon-pink] font-bold mb-2">👥 Gestion d&apos;équipe</h4>
@@ -149,7 +149,7 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <h3 className="text-lg text-[--color-text-primary] font-bold mb-3">🚀 Fonctionnalités à venir</h3>
+              <h3 className="text-base sm:text-lg text-[--color-text-primary] font-bold mb-3">🚀 Fonctionnalités à venir</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-black/20 p-4 rounded-lg border border-[--color-border-dark] opacity-75">
                   <h4 className="text-[--color-neon-purple] font-bold mb-2">🏪 Marché Noir</h4>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Cartes de statistiques principales */}
-        <div className="stats-grid">
+        <div className="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8">
           {/* Eddies */}
           <div className="card">
             <div className="flex items-center justify-between mb-2">

@@ -52,7 +52,11 @@ export default function ContractDetailsView({ initialContract }) {
         const response = await fetch('/api/player/inventory');
         if (response.ok) {
           const inventory = await response.json();
+          console.log(`[PRODUCTION DEBUG] Inventaire récupéré:`, inventory);
+          console.log(`[PRODUCTION DEBUG] One-shot programmes dans l'inventaire:`, inventory.detailedInventory?.oneShotPrograms?.length || 0);
           setPlayerInventory(inventory.detailedInventory || inventory); // compatibilité
+        } else {
+          console.error(`[PRODUCTION DEBUG] Erreur HTTP lors du chargement de l'inventaire:`, response.status);
         }
       } catch (error) {
         console.error('Erreur lors du chargement de l\'inventaire:', error);
@@ -349,7 +353,8 @@ export default function ContractDetailsView({ initialContract }) {
   const oneShotPrograms = (playerInventory?.oneShotPrograms || []).filter(item => item.quantity > 0);
   const revealPrograms = oneShotPrograms.filter(item => item.program?.effects?.reveal_skill === true || ["Logiciel 'Mouchard'", 'Analyseur de Contrat'].includes(item.program?.name));
   const bonusPrograms = oneShotPrograms.filter(item =>
-    (item.program?.effects?.skip_skill_check || item.program?.effects?.add_bonus_roll || item.program?.effects?.reduce_difficulty) && !item.program?.effects?.reveal_skill && !["Logiciel 'Mouchard'", 'Analyseur de Contrat'].includes(item.program?.name)
+    (item.program?.effects?.skip_skill_check || item.program?.effects?.add_bonus_roll || item.program?.effects?.reduce_difficulty) && 
+    !["Logiciel 'Mouchard'", 'Analyseur de Contrat'].includes(item.program?.name)
   );
 
   // Debug logs pour les programmes disponibles
@@ -359,13 +364,29 @@ export default function ContractDetailsView({ initialContract }) {
     console.log(`[FRONTEND DEBUG] Programmes bonus disponibles:`, bonusPrograms.length);
     console.log(`[FRONTEND DEBUG] Programmes de révélation disponibles:`, revealPrograms.length);
     
+    // Debug détaillé pour production
+    console.log(`[PRODUCTION DEBUG] Inventaire complet:`, playerInventory);
+    console.log(`[PRODUCTION DEBUG] One-shot programmes:`, oneShotPrograms);
+    console.log(`[PRODUCTION DEBUG] Bonus programmes:`, bonusPrograms);
+    
     if (bonusPrograms.length > 0) {
       console.log(`[FRONTEND DEBUG] Détail des programmes bonus:`);
       bonusPrograms.forEach(item => {
         console.log(`   - ${item.program.name}: +${item.program.effects.add_bonus_roll} (skill: ${item.program.effects.skill || 'non spécifié'})`);
       });
+    } else {
+      console.log(`[PRODUCTION DEBUG] Aucun programme bonus trouvé. Vérification des filtres...`);
+      const potentialBonus = oneShotPrograms.filter(item => 
+        item.program?.effects?.skip_skill_check || 
+        item.program?.effects?.add_bonus_roll || 
+        item.program?.effects?.reduce_difficulty
+      );
+      console.log(`[PRODUCTION DEBUG] Programmes avec effets de bonus potentiels:`, potentialBonus.length);
+      potentialBonus.forEach(item => {
+        console.log(`   - ${item.program.name}: effets=${JSON.stringify(item.program.effects)}`);
+      });
     }
-  }, [contract.status, oneShotPrograms, bonusPrograms, revealPrograms]);
+  }, [contract.status, oneShotPrograms, bonusPrograms, revealPrograms, playerInventory]);
 
   // Utilisation immédiate d'un programme de révélation
   const [revealLoading, setRevealLoading] = useState(null); // id du programme en cours

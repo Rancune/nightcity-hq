@@ -85,14 +85,14 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 p-6 rounded-lg border border-[--color-neon-cyan] max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-start mb-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-gray-900 p-3 sm:p-6 rounded-lg border border-[--color-neon-cyan] w-full max-w-xs sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-2">
           <div>
-            <h3 className="text-2xl text-[--color-neon-cyan] font-bold">
+            <h3 className="text-xl sm:text-2xl text-[--color-neon-cyan] font-bold">
               🎯 Assigner les Netrunners
             </h3>
-            <p className="text-[--color-text-secondary] mt-1">
+            <p className="text-[--color-text-secondary] mt-1 text-xs sm:text-base">
               Sélectionnez un agent pour chaque compétence requise
             </p>
           </div>
@@ -149,7 +149,7 @@ export default function AssignRunnerModal({ isOpen, onClose, runners, onAssign, 
           ))}
         </div>
         <button
-          className="w-full py-3 rounded bg-cyan-600 text-white font-bold text-lg disabled:opacity-50"
+          className="w-full py-3 rounded bg-cyan-600 text-white font-bold text-lg disabled:opacity-50 mt-4"
           onClick={handleAssignRunners}
           disabled={Object.keys(assignments).length !== assignSkills.length || assigning}
         >

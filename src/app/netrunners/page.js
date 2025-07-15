@@ -232,11 +232,7 @@ export default function NetrunnersPage() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'recrutement') {
-      generateRecruitmentPool();
-    }
-  }, [activeTab]);
+  // Suppression de la génération automatique des runners à l'affichage de l'onglet recrutement
 
   const handleRecruit = async (recruit) => {
     setLoading(true);
@@ -698,10 +694,16 @@ export default function NetrunnersPage() {
   );
 
   return (
-    <main className="page-container">
+    <main className="page-container px-2 sm:px-4">
       <style jsx>{grilledRunnerStyles}</style>
       <style jsx>{onMissionStyles}</style>
       <div className="content-wrapper">
+        <div className="page-header">
+          <h1 className="page-title text-2xl sm:text-3xl lg:text-4xl">Mon Écurie</h1>
+          <p className="page-subtitle text-xs sm:text-sm lg:text-base">
+            Gère tes netrunners, équipe-les et prépare-les pour la prochaine mission !
+          </p>
+        </div>
         {/* Onglets */}
         <div className="tab-container">
           <div className="tab-list">

@@ -9,6 +9,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 export async function generateContractLore() {
   console.log("[IA] Début de la génération de lore...");
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model2 = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model3 = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
   const prompt = `
     Tu es un Fixer dans l'univers de Cyberpunk 2077. 

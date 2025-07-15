@@ -411,38 +411,14 @@ export default function ContratsPage() {
   }
 
   return (
-    <main className="page-container">
+    <main className="page-container px-2 sm:px-4">
       <div className="content-wrapper">
         {/* En-tête avec bouton de génération */}
         <div className="page-header">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="page-title">Contrats</h1>
-              <p className="page-subtitle">
-                <Typewriter text="Gère tes contrats et surveille leur progression dans les rues de Night City." speed={10} />
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {isDevelopment && (
-                <button
-                  onClick={testRewards}
-                  className="btn-secondary text-sm"
-                >
-                  Test Rewards
-                </button>
-              )}
-              {isDevelopment && (
-                <ButtonWithLoading
-                  onClick={handleGenerateContract}
-                  isLoading={isGeneratingContract}
-                  loadingText="GÉNÉRATION..."
-                  className="btn-primary"
-                >
-                  Générer Contrat
-                </ButtonWithLoading>
-              )}
-            </div>
-          </div>
+          <h1 className="page-title text-2xl sm:text-3xl lg:text-4xl">Contrats</h1>
+          <p className="page-subtitle text-xs sm:text-sm lg:text-base">
+            <Typewriter text="Gère tes missions, assigne tes runners et fais grimper ta réputation !" speed={10} />
+          </p>
         </div>
 
         {/* Filtres */}

@@ -11,13 +11,6 @@ pm2 restart fixer-app
 
 
 
-# 1. Variables d'environnement
-CRON_SECRET=votre_secret_ici
-NODE_ENV=production
-
-# 2. Cron job (toutes les 15 minutes entre 6h et 22h)
-*/15 6-22 * * * /usr/bin/node /chemin/vers/scripts/auto-generate-contracts.js
-
 # 3. Tests
 node scripts/test-auto-generation.js
 node scripts/test-faction-rewards.js
